@@ -47,21 +47,22 @@ class PPBase(abc.ABC):
         for name, output in self.outputs.items():
             self.dataset.outputs.append(output)
 
-    def get_dataframe(self):
+    def get_dataframe(self, method='outerjoin', limit=1):
         df = pd.DataFrame()
 
-        for _input in self.input_names:
-            df = df.join(self.dataset[_input], how='outer')
+        if method == 'outerjoin':
+            for _input in self.input_names:
+                df = df.join(self.dataset[_input], how='outer')
 
-        return df
-
-        df = None
-        for _input in self.input_names:
-            if df is None:
-                df = self.dataset[_input].copy()
-                df.columns = [_input]
-            else:
-                df[_input] = self.dataset[_input].copy()
+        elif method == 'onto':
+            df = self.dataset[self.input_names[0]]
+            for _input in self.input_names[1:]:
+                df[_input] = self.dataset[_input].reindex(
+                    df[self.input_names[0]].index.union(
+                        self.dataset[_input].index).sort_values()
+                ).interpolate(
+                    'time', limit=limit
+                ).loc[df[self.input_names[0]].index]
 
         return df
 
