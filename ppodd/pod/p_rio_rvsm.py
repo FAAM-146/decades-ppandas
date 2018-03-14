@@ -42,8 +42,8 @@ class RioRvsm(PPBase):
 
         wf = self.get_dataframe()
 
-        wf['PALT_FEET'] = wf['PRTAFT_PRESSURE_ALT']  * 4
-        wf['FLAG_ALT'] = 0 
+        wf['PALT_FEET'] = wf['PRTAFT_PRESSURE_ALT'] * 4
+        wf['FLAG_ALT'] = 0
         wf.loc[wf['PALT_FEET'] < -2000, 'FLAG_ALT'] = 1
         wf.loc[wf['PALT_FEET'] > 50000, 'FLAG_ALT'] = 1
         wf['PALT_METERS'] = wf['PALT_FEET'] / 3.28084
