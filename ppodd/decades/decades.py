@@ -104,10 +104,15 @@ class DecadesVariable(pd.DataFrame):
 
 
 class DecadesDataset(object):
-    def __init__(self):
+    def __init__(self, date=None):
 
+        if date is None:
+            raise ValueError('Flight date must be given')
+
+        self.date = date
         self.readers = []
         self.definitions = []
+        self.constants = {}
         self.inputs = []
         self.outputs = []
 
@@ -132,6 +137,9 @@ class DecadesDataset(object):
 
     def add_definition(self, definition):
         self.definitions.append(definition)
+
+    def add_constant(self, name, data):
+        self.constants[name] = data
 
     def add_input(self, variable):
         """
