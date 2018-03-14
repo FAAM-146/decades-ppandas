@@ -1,14 +1,19 @@
 import abc
 import csv
+import datetime
 import glob
 import os
+import re
 import sys
 import tempfile
 import zipfile
 import warnings
 
+from dateutil import relativedelta
+
 import numpy as np
 import pandas as pd
+
 
 from ppodd.decades import DecadesVariable
 
@@ -31,6 +36,16 @@ class FileReader(abc.ABC):
 
     def __eq__(self, other):
         return self.__class__ == other.__class__
+
+
+class FlightConstantsReader(FileReader):
+    """
+    Read a flight constants file.
+    """
+
+    def read(self):
+        for _file in self.files:
+            pass
 
 
 class ZipFileReader(FileReader):
@@ -60,6 +75,7 @@ class ZipFileReader(FileReader):
 
 class TcpFileReader(FileReader):
     level = 2
+    time_variable = 'utc_time'
 
     def scan(self, dfile, definition):
         print('Scanning {}...'.format(dfile))
@@ -69,76 +85,124 @@ class TcpFileReader(FileReader):
         with open(filename, 'rb') as f:
             rawdata = f.read()
 
-        output = []
+        offsets = self._get_packet_offsets(definition, rawdata)
+        packet_lens = np.diff(offsets)
+        np.append(packet_lens, 1)
 
-        i = 0
-        while i < len(rawdata):
-            id_length = definition.dtypes[0].itemsize
+        good_indicies = packet_lens == definition.packet_length
 
-            try:
-                _str = rawdata[i:i+id_length].decode('utf-8')
-            except UnicodeDecodeError:
-                i += 1
-                continue
+        megaslice = [
+            slice(i, i+definition.packet_length)
+            for i, j in zip(offsets, good_indicies) if j
+        ]
 
-            if _str.replace('$', '') != definition.identifier:
-                i += 1
-                continue
+        index = np.array([False] * len(rawdata))
 
-            packet_dlen = definition.dtypes['packet_length'].itemsize
+        for i, _slice in enumerate(megaslice):
+            index[_slice] = True
 
-            packet_length = np.frombuffer(
-                rawdata[i+id_length:i+id_length+packet_dlen],
-                dtype=definition.dtypes['packet_length']
-            )
+        rawbytes = np.frombuffer(rawdata, 'b')
+        _output = np.frombuffer(rawbytes[index], dtype=definition.dtypes)
 
-            try:
-                data = np.frombuffer(
-                    rawdata[i:i + packet_length[0] + id_length + packet_dlen],
-                    dtype=definition.dtypes
-                )
-
-                print('GOOD: {}'.format(data))
-                output.append(data)
-
-                i += packet_length[0] + id_length + packet_dlen
-                continue
-
-            except ValueError:
-                data = rawdata[i:i + packet_length[0] + id_length +
-                               packet_dlen]
-                print('{} Packet length ({}) does not match definition ({})'.format(
-                    i,
-                    packet_length[0] + id_length + packet_dlen,
-                    definition.packet_length
-                ))
-                print('BAD: {}'.format(data))
-
-            i += packet_length[0] + id_length + packet_dlen
-
-        _output = np.zeros(len(output), dtype=definition.dtypes)
-
-        for i, out in enumerate(output):
-            _output[i] = out
         return _output
 
-    def _scan_read_packet(self, definition, offset, rawdata):
-        pass
+    def _get_packet_offsets(self, definition, rawdata):
+        rex = re.compile(b'\$' + definition.identifier.encode())
+        offsets = [i.start() for i in rex.finditer(rawdata)]
+        return offsets
+
+    def _scan_read_packet_len(self, definition, offset, rawdata):
+        packet_dlen = definition.dtypes['packet_length'].itemsize
+        id_length = definition.dtypes[0].itemsize
+
+        packet_length = np.frombuffer(
+            rawdata[offset+id_length:offset+id_length+packet_dlen],
+            dtype=definition.dtypes['packet_length']
+        )[0]
+
+        return packet_length
 
     def _get_definition(self, _file):
         for _definition in _file.dataset.definitions:
             _crio_type = os.path.basename(_file.filepath).split('_')[0]
-            print(_crio_type, _definition.identifier)
             if _definition.identifier == _crio_type:
                 return _definition
 
+    def _get_index_fast(self, time, frequency):
+        """
+        Returns an interpolated (subsecond) index using a fast,
+        but potentially error-prone method.
+
+        args:
+            _data: a named np.ndarray, assumed to contain
+                'utc_time'
+            frequency: the frequency to interpolate to (s).
+
+        returns:
+            a pandas.DatetimeIndex
+        """
+        _time = np.append(
+            time, [time[-1] + 1]
+        )
+        index = pd.to_datetime(_time, unit='s')
+        _ser_str = '{}N'.format(1 / frequency * 10**9)
+        return pd.Series(index=index).asfreq(_ser_str).index[:-1]
+
+    def _get_index_slow(self, time, frequency):
+        """
+        Returns an interpolated (subsecond) index using a slow,
+        but (hopefully) robust method.
+
+        args:
+            _data: a named np.ndarray, assumed to contain
+                'utc_time'
+            frequency: the frequency to interpolate to (s).
+
+        returns:
+            a pandas.DatetimeIndex
+        """
+
+        _ser_str = '{}N'.format(1 / frequency * 10**9)
+        index = pd.to_datetime(time, unit='s')
+        dti = None
+        for i in index:
+            _dti = pd.DatetimeIndex(start=i, freq=_ser_str,
+                                    periods=frequency)
+
+            if dti is None:
+                dti = _dti
+            else:
+                dti = dti.append(_dti)
+
+        return dti
+
+    def _get_index(self, var, name, time, definition):
+        try:
+            frequency = definition.dtypes[name].shape[0]
+        except IndexError:
+            frequency = 1
+
+        if frequency != 1:
+            if frequency not in self._index_dict:
+                self._index_dict[frequency] = self._get_index_fast(time, frequency)
+                if self._index_dict[frequency].shape != var.ravel().shape:
+                    self._index_dict[frequency] = self._get_index_slow(time, frequency)
+        else:
+            if 1 not in self._index_dict:
+                self._index_dict[1] = pd.to_datetime(time, unit='s')
+
+        return frequency, self._index_dict[frequency]
+
+    def _get_group_name(self, definition):
+        return definition.identifier[:-2]
+
     def read(self):
         for _file in self.files:
+            self.dataset = _file.dataset
             print('Reading {}'.format(_file))
-            index_dict = {}
+            self._index_dict = {}
 
             definition = self._get_definition(_file)
-            print('IDENTIFIER: {}'.format(definition.identifier))
 
             if definition is None:
                 warnings.warn(
@@ -171,7 +235,7 @@ class TcpFileReader(FileReader):
 
                 if _name[0] == '$':
                     continue
-                if _name == 'utc_time':
+                if _name == self.time_variable:
                     continue
 
                 # Pandas doesn't enjoy non-native endianess, so convert data
@@ -181,84 +245,18 @@ class TcpFileReader(FileReader):
                 else:
                     _var = _data[_name]
 
-                try:
-                    frequency = int(_var.size / _data['utc_time'].size)
-                except ZeroDivisionError:
-                    continue
-
-                def _get_index_fast(_data, frequency):
-                    """
-                    Returns an interpolated (subsecond) index using a fast,
-                    but potentially error-prone method.
-
-                    args:
-                        _data: a named np.ndarray, assumed to contain
-                            'utc_time'
-                        frequency: the frequency to interpolate to (s).
-
-                    returns:
-                        a pandas.DatetimeIndex
-                    """
-                    time = np.append(
-                        _data['utc_time'], [_data['utc_time'][-1] + 1]
-                    )
-                    index = pd.to_datetime(time, unit='s')
-                    _ser_str = '{}N'.format(1 / frequency * 10**9)
-                    return pd.Series(index=index).asfreq(_ser_str).index[:-1]
-
-                def _get_index_slow(_data, frequency):
-                    """
-                    Returns an interpolated (subsecond) index using a slow,
-                    but (hopefully) robust method.
-
-                    args:
-                        _data: a named np.ndarray, assumed to contain
-                            'utc_time'
-                        frequency: the frequency to interpolate to (s).
-
-                    returns:
-                        a pandas.DatetimeIndex
-                    """
-
-                    _ser_str = '{}N'.format(1 / frequency * 10**9)
-                    index = pd.to_datetime(_data['utc_time'], unit='s')
-                    dti = None
-                    for i in index:
-                        _dti = pd.DatetimeIndex(start=i, freq=_ser_str,
-                                                periods=frequency)
-
-                        if dti is None:
-                            dti = _dti
-                        else:
-                            dti = dti.append(_dti)
-
-                    return dti
-
-                # Deal with index interpolation. If the data are contiguous (at
-                # the second), then we can just bounce the index through a
-                # Series.asfreq() call. This is pretty fast. However, if the
-                # data are not contiguous, we have to deal with it defferently.
-                # Currently this means building a new index each second and
-                # sticking them all together. This is stupid, but works.
-                # TODO: do something less stupid that also works.
-                if frequency != 1:
-                    if frequency not in index_dict:
-                        index_dict[frequency] = _get_index_fast(_data, frequency)
-                        if index_dict[frequency].shape != _var.ravel().shape:
-                            index_dict[frequency] = _get_index_slow(_data, frequency)
-                else:
-                    if 1 not in index_dict:
-                        index_dict[1] = pd.to_datetime(_data['utc_time'], unit='s')
+                frequency, index = self._get_index(
+                    _var, _name, _data[self.time_variable], definition
+                )
 
                 # Define the decades variable
-                variable_name = '{}_{}'.format(
-                    definition.identifier[:-2],
-                    _name.upper()
-                )
+                dtd = self._get_group_name(definition)
+
+                variable_name = '{}_{}'.format(dtd,  _name.upper())
 
                 variable = DecadesVariable(
                     {variable_name: _var.ravel()},
-                    index=index_dict[frequency],
+                    index=self._index_dict[frequency],
                     name=variable_name,
                     long_name=definition.get_field(_name).long_name,
                     units='RAW',
@@ -269,19 +267,47 @@ class TcpFileReader(FileReader):
 
 
 class CrioFileReader(TcpFileReader):
-    def _get_definition(self, _file):
-        for _definition in _file.dataset.definitions:
-            _crio_type = os.path.basename(_file.filepath).split('_')[0]
-            print(_crio_type, _definition.identifier)
-            if _definition.identifier == _crio_type:
-                return _definition
+    pass
 
 
 class GinFileReader(TcpFileReader):
+    time_variable = 'time1'
+    frequency = 50
+
     def _get_definition(self, _file):
         for _definition in _file.dataset.definitions:
             if _definition.identifier == 'GRP':
                 return _definition
+
+    def _get_group_name(self, *args):
+        return 'GIN'
+
+    def _scan_read_packet_len(self, definition, offset, rawdata):
+        packet_dlen = definition.dtypes['packet_length'].itemsize
+        id_length = definition.dtypes[0].itemsize
+
+        packet_length = np.frombuffer(
+            rawdata[offset+id_length+2:offset+id_length+2+packet_dlen],
+            dtype=definition.dtypes['packet_length']
+        )[0]
+
+        return packet_length
+
+    def _time_last_saturday(self):
+        return self.dataset.date - relativedelta.relativedelta(
+            weekday=relativedelta.SU(-1)
+        )
+
+    def _get_index(self, var, name, time, definition):
+        try:
+            return self.frequency, self._index_dict[self.frequency]
+        except KeyError:
+            pass
+        index = pd.DatetimeIndex(
+            [self._time_last_saturday() + datetime.timedelta(seconds=i) for i in time]
+        )
+        self._index_dict[self.frequency] = index
+        return self.frequency, index
 
 
 class DefinitionReader(FileReader):
