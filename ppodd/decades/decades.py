@@ -273,6 +273,9 @@ class DecadesDataset(object):
         Run processing modules.
         """
         import ppodd.pod
+
+        self.outputs = []
+
         self.pp_modules = collections.deque(
             [pp(self) for pp in ppodd.pod.pp_modules]
         )
