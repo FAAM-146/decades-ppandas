@@ -6,6 +6,18 @@ import pandas as pd
 
 class PPBase(abc.ABC):
 
+    freq = {
+        1: '1S',
+        2: '500L',
+        4: '250L',
+        8: '125L',
+        16: '62500U',
+        32: '31250000N',
+        64: '15625000N',
+        128: '7812500N',
+        256: '3906250N'
+    }
+
     def __init__(self, dataset):
         self.dataset = dataset
         self.outputs = {}
@@ -47,7 +59,19 @@ class PPBase(abc.ABC):
         for name, output in self.outputs.items():
             self.dataset.outputs.append(output)
 
-    def get_dataframe(self, method='outerjoin', limit=1):
+    def onto(self, dataframe, index, limit=1, period=None):
+        return dataframe.reindex(
+            index.union(dataframe.index).sort_values()
+        ).interpolate(
+            'time', limit=limit, period=period
+        ).loc[index]
+
+    def get_dataframe(self, method='outerjoin', index=None, limit=1,
+                      circular=None):
+
+        if circular is None:
+            circular = []
+
         df = pd.DataFrame()
 
         if method == 'outerjoin':
@@ -55,18 +79,44 @@ class PPBase(abc.ABC):
                 df = df.join(self.dataset[_input], how='outer')
 
         elif method == 'onto':
-            df = self.dataset[self.input_names[0]]
-            for _input in self.input_names[1:]:
-                df[_input] = self.dataset[_input].reindex(
-                    df[self.input_names[0]].index.union(
-                        self.dataset[_input].index).sort_values()
+
+            if index is None:
+                df = self.dataset[self.input_names[0]]
+                index = df[self.input_names[0]].index
+                _start = 1
+            else:
+                df = pd.DataFrame(index=index)
+                _start = 0
+
+            for _input in self.input_names[_start:]:
+                _input_name = _input
+
+                if _input in circular:
+                    _data = np.rad2deg(
+                        np.unwrap(np.deg2rad(self.dataset[_input_name]))
+                    )
+
+                    _input = pd.DataFrame(
+                        [],
+                        index=self.dataset[_input_name].index
+                    )
+
+                    _input[_input_name] = _data
+
+                else:
+                    _input = self.dataset[_input_name]
+
+                df[_input_name] = _input.reindex(
+                    index.union(
+                        _input.index
+                    ).sort_values()
                 ).interpolate(
                     'time', limit=limit
-                ).loc[df[self.input_names[0]].index]
+                ).loc[index]
 
         return df
 
-    def add_output(self, variable):
+    def add_output(self, variable, flag=None):
 
         if variable.name not in self.declarations:
             raise RuntimeError('Output {} has not been declared'.format(
@@ -79,13 +129,19 @@ class PPBase(abc.ABC):
         variable.standard_name = self.declarations[variable.name]['standard_name']
 
         flag_name = '{}_FLAG'.format(variable.name)
+
+        if flag is None:
+            flag = pd.DataFrame([], index=variable.index)
+            flag[flag_name] = 0
+
         if flag_name not in variable:
-            variable[flag_name] = 0
+            variable[flag_name] = flag
 
         variable[flag_name] = np.around(variable[flag_name])
 
-        variable.columns = [variable.name, flag_name]
+        variable.loc[~np.isfinite(variable[flag_name]), flag_name] = 3
 
+        variable.columns = [variable.name, flag_name]
         self.outputs[variable.name] = variable
 
     def ready(self):
