@@ -280,7 +280,7 @@ class GinFileReader(TcpFileReader):
                 return _definition
 
     def _get_group_name(self, *args):
-        return 'GIN'
+        return 'GINDAT'
 
     def _scan_read_packet_len(self, definition, offset, rawdata):
         packet_dlen = definition.dtypes['packet_length'].itemsize
