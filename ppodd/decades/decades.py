@@ -10,6 +10,7 @@ CRIO_FILE_IDENTIFIERS = ['AERACK01', 'CORCON01', 'CPC378001', 'PRTAFT01',
 
 GIN_FILE_IDENTIFIERS = ['GINDAT01']
 
+
 class DecadesFile(object):
     def __init__(self, filepath, file_type=None):
         self.filepath = filepath
@@ -21,6 +22,9 @@ class DecadesFile(object):
 
     @staticmethod
     def infer_type(filepath):
+        if filepath.endswith('.json'):
+            return 'constants'
+
         if filepath.endswith('.zip'):
             return 'zip'
 
@@ -120,6 +124,12 @@ class DecadesDataset(object):
         for _var in self.inputs + self.outputs:
             if _var.name == item:
                 return _var
+
+        try:
+            return self.constants[item]
+        except KeyError:
+            pass
+
         raise KeyError('Unknown variable: {}'.format(item))
 
     @staticmethod
@@ -134,6 +144,8 @@ class DecadesDataset(object):
             return 'ppodd.readers.GinFileReader'
         if file_type == 'zip':
             return 'ppodd.readers.ZipFileReader'
+        if file_type == 'constants':
+            return 'ppodd.readers.JsonConstantsReader'
 
     def add_definition(self, definition):
         self.definitions.append(definition)
@@ -221,6 +233,8 @@ class DecadesDataset(object):
         if dfile.file_type is None:
             raise ValueError('Cannot infer filetype of {}'.format(dfile))
 
+        print(dfile.file_type)
+
         reader_path = DecadesDataset.infer_reader(dfile.file_type)
         reader_module, reader_class = reader_path.rsplit('.', maxsplit=1)
 
@@ -254,6 +268,7 @@ class DecadesDataset(object):
         kwargs:
             file_type: the file type to pass to DecadesFile
         """
+        print('adding {}'.format(filename))
         try:
             self.add_decades_file(DecadesFile(filename, file_type=file_type))
         except ValueError:
