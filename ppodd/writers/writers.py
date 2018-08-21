@@ -36,11 +36,11 @@ class NetCDFWriter(DecadesWriter):
                 if 'FLAG' in _var:
                     is_flag = True
                     _datatype = 'b'
-                    _fill_value = -9999
+                    _fill_value = -1
                 else:
                     is_flag = False
                     _datatype = 'f'
-                    _fill_value = -1
+                    _fill_value = -9999
 
                 if output.frequency == 1:
                     _dims = ('Time',)
@@ -66,7 +66,7 @@ class NetCDFWriter(DecadesWriter):
 
                 data = output[_var].reindex(
                     indicies[output.frequency]
-                )
+                ).interpolate(limit=1)
 
                 if 'FLAG' in _var:
                     data.fillna(3, inplace=True)
@@ -76,6 +76,10 @@ class NetCDFWriter(DecadesWriter):
                 ncvar[:] = data.values.reshape(
                     (len(indicies[1]), output.frequency)
                 )
+
+        time_var = self.nc.createVariable('Time', int, ('Time',))
+        secs = (indicies[1] - pd.to_datetime(indicies[1].date)).total_seconds()
+        time_var[:] = secs
 
         self.nc.close()
 
