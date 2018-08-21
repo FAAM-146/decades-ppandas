@@ -2,6 +2,7 @@ import abc
 import csv
 import datetime
 import glob
+import json
 import os
 import re
 import sys
@@ -184,7 +185,11 @@ class TcpFileReader(FileReader):
 
         if frequency != 1:
             if frequency not in self._index_dict:
-                self._index_dict[frequency] = self._get_index_fast(time, frequency)
+                try:
+                    self._index_dict[frequency] = self._get_index_fast(time, frequency)
+                except ValueError:
+                    # Hacky - why do we need this (TODO)
+                    self._index_dict[frequency] = np.array([])
                 if self._index_dict[frequency].shape != var.ravel().shape:
                     self._index_dict[frequency] = self._get_index_slow(time, frequency)
         else:
@@ -410,6 +415,18 @@ class CrioTcpDefintion(object):
         for f in self.fields:
             if f.short_name == name:
                 return f
+
+
+class JsonConstantsReader(FileReader):
+
+    def read(self):
+        for _file in self.files:
+            with open(_file.filepath, 'r') as _consts:
+                consts = json.loads(_consts.read())
+
+            for _module in consts['MODULES']:
+                for key, value in consts['MODULES'][_module].items():
+                    _file.dataset.add_constant(key, value)
 
 
 class DataField(object):
