@@ -202,7 +202,7 @@ class TcpFileReader(FileReader):
         return definition.identifier[:-2]
 
     def read(self):
-        for _file in sorted(self.files):
+        for _file in sorted(self.files, key=lambda x: os.path.basename(x.filepath)):
             self.dataset = _file.dataset
             print('Reading {}'.format(_file))
             self._index_dict = {}
