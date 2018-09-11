@@ -47,9 +47,7 @@ class DecadesFile(object):
         )
 
 
-class DecadesVariable(pd.DataFrame):
-    _metadata = ['long_name', 'name', 'standard_name', 'frequency', 'number',
-                 'units']
+class DecadesVariable(object):
 
     def __init__(self, *args, **kwargs):
         long_name = kwargs.pop('long_name', None)
@@ -59,7 +57,7 @@ class DecadesVariable(pd.DataFrame):
         number = kwargs.pop('number', None)
         units = kwargs.pop('units', None)
 
-        super(DecadesVariable, self).__init__(*args, **kwargs)
+        self._df = pd.DataFrame(*args, **kwargs)
 
         self.long_name = long_name
         self.name = name
@@ -67,23 +65,42 @@ class DecadesVariable(pd.DataFrame):
         self.frequency = frequency
         self.number = number
         self.units = units
+        self.is_flagged = False
 
-    def _set_metadata(self, frame):
-        for meta in DecadesVariable._metadata:
-            setattr(frame, meta, getattr(self, meta))
+    def __str__(self):
+        return 'DecadesVariable: {}'.format(self.name)
 
-    def combine_first(self, other):
-        """
-        We use combine_first to merge variables from different crio files into
-        a single pd.Series. However we want to ensure that a) variables from
-        different files can only be merged if they have the same name, and
-        b) that the resulting Series object retains this name.
-        """
-        if self.name != other.name:
-            return ValueError('Can only combine variables of same type')
-        df = super(DecadesVariable, self).combine_first(other)
-        self._set_metadata(df)
-        return df
+    def __repr__(self):
+        return '<DecadesVariable({!r})>'.format(self.name)
+
+    def __getattr__(self, attr):
+        try:
+            return self.__dict__[attr]
+        except KeyError:
+            pass
+
+        if attr == 'data':
+            return self._df[self.name]
+
+        if attr == 'flag':
+            if not self.is_flagged:
+                raise ValueError('Variable is not flagged.')
+            return self._df['{}_FLAG'.format(self.name)]
+
+        return getattr(self._df, attr)
+
+    def add_flag(self, flag_data=None):
+        _flag_name = '{}_FLAG'.format(self.name)
+        if _flag_name in self._df:
+            self.is_flagged = True
+            return _flag_name
+
+        if flag_data is None:
+            self._df[_flag_name] = 0
+        else:
+            self._df[_flag_name] = flag_data
+        self.is_flagged = True
+        return _flag_name
 
     def asfreq(self, freq, *args, **kwargs):
         """
@@ -101,10 +118,6 @@ class DecadesVariable(pd.DataFrame):
         return self._set_metadata(
             super(DecadesVariable, self).round(*args, **kwargs)
         )
-
-    @property
-    def _constructor(self):
-        return DecadesVariable
 
 
 class DecadesDataset(object):
@@ -170,8 +183,8 @@ class DecadesDataset(object):
                 break
 
         if _var is not None:
-            _new_var = _var.combine_first(variable)
-            self.inputs.append(_new_var)
+            _var._df = _var._df.combine_first(variable._df)
+            self.inputs.append(_var)
             return
 
         self.inputs.append(variable)
@@ -297,6 +310,8 @@ class DecadesDataset(object):
         self.completed_modules = []
         self.failed_modules = []
 
+        temp_modules = []
+
         module_ran = True
         while self.pp_modules and module_ran:
             module_ran = False
@@ -304,17 +319,23 @@ class DecadesDataset(object):
             pp_module = self.pp_modules.popleft()
 
             if not pp_module.ready():
-                self.pp_modules.append(pp_module)
+                # self.pp_modules.append(pp_module)
+                temp_modules.append(pp_module)
+                module_ran = True
                 continue
             try:
                 print('Running {}'.format(pp_module))
                 pp_module.process()
+                pp_module.finalize()
             except Exception as e:
-                print(str(e))
-                raise
+                import traceback
+                print(' ** Error in {}: {}'.format(pp_module, e))
+                traceback.print_exc()
                 self.failed_modules.append(pp_module)
             else:
                 self.completed_modules.append(pp_module)
 
             module_ran = True
+            while temp_modules:
+                self.pp_modules.append(temp_modules.pop())
 
