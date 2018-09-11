@@ -1,11 +1,12 @@
+import pandas as pd
+
 from ..decades import DecadesVariable
 from .base import PPBase
 
 
 class RioWeightOnWheels(PPBase):
 
-    def inputs(self):
-        return ['PRTAFT_WOW_FLAG']
+    inputs = ['PRTAFT_wow_flag']
 
     def declare_outputs(self):
         self.declare(
@@ -18,13 +19,14 @@ class RioWeightOnWheels(PPBase):
 
     def process(self):
 
-        wow_data = self.dataset['PRTAFT_WOW_FLAG'].asfreq('1S')
+        self.get_dataframe()
+        wow = pd.DataFrame()
+
+        wow['WOW_IND'] = self.d['PRTAFT_wow_flag'].asfreq('1S')
 
         self.add_output(
             DecadesVariable(
-                wow_data,
+                wow,
                 name='WOW_IND',
             )
         )
-
-        self.finalize()

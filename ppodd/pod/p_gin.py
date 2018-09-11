@@ -7,13 +7,12 @@ from .base import PPBase
 
 class Gin(PPBase):
 
-    def inputs(self):
-        return [
-            'GINDAT_LAT', 'GINDAT_LON', 'GINDAT_ALT', 'GINDAT_VELN',
-            'GINDAT_VELE', 'GINDAT_VELD', 'GINDAT_ROLL', 'GINDAT_PTCH',
-            'GINDAT_HDG', 'GINDAT_WAND', 'GINDAT_TRCK', 'GINDAT_GSPD',
-            'GINDAT_ROLR', 'GINDAT_PITR', 'GINDAT_HDGR', 'GINDAT_ACLF',
-            'GINDAT_ACLS', 'GINDAT_ACLD', 'GINDAT_STATUS'
+    inputs = [
+        'GINDAT_lat', 'GINDAT_lon', 'GINDAT_alt', 'GINDAT_veln',
+        'GINDAT_vele', 'GINDAT_veld', 'GINDAT_roll', 'GINDAT_ptch',
+        'GINDAT_hdg', 'GINDAT_wand', 'GINDAT_trck', 'GINDAT_gspd',
+        'GINDAT_rolr', 'GINDAT_pitr', 'GINDAT_hdgr', 'GINDAT_aclf',
+        'GINDAT_acls', 'GINDAT_acld', 'GINDAT_status'
         ]
 
     def declare_outputs(self):
@@ -186,20 +185,22 @@ class Gin(PPBase):
             freq=self.freq[32]
         )
 
-        df = self.get_dataframe(
+        self.get_dataframe(
             method='onto', index=index,
-            circular=['GINDAT_HDG', 'GINDAT_TRCK']
+            circular=['GINDAT_hdg', 'GINDAT_trck']
         )
 
-        flag = np.around(df['GINDAT_STATUS'] / 3)
-        flag.loc[df['GINDAT_LON'] == 0 & (flag < 2)] = 2
-        flag.loc[df['GINDAT_LAT'] == 0 & (flag < 2)] = 2
+        flag = np.around(self.d['GINDAT_status'] / 3)
+        flag.loc[self.d['GINDAT_lon'] == 0 & (flag < 2)] = 2
+        flag.loc[self.d['GINDAT_lon'] == 0 & (flag < 2)] = 2
 
         for declaration in self.declarations:
-            input_name = 'GINDAT_{}'.format(declaration.split('_')[0])
-            self.add_output(
-                DecadesVariable(df[input_name], name=declaration),
-                flag=flag
-            )
+            input_name = 'GINDAT_{}'.format(declaration.split('_')[0].lower())
 
-        self.finalize()
+            _df = pd.DataFrame()
+            _df[declaration] = self.d[input_name]
+
+            dv = DecadesVariable(_df, name=declaration)
+            dv.add_flag(flag)
+
+            self.add_output(dv)

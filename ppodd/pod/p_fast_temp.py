@@ -7,8 +7,7 @@ from .base import PPBase
 
 class RioFastThermistor(PPBase):
 
-    def inputs(self):
-        return ['CORCON_FAST_TEMP', 'CORCON_FASTTEMP_HI_LO', 'PS_RVSM',
+    inputs = ['CORCON_fast_temp', 'CORCON_fasttemp_hi_lo', 'PS_RVSM',
                 'Q_RVSM']  # , 'TRFCTR']
 
     def declare_outputs(self):
@@ -37,6 +36,7 @@ class RioFastThermistor(PPBase):
         )
 
     def process(self):
+        self.get_dataframe()
 
         # calibration constants
         A, B, C, D, E, F, G, H = (1.1692, -29.609, 361.04, -0.030927, 0.23438,
@@ -44,10 +44,10 @@ class RioFastThermistor(PPBase):
 
         TRFCTR = 9.9280E-1
 
-        df = self.get_dataframe()
+        df = self.d
 
-        df['R'] = (1.0 / (D + E * np.exp(df['CORCON_FAST_TEMP'] * F)
-                          + G * np.exp(H * df['CORCON_FAST_TEMP'])))
+        df['R'] = (1.0 / (D + E * np.exp(df['CORCON_fast_temp'] * F)
+                          + G * np.exp(H * df['CORCON_fast_temp'])))
 
         df['IAT'] = A * np.log(df['R'])**2 + B * np.log(df['R']) + C
 
@@ -78,4 +78,3 @@ class RioFastThermistor(PPBase):
         self.add_output(DecadesVariable(tat_ft, name='TAT_FT'))
         self.add_output(DecadesVariable(iat_ft, name='IAT_FT'))
 
-        self.finalize()

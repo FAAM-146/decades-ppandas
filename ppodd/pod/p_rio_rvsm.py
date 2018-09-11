@@ -7,8 +7,7 @@ from .base import PPBase
 
 class RioRvsm(PPBase):
 
-    def inputs(self):
-        return ['PRTAFT_PRESSURE_ALT', 'PRTAFT_IND_AIR_SPEED']
+    inputs = ['PRTAFT_pressure_alt', 'PRTAFT_ind_air_speed']
 
     def declare_outputs(self):
         self.declare(
@@ -16,8 +15,9 @@ class RioRvsm(PPBase):
             units='hPa',
             frequency=32,
             number=576,
-            long_name='Static pressure from the aircraft RVSM (air data) system',
-            standard_name='air_pressure'
+            standard_name='air_pressure',
+            long_name=('Static pressure from the aircraft RVSM (air data) '
+                       'system')
         )
 
         self.declare(
@@ -25,8 +25,9 @@ class RioRvsm(PPBase):
             units='hPa',
             frequency=32,
             number=577,
-            long_name='Pitot static pressure inverted from RVSM (air data) system indicated airspeed',
-            standard_name=None
+            standard_name=None,
+            long_name=('Pitot static pressure inverted from RVSM (air data) '
+                       'system indicated airspeed')
         )
 
         self.declare(
@@ -34,21 +35,26 @@ class RioRvsm(PPBase):
             units='m',
             frequency=32,
             number=578,
-            long_name='Pressure altitude from the aircraft RVSM (air data) system',
-            standard_name='barometric_altitude'
+            standard_name='barometric_altitude',
+            long_name=('Pressure altitude from the aircraft RVSM (air data) '
+                       'system')
         )
 
-    def process(self):
+    def calc_altitude(self):
+        d = self.d
 
-        wf = self.get_dataframe()
+        d['PALT_FEET'] = d['PRTAFT_pressure_alt'] * 4
+        d['FLAG_ALT'] = 0
 
-        wf['PALT_FEET'] = wf['PRTAFT_PRESSURE_ALT'] * 4
-        wf['FLAG_ALT'] = 0
-        wf.loc[wf['PALT_FEET'] < -2000, 'FLAG_ALT'] = 1
-        wf.loc[wf['PALT_FEET'] > 50000, 'FLAG_ALT'] = 1
-        wf['PALT_METERS'] = wf['PALT_FEET'] / 3.28084
+        d.loc[d['PALT_FEET'] < -2000, 'FLAG_ALT'] = 1
+        d.loc[d['PALT_FEET'] > 50000, 'FLAG_ALT'] = 1
 
-        high = wf['PALT_METERS'] > 11000
+        d['PALT_METRES'] = d['PALT_FEET'] / 3.28084
+
+    def calc_pressure(self):
+        d = self.d
+
+        high = self.d['PALT_METRES'] > 11000
 
         T0 = 288.15
         L0 = -0.0065
@@ -58,38 +64,82 @@ class RioRvsm(PPBase):
         R = 8.31432
         P0 = 1013.2500
 
-        wf['P'] = P0 * (T0 / (T0 + L0 * (wf['PALT_METERS'] - h0)))**(go * M / (R * L0))
+        # Calulate pressure from standard atmosphere
+        d['P'] = P0 * (
+            T0 / (T0 + L0 * (d['PALT_METRES'] - h0))
+        )**(go * M / (R * L0))
 
         T1 = 216.65
         P1 = 226.3210
         h1 = 11000.0
 
-        wf.loc[high, 'P'] = P1 * np.exp((-go * M * (wf['PALT_METERS'].loc[high] - h1)) / (R * T1))
+        d.loc[high, 'P'] = P1 * np.exp(
+            (-go * M * (d['PALT_METRES'].loc[high] - h1)) / (R * T1)
+        )
 
-        ps_rvsm = pd.DataFrame([], index=wf.index)
-        ps_rvsm['PS_RVSM'] = wf['P']
-        ps_rvsm['PS_RVSM_FLAG'] = wf['FLAG_ALT'].astype(np.int8)
-        ps_rvsm = ps_rvsm.asfreq('31250000N').interpolate()
-        self.add_output(DecadesVariable(ps_rvsm, name='PS_RVSM'))
+    def calc_ias(self):
+        d = self.d
+        d['IAS'] = d['PRTAFT_ind_air_speed'] * 0.514444 / 32.0
+        d['IAS_FLAG'] = 0
+        d.loc[d['IAS'] < -50, 'IAS_FLAG'] = 1
+        d.loc[d['IAS'] > 500, 'IAS_FLAG'] = 1
+        d.loc[d['FLAG_ALT'] == 1, 'IAS_FLAG'] = 1
 
-        palt_rvs = pd.DataFrame([], index=wf.index)
-        palt_rvs['PALT_RVS'] = wf['PALT_METERS']
-        palt_rvs['PALT_RVS_FLAG'] = wf['FLAG_ALT'].astype(np.int8)
-        palt_rvs = palt_rvs.asfreq('31250000N').interpolate()
-        self.add_output(DecadesVariable(palt_rvs, name='PALT_RVS'))
+    def calc_mach(self):
+        d = self.d
+        d['MACH'] = d['IAS'] / (340.294 * np.sqrt(d['P'] / 1013.25))
 
-        wf['IAS'] = wf['PRTAFT_IND_AIR_SPEED'] * 0.514444 / 32.0
-        wf['IAS_FLAG'] = 0
-        wf.loc[wf['IAS'] < -50, 'IAS_FLAG'] = 1
-        wf.loc[wf['IAS'] > 500, 'IAS_FLAG'] = 1
-        wf.loc[wf['FLAG_ALT'] == 1, 'IAS_FLAG'] = 1
-        wf['MACH'] = wf['IAS'] / (340.294 * np.sqrt(wf['P'] / 1013.25))
-        wf['PITOT'] = wf['P'] * ((((wf['MACH']**2) / 5 + 1)**3.5) - 1)
+    def calc_pitot(self):
+        d = self.d
+        d['PITOT'] = d['P'] * ((((d['MACH']**2) / 5 + 1)**3.5) - 1)
 
-        q_rvsm = pd.DataFrame([], index=wf.index)
-        q_rvsm['Q_RVSM'] = wf['PITOT']
-        q_rvsm['Q_RVSM_FLAG'] = wf['IAS_FLAG']
-        q_rvsm = q_rvsm.asfreq('31250000N').interpolate()
-        self.add_output(DecadesVariable(q_rvsm, name='Q_RVSM'))
+    def calc_ps_rvsm(self):
+        d = self.d
 
-        self.finalize()
+        ps_rvsm = pd.DataFrame([], index=d.index)
+        ps_rvsm['PS_RVSM'] = d['P']
+        ps_rvsm['PS_RVSM_FLAG'] = d['FLAG_ALT'].astype(np.int8)
+        ps_rvsm = ps_rvsm.asfreq(self.freq[32]).interpolate()
+
+        return ps_rvsm
+
+    def calc_palt_rvs(self):
+        d = self.d
+
+        palt_rvs = pd.DataFrame([], index=d.index)
+        palt_rvs['PALT_RVS'] = d['PALT_METRES']
+        palt_rvs['PALT_RVS_FLAG'] = d['FLAG_ALT'].astype(np.int8)
+        palt_rvs = palt_rvs.asfreq(self.freq[32]).interpolate()
+
+        return palt_rvs
+
+    def calc_q_rvsm(self):
+        d = self.d
+        q_rvsm = pd.DataFrame([], index=d.index)
+        q_rvsm['Q_RVSM'] = d['PITOT']
+        q_rvsm['Q_RVSM_FLAG'] = d['IAS_FLAG']
+        q_rvsm = q_rvsm.asfreq(self.freq[32]).interpolate()
+
+        return q_rvsm
+
+    def process(self):
+
+        self.get_dataframe()
+
+        self.calc_altitude()
+        self.calc_pressure()
+        self.calc_ias()
+        self.calc_mach()
+        self.calc_pitot()
+
+        self.add_output(
+            DecadesVariable(self.calc_ps_rvsm(), name='PS_RVSM')
+        )
+
+        self.add_output(
+            DecadesVariable(self.calc_palt_rvs(), name='PALT_RVS')
+        )
+
+        self.add_output(
+            DecadesVariable(self.calc_q_rvsm(), name='Q_RVSM')
+        )
