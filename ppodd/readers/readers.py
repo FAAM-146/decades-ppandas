@@ -257,7 +257,7 @@ class TcpFileReader(FileReader):
                 # Define the decades variable
                 dtd = self._get_group_name(definition)
 
-                variable_name = '{}_{}'.format(dtd,  _name.upper())
+                variable_name = '{}_{}'.format(dtd,  _name)
 
                 variable = DecadesVariable(
                     {variable_name: _var.ravel()},
