@@ -137,7 +137,9 @@ class PPBase(abc.ABC):
         variable.long_name = self.declarations[variable.name]['long_name']
         variable.units = self.declarations[variable.name]['units']
         variable.frequency = self.declarations[variable.name]['frequency']
-        variable.standard_name = self.declarations[variable.name]['standard_name']
+        variable.standard_name = getattr(
+            self.declarations[variable.name], 'standard_name',  None
+        )
 
         flag_name = variable.add_flag()
         if flag is not None:
