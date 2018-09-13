@@ -100,6 +100,7 @@ class DecadesVariable(object):
         self.frequency = frequency
         self.number = number
         self.units = units
+        self.attrs = {}
 
     def __str__(self):
         return 'DecadesVariable: {}'.format(self.name)
@@ -180,6 +181,7 @@ class DecadesDataset(object):
         self.constants = {}
         self.inputs = []
         self.outputs = []
+        self.attrs = {}
 
     def __getitem__(self, item):
         for _var in self.inputs + self.outputs:
