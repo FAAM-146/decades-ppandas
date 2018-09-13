@@ -22,4 +22,4 @@ class ElectricFieldJci140(PPBase):
         df['EXX_JCI'] = df['PRTAFT_jci140_signal']
         df['EXX_JCI_FLAG'] = 3
 
-        self.add_output(DecadesVariable(df, name='EXX_JCI'))
+        self.add_output(DecadesVariable(df[['EXX_JCI', 'EXX_JCI_FLAG']]))
