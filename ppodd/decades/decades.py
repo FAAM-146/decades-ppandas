@@ -59,13 +59,46 @@ class DecadesVariable(object):
 
         self._df = pd.DataFrame(*args, **kwargs)
 
+        # We only want to be given at most two columns (variable, flag) and at
+        # least one column (variable). Raise an error if this is not the case.
+        _columns = [i for i in self._df]
+        if len(_columns) > 2:
+            raise ValueError('Too many columns in instance DataFrame')
+        if len(_columns) < 1:
+            raise ValueError('Too few columns in instance DataFrame')
+
+        # If there's a column with FLAG in the name, then this is our flag
+        # variable.
+        try:
+            _flag_var = [i for i in _columns if 'FLAG' in i][0]
+            _columns.remove(_flag_var)
+            self.is_flagged = True
+        except IndexError as e:
+            self.is_flagged = False
+
+        # Deal with variable/instance naming. If no 'name' keyword is
+        # specified, then insist that the variable and flag are consistently
+        # named. Otherwise, rename both to be consistent with the kwarg.
+        _var = _columns[0]
+        if name is None:
+            if self.is_flagged and _var != _flag_var.replace('_FLAG', ''):
+                raise ValueError(
+                    ('Inconsistent variable/flag names. Expected '
+                     'VAR / VAR_FLAG')
+                )
+            self.name = _var
+        else:
+            self.name = name
+            _rename = {_var: name}
+            if self.is_flagged:
+                _rename[_flag_var] = '{}_FLAG'.format(name)
+            self._df.rename(columns=_rename, inplace=True)
+
         self.long_name = long_name
-        self.name = name
         self.standard_name = standard_name
         self.frequency = frequency
         self.number = number
         self.units = units
-        self.is_flagged = False
 
     def __str__(self):
         return 'DecadesVariable: {}'.format(self.name)
