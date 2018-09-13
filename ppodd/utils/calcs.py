@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def sp_mach(psp, sp, flag=False):
 
     STATIC_MIN = 100
@@ -28,4 +29,15 @@ def sp_mach(psp, sp, flag=False):
     return mach
 
 
+def true_air_temp(iat, mach, recovery_factor=1, flag=False):
 
+    if len(iat) != len(mach):
+        raise ValueError('Inputs are not the same length')
+
+    _flag = np.zeros_like(iat)
+
+    tat = iat / (1 + (0.2 * mach**2 * recovery_factor))
+
+    if flag:
+        return tat, _flag
+    return tat
