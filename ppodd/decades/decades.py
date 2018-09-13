@@ -102,23 +102,6 @@ class DecadesVariable(object):
         self.is_flagged = True
         return _flag_name
 
-    def asfreq(self, freq, *args, **kwargs):
-        """
-        As a convenience, we may wish to as asfreq() with a simple Hz value.
-        Thus we override to accept an integer, which is converted to a pandas
-        period string (Nanosecond) before use.
-        """
-        if type(freq) is int:
-            _period = int((1 / freq) * 10**9)
-            freq = '{}N'.format(_period)
-
-        return super(DecadesVariable, self).asfreq(freq, *args, **kwargs)
-
-    def round(self, *args, **kwargs):
-        return self._set_metadata(
-            super(DecadesVariable, self).round(*args, **kwargs)
-        )
-
 
 class DecadesDataset(object):
     def __init__(self, date=None):
