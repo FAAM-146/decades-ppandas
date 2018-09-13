@@ -83,21 +83,23 @@ class PPBase(abc.ABC):
 
         df = pd.DataFrame()
 
+        _inputs = [i for i in self.inputs if i not in self.dataset.constants]
+
         if method == 'outerjoin':
-            for _input in self.inputs:
+            for _input in _inputs:
                 df = df.join(self.dataset[_input].data, how='outer')
 
         elif method == 'onto':
 
             if index is None:
-                df = self.dataset[self.inputs[0]].data
-                index = df[self.inputs[0]].data.index
+                df = self.dataset[_inputs[0]].data
+                index = df[_inputs[0]].data.index
                 _start = 1
             else:
                 df = pd.DataFrame(index=index)
                 _start = 0
 
-            for _input in self.inputs[_start:]:
+            for _input in _inputs[_start:]:
                 _input_name = _input
 
                 if _input in circular:
@@ -147,6 +149,10 @@ class PPBase(abc.ABC):
 
     def ready(self):
         for _name in self.inputs:
-            if _name not in self.dataset.variables:
+            _inputs = (
+                self.dataset.variables +
+                list(self.dataset.constants.keys())
+            )
+            if _name not in _inputs:
                 return False
         return True
