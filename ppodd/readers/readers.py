@@ -46,7 +46,18 @@ class FlightConstantsReader(FileReader):
 
     def read(self):
         for _file in self.files:
-            pass
+            print('Reading {}'.format(_file.filepath))
+            with open(_file.filepath, 'r') as _consts:
+                consts = json.loads(_consts.read())
+
+            _file.dataset.constants['FLIGHT'] = consts['FLIGHT']
+            date = datetime.datetime.strptime(consts['DATE'], '%Y-%m-%d')
+            _file.dataset.constants['DATE'] = date
+            _file.dataset.constants['REVISION'] = consts['REVISION']
+
+            for _mod in consts['MODULES']:
+                for key, value in consts['MODULES'][_mod].items():
+                    _file.dataset.constants[key] = value
 
 
 class ZipFileReader(FileReader):
@@ -162,7 +173,6 @@ class TcpFileReader(FileReader):
         returns:
             a pandas.DatetimeIndex
         """
-
         _ser_str = '{}N'.format(1 / frequency * 10**9)
         index = pd.to_datetime(time, unit='s')
         dti = None
