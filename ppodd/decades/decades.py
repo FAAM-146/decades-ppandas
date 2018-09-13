@@ -2,6 +2,7 @@ import collections
 import importlib
 import sys
 
+import numpy as np
 import pandas as pd
 
 CRIO_FILE_IDENTIFIERS = ['AERACK01', 'CORCON01', 'CPC378001', 'PRTAFT01',
@@ -122,10 +123,41 @@ class DecadesVariable(object):
 
         return getattr(self._df, attr)
 
-    def add_flag(self, flag_data=None):
+    def add_flag(self, flag_data=None, method='merge'):
+        """
+        Add a flag to the DecadesVariable. If no flag_data is given, the flag
+        array is initialized to zero everywhere.
+
+        If the instance already has a flag variable, this can be replaced with
+        method='clobber' or merged with method='merge'. A merge is simply the
+        element-wise maximum of the existing flag and new flag data.
+
+        Kwargs:
+            flag_data: an iterable of flag data, which must be the same length
+                       as the variable data.
+            method: either 'merge' (default) or 'clobber'. Merge is an
+                    element-wise max with the current flag, clobber replaces
+                    the current flag if it exists.
+        """
+
         _flag_name = '{}_FLAG'.format(self.name)
+
+        if flag_data is not None:
+            if len(flag_data) != len(self.data):
+                raise ValueError(
+                    'Flag data must be the same length as variable'
+                )
+
         if _flag_name in self._df:
             self.is_flagged = True
+            if flag_data is not None:
+                if method == 'merge':
+                    self._df[_flag_name] = np.maximum(flag_data, self.flag)
+                elif method == 'clobber':
+                    self._df[_flag_name] = flag_data
+                else:
+                    raise ValueError('Unknown method: {}'.format(method))
+
             return _flag_name
 
         if flag_data is None:
