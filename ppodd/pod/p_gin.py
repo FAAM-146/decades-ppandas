@@ -197,10 +197,9 @@ class Gin(PPBase):
         for declaration in self.declarations:
             input_name = 'GINDAT_{}'.format(declaration.split('_')[0].lower())
 
-            _df = pd.DataFrame()
-            _df[declaration] = self.d[input_name]
+            self.d[declaration] = self.d[input_name]
 
-            dv = DecadesVariable(_df, name=declaration)
+            dv = DecadesVariable(self.d[declaration])
             dv.add_flag(flag)
 
             self.add_output(dv)
