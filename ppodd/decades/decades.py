@@ -153,7 +153,7 @@ class DecadesVariable(object):
             self.is_flagged = True
             if flag_data is not None:
                 if method == 'merge':
-                    self._df[_flag_name] = np.maximum(flag_data, self.flag)
+                    self._df[_flag_name] = np.fmax(flag_data, self.flag)
                 elif method == 'clobber':
                     self._df[_flag_name] = flag_data
                 else:
