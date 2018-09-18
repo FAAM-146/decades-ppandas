@@ -1,50 +1,20 @@
 import collections
 import importlib
 import sys
+import re
+import os
 
 import numpy as np
 import pandas as pd
 
-CRIO_FILE_IDENTIFIERS = ['AERACK01', 'CORCON01', 'CPC378001', 'PRTAFT01',
-                         'TWCDAT01', 'WVSS2A01', 'WVSS2B01', 'CPC37801',
-                         'UPPBBR01', 'LOWBBR01']
-
-GIN_FILE_IDENTIFIERS = ['GINDAT01']
-
 
 class DecadesFile(object):
-    def __init__(self, filepath, file_type=None):
+    def __init__(self, filepath):
         self.filepath = filepath
 
-        if file_type is not None:
-            self.file_type = file_type
-        else:
-            self.file_type = DecadesFile.infer_type(self.filepath)
-
-    @staticmethod
-    def infer_type(filepath):
-        if filepath.endswith('.json'):
-            return 'constants'
-
-        if filepath.endswith('.zip'):
-            return 'zip'
-
-        for _id in CRIO_FILE_IDENTIFIERS:
-            if _id in filepath:
-                if filepath.endswith('.csv'):
-                    return 'criodef'
-                return 'crio'
-
-        for _id in GIN_FILE_IDENTIFIERS:
-            if _id in filepath:
-                if filepath.endswith('.csv'):
-                    return 'gindef'
-                if filepath.endswith('.bin'):
-                    return 'gin'
-
     def __repr__(self):
-        return '{}({!r}, file_type={!r})'.format(
-            self.__class__.__name__, self.filepath, self.file_type
+        return '{}({!r})'.format(
+            self.__class__.__name__, self.filepath
         )
 
 
@@ -196,19 +166,15 @@ class DecadesDataset(object):
         raise KeyError('Unknown variable: {}'.format(item))
 
     @staticmethod
-    def infer_reader(file_type):
-        if file_type == 'crio':
-            return 'ppodd.readers.CrioFileReader'
-        if file_type == 'criodef':
-            return 'ppodd.readers.CrioDefinitionReader'
-        if file_type == 'gindef':
-            return 'ppodd.readers.CrioDefinitionReader'
-        if file_type == 'gin':
-            return 'ppodd.readers.GinFileReader'
-        if file_type == 'zip':
-            return 'ppodd.readers.ZipFileReader'
-        if file_type == 'constants':
-            return 'ppodd.readers.JsonConstantsReader'
+    def infer_reader(dfile):
+        from ppodd.readers import reader_patterns
+        _filename = os.path.basename(dfile.filepath)
+
+        for pattern in reader_patterns:
+            if re.fullmatch(pattern, _filename):
+                return reader_patterns[pattern]
+
+        print('No reader found for {}'.format(dfile))
 
     def add_definition(self, definition):
         self.definitions.append(definition)
@@ -293,35 +259,27 @@ class DecadesDataset(object):
 
         dfile.dataset = self
 
-        if dfile.file_type is None:
-            raise ValueError('Cannot infer filetype of {}'.format(dfile))
-
-        print(dfile.file_type)
-
-        reader_path = DecadesDataset.infer_reader(dfile.file_type)
-        reader_module, reader_class = reader_path.rsplit('.', maxsplit=1)
-
-        # Ensure we only import once, as using importlib twice can screw up
-        # calls to super(). Computers, eh?
-        if reader_module in sys.modules:
-            reader_module = sys.modules[reader_module]
-        else:
-            reader_module = importlib.import_module(reader_module)
-
-        reader_class = getattr(
-            reader_module, reader_class
-        )
+        reader_class = DecadesDataset.infer_reader(dfile)
 
         try:
             reader = self.get_reader(reader_class)
         except ValueError:
+            pass
+
+        try:
             reader = reader_class()
-            self.readers.append(reader)
-            self.readers.sort(key=lambda r: r.level)
+        except TypeError:
+            reader = None
+
+        if reader is None:
+            raise ValueError
+
+        self.readers.append(reader)
+        self.readers.sort(key=lambda r: r.level)
 
         reader.files.append(dfile)
 
-    def add_file(self, filename, file_type=None):
+    def add_file(self, filename):
         """
         Add a file to the dataset, first creating a DecadesFile.
 
@@ -333,7 +291,7 @@ class DecadesDataset(object):
         """
         print('adding {}'.format(filename))
         try:
-            self.add_decades_file(DecadesFile(filename, file_type=file_type))
+            self.add_decades_file(DecadesFile(filename))
         except ValueError:
             print('failed to add {}'.format(filename))
 

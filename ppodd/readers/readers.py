@@ -17,6 +17,7 @@ import pandas as pd
 
 
 from ppodd.decades import DecadesVariable
+from ppodd.readers import register
 from ..utils import pd_freq
 
 
@@ -39,7 +40,7 @@ class FileReader(abc.ABC):
     def __eq__(self, other):
         return self.__class__ == other.__class__
 
-
+@register(patterns=['.*\.json'])
 class FlightConstantsReader(FileReader):
     """
     Read a flight constants file.
@@ -60,7 +61,7 @@ class FlightConstantsReader(FileReader):
                 for key, value in consts['MODULES'][_mod].items():
                     _file.dataset.constants[key] = value
 
-
+@register(patterns=['.*\.zip'])
 class ZipFileReader(FileReader):
     """
     Read a Zip file. Zip files are assumed to comtain other files which all
@@ -85,7 +86,7 @@ class ZipFileReader(FileReader):
             print(_file)
             _dataset.add_file(_file)
 
-
+@register(patterns=['(^SEAPROBE|.{8})_.+_\w\d{3}'])
 class TcpFileReader(FileReader):
     level = 2
     time_variable = 'utc_time'
@@ -288,6 +289,7 @@ class CrioFileReader(TcpFileReader):
     pass
 
 
+@register(patterns=['GINDAT.+\.bin'])
 class GinFileReader(TcpFileReader):
     time_variable = 'time1'
     frequency = 50
@@ -356,7 +358,7 @@ class DefinitionReader(FileReader):
 
         return typestr
 
-
+@register(patterns=['.+_TCP_?.*\.csv'])
 class CrioDefinitionReader(DefinitionReader):
 
     def read(self):
