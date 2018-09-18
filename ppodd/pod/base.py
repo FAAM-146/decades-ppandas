@@ -3,6 +3,7 @@ import abc
 import numpy as np
 import pandas as pd
 
+from ..utils import pd_freq
 
 class PPBase(abc.ABC):
 
@@ -145,7 +146,11 @@ class PPBase(abc.ABC):
         if flag is not None:
             variable.flag = flag
 
-        variable._df.loc[~np.isfinite(variable._df[variable.name]), flag_name] = 3
+        # Force the variable to the declared frequency
+        variable._df = variable._df.asfreq(pd_freq[variable.frequency])
+
+        # Flag any gaps caused by asfreq as 3
+        variable._df.loc[~np.isfinite(variable._df[flag_name]), flag_name] = 3
 
         self.outputs[variable.name] = variable
 
