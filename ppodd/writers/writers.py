@@ -77,7 +77,7 @@ class NetCDFWriter(DecadesWriter):
             freq=_freq
         )
 
-        _data = var.data.reindex(_index)
+        _data = var.data.reindex(_index).fillna(self._FillValue)
         _flag = var.flag.reindex(_index)
         _flag.loc[~np.isfinite(_flag)] = 3
 
@@ -85,6 +85,7 @@ class NetCDFWriter(DecadesWriter):
 
         _shape = (int(len(_data) / var.frequency), var.frequency)
 
+        # If the frequency of a varable is not 1, then we need to reshape itt
         if var.frequency != 1:
             nc[_var_name][:] = _data.values.reshape(_shape)
             nc[_flag_name][:] = _flag.values.reshape(_shape)
@@ -92,9 +93,13 @@ class NetCDFWriter(DecadesWriter):
             nc[_var_name][:] = _data.values
             nc[_flag_name][:] = _flag.values
 
-        nc[_var_name].units = var.units
-        nc[_var_name].long_name = var.long_name
-        nc[_var_name].frequency = np.int32(var.frequency)
+        for _name in (_var_name, _flag_name):
+            nc[_name].units = var.units
+            nc[_name].frequency = np.int32(var.frequency)
+            if _name == _var_name:
+                nc[_name].long_name = var.long_name
+            else:
+                nc[_name].long_name = 'Flag for {}'.format(var.long_name)
         if var.standard_name is not None:
             nc[_var_name].standard_name = var.standard_name
 
@@ -114,13 +119,19 @@ class NetCDFWriter(DecadesWriter):
 
         for var in self.dataset.outputs:
             if var.frequency == 1:
-                nc.createVariable(var.name, float, ('Time',))
-                nc.createVariable('{}_FLAG'.format(var.name), np.int8, ('Time',))
+                nc.createVariable(
+                    var.name, float, ('Time',),
+                    fill_value=self._FillValue
+                )
+                nc.createVariable(
+                    '{}_FLAG'.format(var.name), np.int8, ('Time',)
+                )
             else:
                 nc.createVariable(
                     var.name,
                     float,
-                    ('Time', 'sps{0:02d}'.format(var.frequency))
+                    ('Time', 'sps{0:02d}'.format(var.frequency)),
+                    fill_value=self._FillValue
                 )
                 nc.createVariable(
                     '{}_FLAG'.format(var.name),
@@ -128,8 +139,17 @@ class NetCDFWriter(DecadesWriter):
                     ('Time', 'sps{0:02d}'.format(var.frequency))
                 )
 
-    def write(self, filename):
+    def _write_global_attrs(self, nc):
+        for attr, value in self.dataset.constants.items():
+            try:
+                setattr(nc, attr, value)
+            except TypeError:
+                setattr(nc, attr, str(value))
+
+    def write(self, filename, freq=None):
         with Dataset(filename, 'w') as nc:
             self._init_nc_file(nc)
             for var in self.dataset.outputs:
                 self._write_var(nc, var)
+
+            self._write_global_attrs(nc)
