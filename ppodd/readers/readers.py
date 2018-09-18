@@ -17,6 +17,7 @@ import pandas as pd
 
 
 from ppodd.decades import DecadesVariable
+from ..utils import pd_freq
 
 
 class FileReader(abc.ABC):
@@ -157,13 +158,12 @@ class TcpFileReader(FileReader):
             time, [time[-1] + 1]
         )
         index = pd.to_datetime(_time, unit='s')
-        _ser_str = '{}N'.format(1 / frequency * 10**9)
-        return pd.Series(index=index).asfreq(_ser_str).index[:-1]
+        return pd.Series(index=index).asfreq(pd_freq[frequency]).index[:-1]
 
     def _get_index_slow(self, time, frequency):
         """
-        Returns an interpolated (subsecond) index using a slow,
-        but (hopefully) robust method.
+        Returns an interpolated (subsecond) index using a slightly,
+        slower, but more robust method.
 
         args:
             _data: a named np.ndarray, assumed to contain
@@ -173,19 +173,22 @@ class TcpFileReader(FileReader):
         returns:
             a pandas.DatetimeIndex
         """
-        _ser_str = '{}N'.format(1 / frequency * 10**9)
-        index = pd.to_datetime(time, unit='s')
-        dti = None
-        for i in index:
-            _dti = pd.DatetimeIndex(start=i, freq=_ser_str,
-                                    periods=frequency)
 
-            if dti is None:
-                dti = _dti
-            else:
-                dti = dti.append(_dti)
+        _time = np.append(
+            time, [time[-1] + 1]
+        )
+        _index = pd.to_datetime(_time, unit='s')
 
-        return dti
+        df = pd.DataFrame(index=_index)
+        df['temp'] = 0
+
+        i = df.asfreq(
+            pd_freq[frequency]
+        ).interpolate(
+            method='time', limit=frequency-1
+        ).dropna().index
+
+        return i[:-1]
 
     def _get_index(self, var, name, time, definition):
         try:
@@ -214,7 +217,6 @@ class TcpFileReader(FileReader):
     def read(self):
         for _file in sorted(self.files, key=lambda x: os.path.basename(x.filepath)):
             self.dataset = _file.dataset
-            print('Reading {}'.format(_file))
             self._index_dict = {}
 
             definition = self._get_definition(_file)
@@ -228,6 +230,7 @@ class TcpFileReader(FileReader):
 
             dtypes = definition.dtypes
 
+            print('Reading {}...'.format(_file))
             _data = np.fromfile(_file.filepath, dtype=dtypes)
 
             _read_fail = False
@@ -318,8 +321,11 @@ class GinFileReader(TcpFileReader):
             return self.frequency, self._index_dict[self.frequency]
         except KeyError:
             pass
-        index = pd.DatetimeIndex(
-            [self._time_last_saturday() + datetime.timedelta(seconds=i) for i in time]
+
+        index = pd.DatetimeIndex(np.array(time) * 1e9)
+        index += pd.DateOffset(
+            seconds=(self._time_last_saturday() - datetime.datetime(
+                1970, 1, 1)).total_seconds()
         )
         self._index_dict[self.frequency] = index
         return self.frequency, index
