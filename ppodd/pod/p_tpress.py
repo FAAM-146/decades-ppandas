@@ -65,11 +65,10 @@ class TPress(PPBase):
         )
 
     def get_range_flag(self, var, limits):
-        flag = np.zeros_like(self.d.index)
+        flag = np.zeros_like(self.d[var])
         flag[self.d[var] < limits[0]] = 2
         flag[self.d[var] > limits[1]] = 2
         flag[self.d[var] == 0] = 3
-        print(flag)
         return flag
 
     def process(self):
@@ -103,21 +102,21 @@ class TPress(PPBase):
         tbpd_flag = self.get_range_flag('TBPD', (50, 200))
 
         p0_s10_out = DecadesVariable(d.P0_S10)
-#        p0_s10_out.add_flag(p0_s10_flag)
+        p0_s10_out.add_flag(p0_s10_flag)
         self.add_output(p0_s10_out)
 
         pa_turb_out = DecadesVariable(d.PA_TURB)
-#        pa_turb_out.add_flag(pa_turb_flag)
+        pa_turb_out.add_flag(pa_turb_flag)
         self.add_output(pa_turb_out)
 
         pb_turb_out = DecadesVariable(d.PB_TURB)
-#        pb_turb_out.add_flag(pb_turb_flag)
+        pb_turb_out.add_flag(pb_turb_flag)
         self.add_output(pb_turb_out)
 
         tbpc_out = DecadesVariable(d.TBPC)
-#        tbpc_out.add_flag(tbpc_flag)
+        tbpc_out.add_flag(tbpc_flag)
         self.add_output(tbpc_out)
 
         tbpd_out = DecadesVariable(d.TBPD)
-#        tbpd_out.add_flag(tbpd_flag)
+        tbpd_out.add_flag(tbpd_flag)
         self.add_output(tbpd_out)
