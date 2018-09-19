@@ -44,7 +44,7 @@ class DecadesVariable(object):
             _flag_var = [i for i in _columns if 'FLAG' in i][0]
             _columns.remove(_flag_var)
             self.is_flagged = True
-        except IndexError as e:
+        except (IndexError, TypeError) as e:
             self.is_flagged = False
 
         # Deal with variable/instance naming. If no 'name' keyword is
