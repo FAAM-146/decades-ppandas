@@ -94,12 +94,13 @@ class NetCDFWriter(DecadesWriter):
             nc[_flag_name][:] = _flag.values
 
         for _name in (_var_name, _flag_name):
-            nc[_name].units = var.units
             nc[_name].frequency = np.int32(var.frequency)
             if _name == _var_name:
                 nc[_name].long_name = var.long_name
+                nc[_name].units = var.units
             else:
                 nc[_name].long_name = 'Flag for {}'.format(var.long_name)
+                nc[_name].units = 1
         if var.standard_name is not None:
             nc[_var_name].standard_name = var.standard_name
 
@@ -141,6 +142,12 @@ class NetCDFWriter(DecadesWriter):
 
     def _write_global_attrs(self, nc):
         for attr, value in self.dataset.constants.items():
+            if hasattr(value, '__iter__') and type(value) is not str:
+                try:
+                    if type(value[0]) is str:
+                        value = ' '.join(value)
+                except KeyError:
+                    pass
             try:
                 setattr(nc, attr, value)
             except TypeError:
