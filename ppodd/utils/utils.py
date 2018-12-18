@@ -34,7 +34,7 @@ def get_range_flag(var, limits, flag_val=2):
     """
     flag = np.zeros_like(var)
 
-    flag[flag < limits[0]] = flag_val
-    flag[flag > limits[1]] = flag_val
+    flag[var < limits[0]] = flag_val
+    flag[var > limits[1]] = flag_val
 
     return flag
