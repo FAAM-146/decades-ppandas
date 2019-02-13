@@ -174,11 +174,11 @@ class TcpFileReader(FileReader):
         returns:
             a pandas.DatetimeIndex
         """
-
         _time = np.append(
             time, [time[-1] + 1]
         )
         _index = pd.to_datetime(_time, unit='s')
+        _index = _index.unique()
 
         df = pd.DataFrame(index=_index)
         df['temp'] = 0
@@ -248,6 +248,7 @@ class TcpFileReader(FileReader):
                     break
 
             if _read_fail:
+                del _data
                 _data = self.scan(_file, definition)
 
             for _name, _dtype in _data.dtype.fields.items():
@@ -264,8 +265,17 @@ class TcpFileReader(FileReader):
                 else:
                     _var = _data[_name]
 
+                _time = _data[self.time_variable]
+                _good_times = np.where(_time - np.min(_time) < 24*3600)
+                _time = _time[_good_times]
+
+                if len(_var.shape) == 1:
+                    _var = _var[_good_times]
+                else:
+                    _var = _var[_good_times, :]
+
                 frequency, index = self._get_index(
-                    _var, _name, _data[self.time_variable], definition
+                    _var, _name, _time, definition
                 )
 
                 # Define the decades variable
@@ -273,8 +283,14 @@ class TcpFileReader(FileReader):
 
                 variable_name = '{}_{}'.format(dtd,  _name)
 
+                max_var_len = len(self._index_dict[frequency])
+                if max_var_len != len(_var.ravel()):
+                    print('WARN: index & variable len differ')
+                    print('      ({})'.format(variable_name))
+
                 variable = DecadesVariable(
-                    {variable_name: _var.ravel()},
+                    {variable_name:
+                     _var.ravel()[:max_var_len]},
                     index=self._index_dict[frequency],
                     name=variable_name,
                     long_name=definition.get_field(_name).long_name,
