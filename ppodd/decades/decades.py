@@ -261,21 +261,25 @@ class DecadesDataset(object):
 
         reader_class = DecadesDataset.infer_reader(dfile)
 
+        reader = None
+
         try:
             reader = self.get_reader(reader_class)
         except ValueError:
             pass
 
-        try:
-            reader = reader_class()
-        except TypeError:
-            reader = None
+        if reader is None:
+            try:
+                reader = reader_class()
+            except TypeError:
+                reader = None
 
         if reader is None:
             raise ValueError
 
-        self.readers.append(reader)
-        self.readers.sort(key=lambda r: r.level)
+        if reader not in self.readers:
+            self.readers.append(reader)
+            self.readers.sort(key=lambda r: r.level)
 
         reader.files.append(dfile)
 
