@@ -110,7 +110,7 @@ class TcpFileReader(FileReader):
             for i, j in zip(offsets, good_indicies) if j
         ]
 
-        index = np.array([False] * len(rawdata))
+        index = np.zeros(len(rawdata), dtype=bool)
 
         for i, _slice in enumerate(megaslice):
             index[_slice] = True
