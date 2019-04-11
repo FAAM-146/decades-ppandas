@@ -190,6 +190,8 @@ class Gin(PPBase):
             circular=['GINDAT_hdg', 'GINDAT_trck']
         )
 
+        self.d['GINDAT_hdg'] %= 360
+
         flag = np.around(self.d['GINDAT_status'] / 3)
         flag.loc[self.d['GINDAT_lon'] == 0 & (flag < 2)] = 2
         flag.loc[self.d['GINDAT_lon'] == 0 & (flag < 2)] = 2
