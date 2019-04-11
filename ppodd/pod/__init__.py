@@ -1,6 +1,7 @@
 import os
 import re
 import importlib
+import sys
 
 from .base import PPBase
 
@@ -23,5 +24,15 @@ def load_plugins():
 
     return modules
 
+
+def compile_cython():
+    """
+    Does a basic cython compile if required.
+    """
+    import pyximport
+    pyximport.install()
+
+
+compile_cython()
 load_plugins()
 pp_modules = PPBase.__subclasses__()
