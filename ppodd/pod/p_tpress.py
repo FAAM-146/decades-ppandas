@@ -35,7 +35,7 @@ class TPress(PPBase):
             units='hPa',
             frequency=32,
             number=774,
-            long_name=('Calibrated differential pressure between turbulence ',
+            long_name=('Calibrated differential pressure between turbulence '
                        'probe vertical ports')
         )
 
@@ -44,7 +44,7 @@ class TPress(PPBase):
             units='hPa',
             frequency=32,
             number=775,
-            long_name=('Calibrated differential pressure between turbulence ',
+            long_name=('Calibrated differential pressure between turbulence '
                        'probe horizontal ports')
         )
 
