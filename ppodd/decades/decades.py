@@ -27,6 +27,7 @@ class DecadesVariable(object):
         frequency = kwargs.pop('frequency', None)
         number = kwargs.pop('number', None)
         units = kwargs.pop('units', None)
+        write = kwargs.pop('write', True)
 
         self._df = pd.DataFrame(*args, **kwargs)
 
@@ -70,6 +71,7 @@ class DecadesVariable(object):
         self.frequency = frequency
         self.number = number
         self.units = units
+        self.write = write
         self.attrs = {}
 
     def __str__(self):
