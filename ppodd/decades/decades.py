@@ -308,11 +308,21 @@ class DecadesDataset(object):
         for reader in self.readers:
             reader.read()
 
-    def process(self):
+    def process(self, modname=None):
         """
         Run processing modules.
         """
         import ppodd.pod
+
+        if modname is not None:
+            mods = ppodd.pod.pp_modules
+            for mod in mods:
+                if mod.__name__ is modname:
+                    _mod = mod(self)
+                    if _mod.ready():
+                        _mod.process()
+                        _mod.finalize()
+            return
 
         self.outputs = []
 
