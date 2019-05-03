@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 pd_freq = {
     1: '1S',
@@ -13,6 +14,7 @@ pd_freq = {
     128: '7812500N',
     256: '3906250N'
 }
+
 
 def get_range_flag(var, limits, flag_val=2):
     """
@@ -38,3 +40,71 @@ def get_range_flag(var, limits, flag_val=2):
     flag[var > limits[1]] = flag_val
 
     return flag
+
+
+def flagged_avg(df, flag_col, data_col, fill_nan=None, flag_value=1,
+                skip_start=0, skip_end=0, out_name=None, interp=False):
+    """
+    Average a variable where a corresponding flag has a given value
+
+    Args:
+        df: the DataFrame to operate on
+        flag_col: the name of the column of df which contains the flag variable
+        data_col: the name of the column of df which contains the data variable
+
+    Kwargs:
+        fill_nan: the value with which to fill any NaNs in the flag (default 0)
+        flag_value: the value of the flag array used to identify averaging
+                    windows (default 1)
+        skip_start: the number of data points to skip in the averaging after
+                    the flag changes to flag_value (default 0)
+        skip_end: the number of data points to skip in the averaging before the
+                  flag changes from flag_value to something else (default 0)
+        out_name: the name of the resultant averaged data (a column in df). If
+                  not given, the default is <data_col>_<flag_col>
+        interp:   interpolate the averaged data across the full time span
+                  (default False). If False, the output will be NaN everywhere
+                  except the index closest to the middle of each averaging
+                  period.
+
+    Returns:
+        None, df is modified in-place.
+    """
+    if out_name is None:
+        out_name = '{}_{}'.format(data_col, flag_col)
+
+    # Replace nans in the flag, either by backfilling or setting to a given
+    # value 
+    if fill_nan is not None:
+        df[flag_col].fillna(fill_nan, inplace=True)
+    else:
+        df[flag_col].fillna(method='bfill', inplace=True)
+
+    # Identify coherent groups of a single flag value, and drop those not
+    # corresponding to the falg value that we're interested in
+    groups = (df[flag_col] != df[flag_col].shift()).cumsum()
+    groups[df[flag_col] != flag_value] = np.nan
+    groups.dropna(inplace=True)
+
+    _groups = df.groupby(groups)
+
+    # Create a series containing mean data values over each flag group,
+    # potentially skipping data at the start and end of each group
+    # TODO: this is double-plus ugly.
+    means = pd.Series(
+       _groups.apply(lambda x: x[data_col].iloc[skip_start:len(x)-skip_end].mean()).values,
+        index=_groups.apply(lambda x: x.index[int(len(x) / 2)])
+    )
+
+    # Either interpolate back across the full index, or create a series which
+    # is NaN everywhere that the means are not defined.
+    if interp:
+        df[out_name] = (
+            means.reindex(
+                df.index.union(means.index).sort_values()
+            ).interpolate().loc[df.index]
+        )
+
+    else:
+        df[out_name] = np.nan
+        df.loc[means.index, out_name] = means.values
