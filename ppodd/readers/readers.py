@@ -288,15 +288,19 @@ class TcpFileReader(FileReader):
                     print('WARN: index & variable len differ')
                     print('      ({})'.format(variable_name))
 
+                _var = _var.ravel()[:max_var_len]
+
                 variable = DecadesVariable(
-                    {variable_name:
-                     _var.ravel()[:max_var_len]},
+                    {variable_name: _var.ravel()},
                     index=self._index_dict[frequency],
                     name=variable_name,
                     long_name=definition.get_field(_name).long_name,
                     units='RAW',
                     frequency=frequency
                 )
+
+                if variable.index.size != variable.index.unique().size:
+                    print('Non-unique index: {}'.format(variable.name))
 
                 _file.dataset.add_input(variable)
 
