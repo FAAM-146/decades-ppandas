@@ -20,14 +20,24 @@ class DecadesFile(object):
 
 class DecadesVariable(object):
 
+    NC_ATTRS = [
+        'long_name', 'frequency', 'standard_name', 'units', 'number',
+        '_FillValue', 'valid_min', 'valid_max'
+    ]
+
     def __init__(self, *args, **kwargs):
-        long_name = kwargs.pop('long_name', None)
         name = kwargs.pop('name', None)
-        standard_name = kwargs.pop('standard_name', None)
-        frequency = kwargs.pop('frequency', None)
-        number = kwargs.pop('number', None)
-        units = kwargs.pop('units', None)
+
+        self.attrs = {
+            '_FillValue': -9999.
+        }
+
         write = kwargs.pop('write', True)
+
+        for _attr in DecadesVariable.NC_ATTRS:
+            _val = kwargs.pop(_attr, None)
+            if _val is not None:
+                self.attrs[_attr] = _val
 
         self._df = pd.DataFrame(*args, **kwargs)
 
@@ -66,13 +76,9 @@ class DecadesVariable(object):
                 _rename[_flag_var] = '{}_FLAG'.format(name)
             self._df.rename(columns=_rename, inplace=True)
 
-        self.long_name = long_name
-        self.standard_name = standard_name
-        self.frequency = frequency
-        self.number = number
-        self.units = units
         self.write = write
-        self.attrs = {}
+
+        self.attrs['ancillary_variables'] = '{}_FLAG'.format(self.name)
 
     def __str__(self):
         return 'DecadesVariable: {}'.format(self.name)
@@ -86,6 +92,11 @@ class DecadesVariable(object):
         except KeyError:
             pass
 
+        try:
+            return self.attrs[attr]
+        except KeyError:
+            pass
+
         if attr == 'data':
             return self._df[self.name]
 
@@ -95,6 +106,12 @@ class DecadesVariable(object):
             return self._df['{}_FLAG'.format(self.name)]
 
         return getattr(self._df, attr)
+
+    def __setattr__(self, attr, value):
+        if attr in DecadesVariable.NC_ATTRS:
+            self.attrs[attr] = value
+        else:
+            super(DecadesVariable, self).__setattr__(attr, value)
 
     def add_flag(self, flag_data=None, method='merge'):
         """

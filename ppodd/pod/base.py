@@ -88,7 +88,7 @@ class PPBase(abc.ABC):
 
         if method == 'outerjoin':
             for _input in _inputs:
-                df = df.join(self.dataset[_input].data, how='outer')
+                df = df.join(self.dataset[_input].data.dropna(), how='outer')
 
         elif method == 'onto':
 
@@ -123,7 +123,7 @@ class PPBase(abc.ABC):
                         _input.index
                     ).sort_values()
                 ).interpolate(
-                    'time', limit=limit
+                    'linear', limit=limit
                 ).loc[index]
 
         self.d = df
@@ -135,12 +135,8 @@ class PPBase(abc.ABC):
                 variable.name
             ))
 
-        variable.long_name = self.declarations[variable.name]['long_name']
-        variable.units = self.declarations[variable.name]['units']
-        variable.frequency = self.declarations[variable.name]['frequency']
-        variable.standard_name = getattr(
-            self.declarations[variable.name], 'standard_name',  None
-        )
+        for item, value in self.declarations[variable.name].items():
+            setattr(variable, item, value)
 
         flag_name = variable.add_flag()
         if flag is not None:
@@ -151,6 +147,9 @@ class PPBase(abc.ABC):
 
         # Flag any gaps caused by asfreq as 3
         variable._df.loc[~np.isfinite(variable._df[flag_name]), flag_name] = 3
+
+        good_start = np.min(np.where(~np.isnan(variable.data)))
+        variable._df = variable._df.iloc[good_start:]
 
         self.outputs[variable.name] = variable
 
