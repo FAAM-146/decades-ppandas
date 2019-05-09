@@ -108,3 +108,38 @@ def flagged_avg(df, flag_col, data_col, fill_nan=None, flag_value=1,
     else:
         df[out_name] = np.nan
         df.loc[means.index, out_name] = means.values
+
+
+class Either(object):
+
+    def __init__(self, *args, name=None):
+        self.options = args
+        if name is None:
+            raise ValueError('name must be given')
+
+    def __eq__(self, other):
+        if other in self.options:
+            return True
+
+        try:
+            if other.options == self.options and type(other) == type(self):
+                return True
+        except AttributeError:
+            pass
+
+        return False
+
+    def __str__(self):
+        return '<{}>'.format(', '.join(self.options))
+
+    def __repr__(self):
+        _repr = 'Either('
+        for i, option in enumerate(self.options):
+            _repr += '{!r}'.format(option)
+            if i != len(self.options) - 1:
+                _repr += ', '
+        _repr += ')'
+        return _repr
+
+    def __contains__(self, item):
+        return item in self.options
