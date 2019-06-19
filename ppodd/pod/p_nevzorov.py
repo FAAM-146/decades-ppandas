@@ -117,6 +117,8 @@ class Nevzorov(PPBase):
     flight constants as VANETYPE.
     """
 
+    TEST_SETUP = {'VANETYPE': 'all'}
+
     inputs = [
         'CORCON_nv_lwc_vcol',
         'CORCON_nv_lwc_icol',
@@ -294,11 +296,14 @@ class Nevzorov(PPBase):
 
         self._declare_outputs_common()
 
-        _vanetype = self.dataset['VANETYPE'].lower()
+        try:
+            _vanetype = self.dataset['VANETYPE'].lower()
+        except KeyError:
+            _vanetype = '1t2l1r'
 
-        if _vanetype == '1t1l2r':
+        if _vanetype in ('1t1l2r', 'all'):
             self._declare_outputs_1t1l2r()
-        elif _vanetype == '1t2l1r':
+        elif _vanetype in ('1t2l1r', 'all'):
             self._declare_outputs_1t2l1r()
         else:
             raise ValueError(
