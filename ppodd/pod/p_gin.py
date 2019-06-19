@@ -179,11 +179,10 @@ class Gin(PPBase):
         )
 
     def process(self):
-        index = pd.date_range(
-            self.dataset.inputs[0].index[0].round('1S'),
-            self.dataset.inputs[1].index[-1].round('1S'),
-            freq=self.freq[32]
-        )
+        start = self.dataset[self.inputs[0]].index[0].round('1S')
+        end = self.dataset[self.inputs[0]].index[-1].round('1S')
+
+        index = pd.date_range(start, end, freq=self.freq[32])
 
         self.get_dataframe(
             method='onto', index=index,
