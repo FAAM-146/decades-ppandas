@@ -67,8 +67,6 @@ class PPBase(abc.ABC):
         for name, output in self.outputs.items():
             self.dataset.outputs.append(output)
 
-        print('  -> {}'.format(', '.join(self.outputs.keys())))
-
     def onto(self, dataframe, index, limit=1, period=None):
         return dataframe.reindex(
             index.union(dataframe.index).sort_values()
