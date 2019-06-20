@@ -39,10 +39,6 @@ class PPBase(abc.ABC):
     def process(self):
         """Do the actual postprocessing"""
 
-    @abc.abstractmethod
-    def inputs(self):
-        """Define required inputs"""
-
     def declare(self, name, **kwargs):
         """
         Declare the output variables that the processing module is going to
