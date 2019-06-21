@@ -266,6 +266,12 @@ class TcpFileReader(FileReader):
                     _var = _data[_name]
 
                 _time = _data[self.time_variable]
+
+                # If there isn't any time info, then get out of here before we
+                # raise an exception.
+                if not len(_time):
+                    continue
+
                 _good_times = np.where(_time - np.min(_time) < 24*3600)
                 _time = _time[_good_times]
 
