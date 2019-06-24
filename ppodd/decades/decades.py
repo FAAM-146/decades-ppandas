@@ -171,6 +171,7 @@ class DecadesDataset(object):
         self.inputs = []
         self.outputs = []
         self.attrs = {}
+        self._garbage_collect = False
 
     def __getitem__(self, item):
         for _var in self.inputs + self.outputs:
@@ -183,6 +184,16 @@ class DecadesDataset(object):
             pass
 
         raise KeyError('Unknown variable: {}'.format(item))
+
+    def garbage_collect(self, collect):
+        """
+        Turn garbage collection on or off. If on, variables which are not
+        required for processing are removed from the dataset.
+        """
+        if collect:
+            self._garbage_collect = True
+            return
+        self._garbage_collect = False
 
     @staticmethod
     def infer_reader(dfile):
@@ -327,6 +338,27 @@ class DecadesDataset(object):
         for reader in self.readers:
             reader.read()
 
+    def _get_required_data(self):
+        _required_inputs = []
+        for mod in self.pp_modules:
+            _required_inputs += mod.inputs
+        _required_inputs = list(set(_required_inputs))
+
+        return _required_inputs
+
+    def _collect_garbage(self):
+        if not self._garbage_collect:
+            return
+
+        required_inputs = self._get_required_data()
+
+        _copied_inputs = self.inputs.copy()
+        for var in _copied_inputs:
+            if var.name not in required_inputs:
+                print('Garbage collect: {}'.format(var.name))
+                self.inputs.remove(var)
+                del var
+
     def process(self, modname=None):
         """
         Run processing modules.
@@ -355,6 +387,7 @@ class DecadesDataset(object):
 
         module_ran = True
         while self.pp_modules and module_ran:
+
             module_ran = False
 
             pp_module = self.pp_modules.popleft()
@@ -379,4 +412,6 @@ class DecadesDataset(object):
             module_ran = True
             while temp_modules:
                 self.pp_modules.append(temp_modules.pop())
+
+            self._collect_garbage()
 
