@@ -8,6 +8,7 @@ from .base import PPBase
 class GINWinds(PPBase):
 
     inputs = [
+        'GIN_HDG_OFFSET',
         'VELE_GIN',
         'VELN_GIN',
         'HDG_GIN',
@@ -60,12 +61,10 @@ class GINWinds(PPBase):
         """
         d = self.d
 
-        heading_offset = 0.35
         tas_scale_factor = 0.9984
 
-        d.HDG_GIN += heading_offset
-
         self.correct_tas_rvsm(tas_scale_factor=tas_scale_factor)
+
         air_spd_east = np.cos(np.deg2rad(d.HDG_GIN - 90.)) * d.TAS
         air_spd_north = np.sin(np.deg2rad(d.HDG_GIN - 90.)) * d.TAS
 
@@ -82,8 +81,10 @@ class GINWinds(PPBase):
         self.get_dataframe(
             method='onto',
             index=pd.DatetimeIndex(start=start_time, end=end_time, freq='1S'),
-            limit=50
+            circular=['HDG_GIN'], limit=50
         )
+
+        self.d.HDG_GIN %= 360
 
         self.correct_tas_rvsm()
         self.calc_noturb_wspd()
