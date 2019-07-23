@@ -10,8 +10,11 @@ from ..utils import pd_freq
 
 
 class DecadesWriter(abc.ABC):
+    """
+    Define an interface for classes writing out DecadesDataset data.
+    """
 
-    def __init__(self, dataset):
+    def __init__(self, dataset, *args, **kwargs):
         self.dataset = dataset
 
     @abc.abstractmethod
@@ -20,8 +23,14 @@ class DecadesWriter(abc.ABC):
 
 
 class NetCDFWriter(DecadesWriter):
+    """
+    Write a DecadesDataset to NetCDF.
 
-    _FillValue = -9999
+    A NetCDFWriter takes a DecadesDataset instance in its constructor and will
+    write this dataset to file when its write method is called. This can
+    include an optional freq keyword to force the output to a specified
+    frequency.
+    """
 
     def __init__(self, *args, **kwargs):
         self.output_freqs = []
@@ -33,25 +42,36 @@ class NetCDFWriter(DecadesWriter):
         super().__init__(*args, **kwargs)
 
         self._get_time_bounds()
-        self._get_output_freqs()
+        self.output_freqs = self._get_output_freqs()
 
     def _get_output_freqs(self):
         """Get all of the required output frequencies"""
         output_freqs = []
+
         for var in self.dataset.outputs:
+
+            if not var.write:
+                continue
+
             if var.frequency not in output_freqs:
                 output_freqs.append(var.frequency)
-        self.output_freqs = output_freqs
 
+        return output_freqs
 
     def _get_time_bounds(self):
         """Get the earliest and latest times of all output variables"""
-        start_time = datetime.datetime(2999, 1, 1)
-        end_time = datetime.datetime(1900, 1, 1)
+
+        start_time = datetime.datetime.max
+        end_time = datetime.datetime.min
 
         for var in self.dataset.outputs:
+
+            if not var.write:
+                continue
+
             if var.data.index[0] < start_time:
                 start_time = var.data.index[0]
+
             if var.data.index[-1] > end_time:
                 end_time = var.data.index[-1]
 
@@ -61,102 +81,178 @@ class NetCDFWriter(DecadesWriter):
         self.end_time = end_time
 
     def _write_var(self, nc, var):
-        _var_name = var.name
-        _flag_name = '{}_FLAG'.format(var.name)
+        """
+        Write a given DecadesVariable to a netCDF file, including flag.
 
-        _freq = pd_freq[var.frequency]
+        Args:
+            nc: a netCDF4.Dataset, opened to write
+            var: DecadesVariable
+        """
 
-        if 60 % var.frequency == 0:
-            _end = self.end_time
+        _freq = self.write_freq or var.frequency
+
+        # If the variable is at 1 Hz, it only needs a time dimension,
+        # otherwise, it also requires an spsNN dimension.
+        if _freq == 1:
+            ncvar = nc.createVariable(
+                var.name, float, ('Time',),
+                fill_value=var.attrs['_FillValue']
+            )
+
+            ncflag = nc.createVariable(
+                '{}_FLAG'.format(var.name),
+                np.int8, ('Time',), fill_value=-1
+            )
         else:
-            _end = self.end_time + datetime.timedelta(seconds=1/var.frequency)
+            ncvar = nc.createVariable(
+                var.name, float, ('Time', 'sps{0:02d}'.format(_freq)),
+                fill_value=var.attrs['_FillValue']
+            )
 
-        _index = pd.DatetimeIndex(
-            start=self.start_time,
-            end=_end,
-            freq=_freq
+            ncflag = nc.createVariable(
+                '{}_FLAG'.format(var.name), np.int8,
+                ('Time', 'sps{0:02d}'.format(_freq)), fill_value=-1
+            )
+
+        # Write variable attributes, excluding _FillValue, which must be given
+        # when the variable is created.
+        for attr_key, attr_val in var.attrs.items():
+            if attr_key is '_FillValue' or attr_val is None:
+                continue
+            setattr(ncvar, attr_key, attr_val)
+
+        # Add a few required attributes to the flag variable.
+        ncflag.standard_name = 'status_flag'
+
+        # Create a new DatetimeIndex to interpolate to, given frequency
+        _end = self.end_time - datetime.timedelta(seconds=1/_freq)
+
+        _index = pd.date_range(
+            self.start_time,
+            _end,
+            freq=pd_freq[_freq]
         )
 
-        _data = var.data.reindex(_index).fillna(self._FillValue)
-        _flag = var.flag.reindex(_index)
-        _flag.loc[~np.isfinite(_flag)] = 3
-
-        print('Writing: {}'.format(var.long_name))
-
-        _shape = (int(len(_data) / var.frequency), var.frequency)
-
-        # If the frequency of a varable is not 1, then we need to reshape itt
-        if var.frequency != 1:
-            nc[_var_name][:] = _data.values.reshape(_shape)
-            nc[_flag_name][:] = _flag.values.reshape(_shape)
+        if _freq == var.frequency:
+            # variable is alreay at the correct frequency, all we require is a
+            # reindex, filling any missing data with _FillValue, and flagging
+            # as a 3
+            _data = var.data.reindex(_index).fillna(var.attrs['_FillValue'])
+            _flag = var.flag.reindex(_index)
+            _flag.loc[~np.isfinite(_flag)] = 3
         else:
-            nc[_var_name][:] = _data.values
-            nc[_flag_name][:] = _flag.values
+            # Variable and flag must be resampled to bring onto the correct
+            # frequency and then reindexed. Apply a mean to the data and a pad
+            # to the flag.
+            _data = var.data.resample(
+                pd_freq[_freq], limit=var.frequency-1
+            ).apply('mean').reindex(_index)
 
-        for _name in (_var_name, _flag_name):
-            nc[_name].frequency = np.int32(var.frequency)
-            if _name == _var_name:
-                nc[_name].long_name = var.long_name
-                nc[_name].units = var.units
-            else:
-                nc[_name].long_name = 'Flag for {}'.format(var.long_name)
-                nc[_name].units = 1
-        if var.standard_name is not None:
-            nc[_var_name].standard_name = var.standard_name
+            _flag = var.flag.resample(
+                pd_freq[_freq], limit=var.frequency-1
+            ).pad().reindex(_index)
 
-    def _init_nc_file(self, nc):
+        # Reshape the data if it is not at 1 Hz
+        if _freq != 1:
+            _data = _data.values.reshape(int(len(_index) / _freq), _freq)
+            _flag = _flag.values.reshape(int(len(_index) / _freq), _freq)
+        else:
+            _data = _data.values
+            _flag = _flag.values
+
+        # Finally write the data
+        print('Writing {}...'.format(var.attrs['long_name']))
+        ncvar[:] = _data
+        ncflag[:] = _flag
+
+    def _init_netcdf(self, nc):
+        """
+        Initialise an output netCDF file, creating dimensions as required.
+
+        Args:
+            nc: handle to a netCDF4.Dataset opened for write
+        """
+
+        # Create time dimension, variable, and set attributes
         nc.createDimension('Time', None)
-        for freq in self.output_freqs:
-            if freq == 1:
-                continue
-            sps_name = 'sps{0:02d}'.format(freq)
-            nc.createDimension(sps_name, freq)
+        self.time = nc.createVariable('Time', int, ('Time',), fill_value=-1)
+        self.time.long_name = 'Time of measurement'
+        self.time.standard_name = 'time'
+        self.time.calendar = 'gregorian'
+        self.time.units = 'seconds since 1970-01-01'
 
-        nc.createVariable('Time', int, ('Time',))
-        nc['Time'][:] = list(pd.DatetimeIndex(
-            start=self.start_time, end=self.end_time, freq='1s'
-        ).astype(int) / 1e9)
-        nc['Time'].units = 'seconds since 1970-01-01'
-
-        for var in self.dataset.outputs:
-            if var.frequency == 1:
-                nc.createVariable(
-                    var.name, float, ('Time',),
-                    fill_value=self._FillValue
-                )
-                nc.createVariable(
-                    '{}_FLAG'.format(var.name), np.int8, ('Time',)
-                )
-            else:
-                nc.createVariable(
-                    var.name,
-                    float,
-                    ('Time', 'sps{0:02d}'.format(var.frequency)),
-                    fill_value=self._FillValue
-                )
-                nc.createVariable(
-                    '{}_FLAG'.format(var.name),
-                    np.int8,
-                    ('Time', 'sps{0:02d}'.format(var.frequency))
+        # If not forcing to a frequency, create a dimension for each frequency
+        # that we're going to output.
+        if self.write_freq is None:
+            for _freq in sorted(self.output_freqs):
+                nc.createDimension('sps{0:02d}'.format(_freq), _freq)
+        else:
+            if self.write_freq != 1:
+                # If forcing to non-1hz freq, create the required dimension
+                nc.createDimension(
+                    'sps{0:02d}'.format(self.write_freq), self.write_freq
                 )
 
-    def _write_global_attrs(self, nc):
-        for attr, value in self.dataset.constants.items():
-            if hasattr(value, '__iter__') and type(value) is not str:
-                try:
-                    if type(value[0]) is str:
-                        value = ' '.join(value)
-                except KeyError:
-                    pass
-            try:
-                setattr(nc, attr, value)
-            except TypeError:
-                setattr(nc, attr, str(value))
+    def _write_constant(self, nc, key, value):
+        """
+        Write a (key, value) pair to a given netCDF handle as global
+        attributes. If value is a datetime, coerce to date string. If value is
+        a dict, recursively add these as attributes, prepended by {key}_
+
+        Args:
+            nc: a netCDF4.Dataset, opened for writing
+            key: the global attribute key to write to nc
+            value: the global attribute value to write to nc
+        """
+
+        # Coerce datetimes to a date string
+        try:
+            value = value.strftime('%Y-%m-%d')
+        except AttributeError:
+            pass
+
+        # If given a dict, recursively build keys
+        if type(value) is dict:
+            for _key, _val in value.items():
+                _key = '{}_{}'.format(key, _key)
+                self._write_constant(nc, _key, _val)
+            return
+
+        setattr(nc, key, value)
 
     def write(self, filename, freq=None):
+        """
+        Write a DecadesDataset to a netCDF file, optionally forcing the output
+        to a specified frequency. Note that forcing to anything onther than 1
+        hz is currently untested.
+
+        Args:
+            filename: the path of the netCDF file to create.
+
+        Kwargs:
+            freq (None): frequency to force the output to.
+        """
+
+        # The frequency to force the output to, if any
+        self.write_freq = freq
+
         with Dataset(filename, 'w') as nc:
-            self._init_nc_file(nc)
+
+            # Init the netCDF file
+            self._init_netcdf(nc)
+
+            # Write each variable in turn
             for var in self.dataset.outputs:
                 self._write_var(nc, var)
 
-            self._write_global_attrs(nc)
+            # Create an index for the Time variable
+            dates = pd.date_range(self.start_time, self.end_time,
+                                  freq='S')
+
+            # Time will natively be nanoseconds from 1970-01-01, so just
+            # convert this to seconds.
+            self.time[:] = dates.values.astype(np.int64) / 1e9
+
+            # Write flight constants as global attributes
+            for const in self.dataset.constants.items():
+                self._write_constant(nc, *const)
