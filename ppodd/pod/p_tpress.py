@@ -53,7 +53,8 @@ class TPress(PPBase):
             units='hPa',
             frequency=32,
             number=776,
-            long_name='TURB PROBE Ca'
+            long_name='TURB PROBE Ca',
+            write=False
         )
 
         self.declare(
@@ -61,7 +62,8 @@ class TPress(PPBase):
             units='hPa',
             frequency=32,
             number=777,
-            long_name='TURB PROBE Cb'
+            long_name='TURB PROBE Cb',
+            write=False
         )
 
     def get_range_flag(self, var, limits):
