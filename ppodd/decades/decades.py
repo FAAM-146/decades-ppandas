@@ -373,6 +373,8 @@ class DecadesDataset(object):
                     if _mod.ready():
                         _mod.process()
                         _mod.finalize()
+                    else:
+                        print('Module {} not ready'.format(mod.__name__))
             return
 
         self.outputs = []
