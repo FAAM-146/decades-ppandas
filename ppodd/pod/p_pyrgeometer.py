@@ -72,7 +72,8 @@ class KippZonenPyrgeometer(PPBase):
             units='W m-2',
             frequency=1,
             number=1021,
-            long_name='Corrected downward longwave irradiance'
+            long_name='Corrected downward longwave irradiance',
+            write=False
         )
 
         self.declare(
@@ -80,7 +81,8 @@ class KippZonenPyrgeometer(PPBase):
             units='W m-2',
             frequency=1,
             number=1024,
-            long_name='Corrected upward longwave irradiance'
+            long_name='Corrected upward longwave irradiance',
+            write=False
         )
 
     def process(self):
@@ -128,3 +130,6 @@ class KippZonenPyrgeometer(PPBase):
 
         ir_dn = DecadesVariable(low_l_d, name='IR_DN_C')
         ir_dn.add_flag(d['WOW_FLAG'])
+
+        self.add_output(ir_up)
+        self.add_output(ir_dn)
