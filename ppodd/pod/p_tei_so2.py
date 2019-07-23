@@ -89,7 +89,7 @@ class TecoSO2(PPBase):
 
         # The instrument is in calibration when one of the valves V6 (cylinder
         # air) or V8 (cabin air) is open.
-        self.d['zero_flag'] = self.d.CHTSOO_V6 | self.d.CHTSOO_V8
+        self.d['zero_flag'] = (self.d.CHTSOO_V6 == 1) | self.d.CHTSOO_V8
 
         # Average across the zeros, linearly interpolate back to 1 Hz...
         flagged_avg(self.d, 'zero_flag', 'CHTSOO_conc', out_name='zero',
