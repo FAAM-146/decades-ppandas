@@ -124,7 +124,9 @@ class AL52CO(PPBase):
         # after a calibration, with a 2 sec safety buffer
         d['CAL_FLAG'] = d.AL52CO_sens.diff() != 0
         indicies = np.where(d.CAL_FLAG != 0)[0]
-        d.loc[d.index[indicies + 2], 'CAL_FLAG'] = 1
+        indicies_p2 = indicies + 2
+        indicies_p2 = indicies_p2[np.where(indicies_p2 < len(indicies))]
+        d.loc[d.index[indicies_p2], 'CAL_FLAG'] = 1
         d.loc[d.index[indicies], 'CAL_FLAG'] = 0
 
         # Interpolate the zero
