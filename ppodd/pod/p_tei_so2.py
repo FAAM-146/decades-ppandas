@@ -29,7 +29,7 @@ class TecoSO2(PPBase):
             number=740,
             long_name=('Mole fraction of Sulphur Dioxide in air from TECO 43 '
                        'instrument'),
-            standard_name='mole_fraction_of_sulpuhr_dioxide_in_air'
+            standard_name='mole_fraction_of_sulphur_dioxide_in_air'
         )
 
     def flag(self):
