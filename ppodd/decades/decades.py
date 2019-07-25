@@ -172,6 +172,7 @@ class DecadesDataset(object):
         self.outputs = []
         self.attrs = {}
         self._garbage_collect = False
+        self._qa_dir = None
 
     def __getitem__(self, item):
         for _var in self.inputs + self.outputs:
@@ -194,6 +195,20 @@ class DecadesDataset(object):
             self._garbage_collect = True
             return
         self._garbage_collect = False
+
+    @property
+    def qa_dir(self):
+        return self._qa_dir
+
+    @qa_dir.setter
+    def qa_dir(self, qa_dir):
+        if not os.path.isdir(qa_dir) and os.path.exists(qa_dir):
+            raise OSError('{} exists and is not a directory'.format(qa_dir))
+
+        elif not os.path.exists(qa_dir):
+            os.makedirs(qa_dir)
+
+        self._qa_dir = qa_dir
 
     @staticmethod
     def infer_reader(dfile):
@@ -358,6 +373,17 @@ class DecadesDataset(object):
                 print('Garbage collect: {}'.format(var.name))
                 self.inputs.remove(var)
                 del var
+
+    def run_qa(self):
+        import ppodd.qa
+        self.qa_modules = [qa(self) for qa in ppodd.qa.qa_modules]
+
+        while self.qa_modules:
+            _mod = self.qa_modules.pop()
+            try:
+                _mod.run()
+            except Exception as e:
+                print(' ** Error in {}: {}'.format(_mod, e))
 
     def process(self, modname=None):
         """
