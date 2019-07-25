@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 from scipy.optimize import curve_fit
 
@@ -32,34 +33,34 @@ def get_no_cloud_mask(twc_col_p, wow, window_secs=3, min_period=5, freq=64):
 
     range_limits = (1E-12, 0.1)
 
-    def _roll_fn(arr):
-        """
-        Reduce an array to a flag, based on its range.
+    vals = np.array(twc_col_p.values)
+    out = np.zeros_like(vals)
 
-        Args:
-            arr: the array to produce a flag value
+    # Window sizes
+    window_size = window_secs * freq
+    min_length = min_period * freq
+    _half_window = int(np.floor(window_size / 2))
 
-        Returns:
-            a flag value of 0 or 1
-        """
-        _range = np.ptp(arr)
-        return range_limits[0] < _range < range_limits[1]
+    # Calculate range through a sliding window
+    for i in range(0, len(vals) - _half_window):
+        _range = np.ptp(vals[i:i+window_size])
+        out[i + _half_window] = range_limits[0] < _range < range_limits[1]
 
-    # Generate mask by looking at range in a rollinf window
-    mask = twc_col_p.rolling(
-        freq * window_secs, center=True
-    ).apply(_roll_fn, raw=True)
+    out = out.astype(int)
 
-    # Flag as 0 when on the ground
-    mask.loc[wow == 1 | np.isnan(wow)] = 0
+    # Ensure that sectors marked as clear air are not too short
+    _split = np.split(out, np.where(np.abs(np.diff(out)) != 0)[0] + 1)
+    for _group in _split:
+        if len(_group) < min_length:
+            _group[:] = 0
 
-    # Ensure each segment is long enough
-    mask_groups = (mask != mask.shift()).cumsum()
-    for group in mask_groups.unique():
-        if mask.loc[mask_groups == group].sum() < min_period * freq:
-            mask.loc[mask_groups == group] = 0
+    out = np.concatenate(_split)
 
-    return mask
+    # Don't allow clear air calculations when we're on the ground
+    out[wow == 1] = 0
+
+    # Return mask as a Pandas object.
+    return pd.Series(out, index=twc_col_p.index)
 
 
 def get_fitted_k(col_p, ref_p, ias, ps, no_cloud_mask, k):
@@ -175,6 +176,15 @@ class Nevzorov(PPBase):
             units='W',
             frequency=64,
             long_name='TWC collector power'
+        )
+
+        self.declare(
+            'NV_CLEAR_AIR_MASK',
+            frequency=1,
+            long_name=('Clear air mask based on Nevzorov Total Water power '
+                       'variance'),
+            write=False
+
         )
 
     def _declare_outputs_1t1l2r(self):
@@ -465,3 +475,5 @@ class Nevzorov(PPBase):
                 )
                 _var.add_flag(self.d['flag'])
                 self.add_output(_var)
+
+        self.add_output(DecadesVariable(clear_air, name='NV_CLEAR_AIR_MASK'))
