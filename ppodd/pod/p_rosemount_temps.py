@@ -50,6 +50,24 @@ class RosemountTemperatures(PPBase):
             standard_name='air_temperature'
         )
 
+        self.declare(
+            'IAT_DI_R',
+            units='K',
+            frequency=32,
+            long_name=('Indicated air temperature from the Rosemount deiced '
+                       'temperature sensor'),
+            write=False
+        )
+
+        self.declare(
+            'IAT_ND_R',
+            units='K',
+            frequency=32,
+            long_name=('Indicated air temperature from the Rosemount '
+                       'non-deiced temperature sensor'),
+            write=False
+        )
+
     def calc_mach(self):
         d = self.d
 
@@ -107,10 +125,10 @@ class RosemountTemperatures(PPBase):
         d = self.d
 
         _cals = self.dataset['CALNDT'][::-1]
-        d['ND_IAT'] = np.polyval(_cals, d['CORCON_ndi_temp'])
+        d['IAT_ND_R'] = np.polyval(_cals, d['CORCON_ndi_temp'])
 
         # Convert to Kelvin
-        d['ND_IAT'] = celsius_to_kelvin(d['ND_IAT'])
+        d['IAT_ND_R'] = celsius_to_kelvin(d['IAT_ND_R'])
 
     def calc_di_iat(self):
         """
@@ -123,11 +141,11 @@ class RosemountTemperatures(PPBase):
         d = self.d
 
         _cals = self.dataset['CALDIT'][::-1]
-        d['DI_IAT'] = np.polyval(_cals, d['CORCON_di_temp'])
+        d['IAT_DI_R'] = np.polyval(_cals, d['CORCON_di_temp'])
 
         # Convert to kelvin and apply heating correction
-        d['DI_IAT'] = celsius_to_kelvin(d['DI_IAT'])
-        d['DI_IAT'] -= d['HEATING_CORRECTION']
+        d['IAT_DI_R'] = celsius_to_kelvin(d['IAT_DI_R'])
+        d['IAT_DI_R'] -= d['HEATING_CORRECTION']
 
     def calc_ndi_tat(self):
         """
@@ -138,7 +156,7 @@ class RosemountTemperatures(PPBase):
         """
         d = self.d
         d['TAT_ND_R'] = true_air_temp(
-            d['ND_IAT'], d['MACHNO'], self.dataset['TRFCTR'][1]
+            d['IAT_ND_R'], d['MACHNO'], self.dataset['TRFCTR'][1]
         )
 
     def calc_di_tat(self):
@@ -150,7 +168,7 @@ class RosemountTemperatures(PPBase):
         """
         d = self.d
         d['TAT_DI_R'] = true_air_temp(
-            d['DI_IAT'], d['MACHNO'], self.dataset['TRFCTR'][0]
+            d['IAT_DI_R'], d['MACHNO'], self.dataset['TRFCTR'][0]
         )
 
     def flag_delta_t(self, threshold=1):
@@ -184,9 +202,14 @@ class RosemountTemperatures(PPBase):
         tat_nd = DecadesVariable(self.d['TAT_ND_R'])
         tat_di = DecadesVariable(self.d['TAT_DI_R'])
 
+        iat_nd = DecadesVariable(self.d['IAT_ND_R'])
+        iat_di = DecadesVariable(self.d['IAT_DI_R'])
+
         for tat in (tat_nd, tat_di):
             tat.add_flag(self.d['MACHNO_FLAG'])
             tat.add_flag(self.d['DT_FLAG'])
             self.add_output(tat)
 
-
+        for iat in (iat_nd, iat_di):
+            iat.add_flag(self.d['MACHNO_FLAG'])
+            self.add_output(iat)
