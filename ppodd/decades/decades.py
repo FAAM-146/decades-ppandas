@@ -1,4 +1,5 @@
 import collections
+import gc
 import importlib
 import sys
 import re
@@ -373,6 +374,8 @@ class DecadesDataset(object):
                 print('Garbage collect: {}'.format(var.name))
                 self.inputs.remove(var)
                 del var
+        del _copied_inputs
+        gc.collect()
 
     def run_qa(self):
         import ppodd.qa
