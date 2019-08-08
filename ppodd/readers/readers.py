@@ -159,7 +159,7 @@ class TcpFileReader(FileReader):
             time, [time[-1] + 1]
         )
         index = pd.to_datetime(_time, unit='s')
-        return pd.Series(index=index).asfreq(pd_freq[frequency]).index[:-1]
+        return pd.date_range(_time[0], time[-1], freq=pd_freq[frequency])[:-1]
 
     def _get_index_slow(self, time, frequency):
         """
@@ -272,7 +272,8 @@ class TcpFileReader(FileReader):
                 if not len(_time):
                     continue
 
-                _good_times = np.where(_time - np.min(_time) < 24*3600)
+                _good_times = np.where(np.abs(_time - np.median(_time)) < 12 * 3600)
+
                 _time = _time[_good_times]
 
                 if len(_var.shape) == 1:
