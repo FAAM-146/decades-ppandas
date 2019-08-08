@@ -358,6 +358,10 @@ class DecadesDataset(object):
         _required_inputs = []
         for mod in self.pp_modules:
             _required_inputs += mod.inputs
+
+        for qa in self.qa_modules:
+            _required_inputs += qa.inputs
+
         _required_inputs = list(set(_required_inputs))
 
         return _required_inputs
@@ -378,8 +382,6 @@ class DecadesDataset(object):
         gc.collect()
 
     def run_qa(self):
-        import ppodd.qa
-        self.qa_modules = [qa(self) for qa in ppodd.qa.qa_modules]
 
         while self.qa_modules:
             _mod = self.qa_modules.pop()
@@ -393,6 +395,7 @@ class DecadesDataset(object):
         Run processing modules.
         """
         import ppodd.pod
+        import ppodd.qa
 
         if modname is not None:
             mods = ppodd.pod.pp_modules
@@ -405,6 +408,8 @@ class DecadesDataset(object):
                     else:
                         print('Module {} not ready'.format(mod.__name__))
             return
+
+        self.qa_modules = [qa(self) for qa in ppodd.qa.qa_modules]
 
         self.outputs = []
 
