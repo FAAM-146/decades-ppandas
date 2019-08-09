@@ -8,9 +8,15 @@ class TemperatureQA(QAMod):
     inputs = [
         'TAT_DI_R',
         'TAT_ND_R',
+        'IAT_DI_R',
+        'IAT_ND_R',
+        'WOW_IND',
+        'PRTAFT_deiced_temp_flag'
     ]
 
     def make_cloud_plot(self, fig):
+        from matplotlib.colors import ListedColormap
+
         lwc_axis = fig.timeseries_axes([.1, .80, .8, .05], labelx=False)
 
         clear_air = self.dataset['NV_CLEAR_AIR_MASK'].data.asfreq('1S')
@@ -23,7 +29,13 @@ class TemperatureQA(QAMod):
 
         _x = np.abs(np.vstack((cloud, cloud)))
 
-        lwc_axis.pcolormesh(cloud.index, [0, 1], _x, cmap='Blues_r')
+        cmap = ListedColormap(
+            np.array([
+                [135/256, 221/256, 255/256],
+                [240/256, 240/256, 240/256]
+            ]))
+
+        lwc_axis.pcolormesh(cloud.index, [0, 1], _x, cmap=cmap)
 
         lwc_axis.set_ylabel('Cloud', rotation=0, labelpad=20)
         lwc_axis.set_xticks([])
@@ -74,11 +86,12 @@ class TemperatureQA(QAMod):
         ma_axis, pa_axis = fig.timeseries_axes([.1, .37, .8, .17], twinx=True)
 
         ma_axis.plot(sp_mach(psp, sp), label='Mach', color='purple')
-        ma_axis.legend(fontsize=6)
+        ma_axis.legend(fontsize=6, loc='upper right')
+        ma_axis.set_ylim([0, .65])
 
         pa_axis.plot(self.dataset['PALT_RVS'].data.asfreq('1S'),
                      color='green', label='Press. Alt.')
-        pa_axis.legend()
+        pa_axis.legend(fontsize=6, loc='upper left')
 
         ma_axis.set_xlabel('Time (UTC)')
         ma_axis.set_ylabel('Mach #')
@@ -94,7 +107,7 @@ class TemperatureQA(QAMod):
         tat_di.loc[wow == 1] = np.nan
         tat_nd.loc[wow == 1] = np.nan
 
-        scat_axis.scatter(tat_di, tat_nd, 1, c=tat_di.index)
+        scat_axis.scatter(tat_di, tat_nd, 1, color='#03dbfc')
 
         scat_axis.add_121()
         scat_axis.set_xlabel('TAT DI (K)')
@@ -102,11 +115,11 @@ class TemperatureQA(QAMod):
 
     def make_spectra_plot(self, fig):
         def spectra():
-            _index = self.dataset['TAT_DI_R'].data.index
+            _index = self.dataset['IAT_DI_R'].data.index
             _mask = (_index > fig.to_time) & (_index < fig.land_time)
 
-            tat_di = self.dataset['TAT_DI_R'].data.loc[_mask]
-            tat_nd = self.dataset['TAT_ND_R'].data.loc[_mask]
+            tat_di = self.dataset['IAT_DI_R'].data.loc[_mask]
+            tat_nd = self.dataset['IAT_ND_R'].data.loc[_mask]
             freqs = np.fft.fftfreq(tat_di.size, 1/32)
 
             ps_nd = np.abs(np.fft.fft(tat_nd))**2
@@ -133,7 +146,7 @@ class TemperatureQA(QAMod):
             label='DI'
         )
 
-        spec_axis.set_ylim(.5, 10**3)
+        spec_axis.set_ylim(.5, 10**4)
         spec_axis.set_xlim(1, 16)
 
         spec_axis.set_xlabel('Frequency')
