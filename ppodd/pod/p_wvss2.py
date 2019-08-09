@@ -11,10 +11,10 @@ parameters['VMR'] = {
     'units': 'ppmv',
     'long_name': 'Water Vapour Measurement from {ins} {interp}'
 }
-# parameters['PRESS'] = {
-#     'units': 'hPa',
-#     'long_name': 'Pressure inside {ins} sample cell {interp}'
-# }
+parameters['PRESS'] = {
+    'units': 'hPa',
+    'long_name': 'Pressure inside {ins} sample cell {interp}'
+}
 # parameters['TEMP'] = {
 #     'units': 'deg C',
 #     'long_name': 'Temperature of {ins} sample cell {interp}'
