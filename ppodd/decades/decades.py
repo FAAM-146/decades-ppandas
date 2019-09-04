@@ -1,4 +1,5 @@
 import collections
+import datetime
 import gc
 import importlib
 import sys
@@ -139,13 +140,14 @@ class DecadesVariable(object):
                     'Flag data must be the same length as variable'
                 )
 
+
         if _flag_name in self._df:
             self.is_flagged = True
             if flag_data is not None:
                 if method == 'merge':
                     self._df[_flag_name] = np.fmax(flag_data, self.flag)
                 elif method == 'clobber':
-                    self._df[_flag_name] = flag_data
+                    self._df[_flag_name] = flag_data.astype(np.int8)
                 else:
                     raise ValueError('Unknown method: {}'.format(method))
 
@@ -154,7 +156,8 @@ class DecadesVariable(object):
         if flag_data is None:
             self._df[_flag_name] = 0
         else:
-            self._df[_flag_name] = flag_data
+            flag_data[~np.isfinite(flag_data)] = 3
+            self._df[_flag_name] = flag_data.astype(np.int8)
         self.is_flagged = True
         return _flag_name
 
@@ -172,11 +175,34 @@ class DecadesDataset(object):
         self.inputs = []
         self.outputs = []
         self.attrs = {}
+        self._dataframes = {}
         self._garbage_collect = False
         self._qa_dir = None
+        self._takeoff_time = None
+
+        import ppodd.pod
+        import ppodd.qa
+
+        self.qa_modules = [qa(self) for qa in ppodd.qa.qa_modules]
+        self.pp_modules = collections.deque(
+            [pp(self) for pp in ppodd.pod.pp_modules]
+        )
 
     def __getitem__(self, item):
-        for _var in self.inputs + self.outputs:
+
+        # When getting a variable, assign its dataframe (_df) attribute from
+        # it's parent dataset
+        for _var in self.inputs:
+            if _var.name == item:
+
+                if _var._df is None:
+                    _var._df = self._dataframes[
+                        _var.name.split('_')[0]
+                    ][_var.frequency][[_var.name]]
+
+                return _var
+
+        for _var in self.outputs:
             if _var.name == item:
                 return _var
 
@@ -239,16 +265,55 @@ class DecadesDataset(object):
         """
 
         _var = None
-        for i, _variable in enumerate(self.inputs):
-            if _variable.name == variable.name:
-                _var = self.inputs.pop(i)
-                break
 
-        if _var is not None:
-            _var._df = _var._df.combine_first(variable._df)
-            self.inputs.append(_var)
-            return
+        _dlu = variable.name.split('_')[0]
+        _freq = variable.frequency
 
+        # If the variable index is not unique, select only the last entry.
+        if len(variable._df.index) != len(variable._df.index.unique()):
+            variable._df = variable._df.loc[~variable._df.duplicated(keep='last')]
+
+        if _dlu not in self._dataframes:
+            self._dataframes[_dlu] = {}
+
+        if variable.frequency not in self._dataframes[_dlu]:
+            # The dataframe for the current DLU at the current frequency does
+            # not yet exist, so we need to create it, using the variable
+            # dataframe
+            self._dataframes[_dlu][_freq] = variable._df
+
+        else:
+            # The dataframe does exist, so attempt to merge into it, assuming
+            # that the index in the variable is covered by that in the
+            # dataframe 
+            try:
+                self._dataframes[_dlu][_freq].loc[
+                    variable._df.index, variable.name
+                ] = variable._df[variable.name]
+
+            except KeyError:
+                # The dataframe does not include all of the indicies present in
+                # this variable, therefore we need to reindex
+
+                # Create the new index as the unique union between the
+                # dataframe and the variable. 
+                _index = self._dataframes[_dlu][_freq].index.union(
+                    variable.index).sort_values().unique()
+
+                # Reindex the dataframe
+                _df = self._dataframes[_dlu][_freq].reindex(_index)
+                self._dataframes[_dlu][_freq] = _df
+
+                # And merge in the variable
+                self._dataframes[_dlu][_freq].loc[
+                    variable._df.index, variable.name
+                ] = variable._df[variable.name]
+
+        # Once the variable has been merged into a dataset dataframe, it no
+        # longer needs to maintain its own internal dataframe
+        variable._df = None
+
+        # Append the variable to the list of dataset input variables
         self.inputs.append(variable)
 
     @property
@@ -353,6 +418,26 @@ class DecadesDataset(object):
 
         for reader in self.readers:
             reader.read()
+            self._collect_garbage()
+
+        self.readers = None
+        gc.collect()
+
+    @property
+    def takeoff_time(self):
+        if self._takeoff_time is not None:
+            return self._takeoff_time
+
+        if 'PRTAFT' not in self._dataframes:
+            return None
+
+        series = self._dataframes['PRTAFT'][1]['PRTAFT_wow_flag']
+
+        self._takeoff_time =  series.diff().where(
+            series.diff()==-1
+        ).dropna().tail(1).index
+
+        return self._takeoff_time
 
     def _get_required_data(self):
         _required_inputs = []
@@ -373,11 +458,25 @@ class DecadesDataset(object):
         required_inputs = self._get_required_data()
 
         _copied_inputs = self.inputs.copy()
+
         for var in _copied_inputs:
             if var.name not in required_inputs:
+
+                try:
+                    _dlu = var.name.split('_')[0]
+                except Exception:
+                    continue
+
+                _freq = var.frequency
+
+                self._dataframes[_dlu][_freq].drop(
+                    var.name, axis=1, inplace=True, errors='ignore'
+                )
+
                 print('Garbage collect: {}'.format(var.name))
                 self.inputs.remove(var)
                 del var
+
         del _copied_inputs
         gc.collect()
 
@@ -390,12 +489,25 @@ class DecadesDataset(object):
             except Exception as e:
                 print(' ** Error in {}: {}'.format(_mod, e))
 
+    def _trim_data(self):
+        if self.takeoff_time is not None:
+            CUTOFF = self.takeoff_time[0] - datetime.timedelta(hours=4)
+            for key, value in self._dataframes.items():
+                dlu = self._dataframes[key]
+                for key, value in dlu.items():
+                    df = dlu[key]
+
+                    print('dropping')
+                    df.drop(df.index[df.index < CUTOFF], inplace=True)
+
     def process(self, modname=None):
         """
         Run processing modules.
         """
         import ppodd.pod
         import ppodd.qa
+
+        self._trim_data()
 
         if modname is not None:
             mods = ppodd.pod.pp_modules
@@ -429,7 +541,6 @@ class DecadesDataset(object):
             pp_module = self.pp_modules.popleft()
 
             if not pp_module.ready():
-                # self.pp_modules.append(pp_module)
                 temp_modules.append(pp_module)
                 module_ran = True
                 continue
