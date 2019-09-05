@@ -85,6 +85,7 @@ class PPBase(abc.ABC):
                 df = df.join(self.dataset[_input].data.dropna(), how='outer')
 
         elif method == 'onto':
+            import matplotlib.pyplot as plt
 
             if index is None:
                 df = self.dataset[_inputs[0]].data
@@ -98,9 +99,15 @@ class PPBase(abc.ABC):
                 _input_name = _input
 
                 if _input in circular:
-                    _data = np.rad2deg(
-                        np.unwrap(np.deg2rad(self.dataset[_input_name].data))
+
+                    _mask = ~np.isnan(
+                        np.deg2rad(self.dataset[_input_name].data)
                     )
+
+                    _data = self.dataset[_input_name].data.values.copy()
+                    _data[_mask] = np.rad2deg(
+                        np.unwrap(np.deg2rad(_data[_mask]))
+                    ) % 360
 
                     _input = pd.DataFrame(
                         [],

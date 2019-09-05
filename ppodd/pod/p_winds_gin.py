@@ -80,11 +80,9 @@ class GINWinds(PPBase):
 
         self.get_dataframe(
             method='onto',
-            index=pd.DatetimeIndex(start=start_time, end=end_time, freq='1S'),
+            index=pd.date_range(start=start_time, end=end_time, freq='1S'),
             circular=['HDG_GIN'], limit=50
         )
-
-        self.d.HDG_GIN %= 360
 
         self.correct_tas_rvsm()
         self.calc_noturb_wspd()
