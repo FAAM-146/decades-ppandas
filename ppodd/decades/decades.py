@@ -140,6 +140,10 @@ class DecadesVariable(object):
                     'Flag data must be the same length as variable'
                 )
 
+            try:
+                flag_data = flag_data.values
+            except AttributeError:
+                pass
 
         if _flag_name in self._df:
             self.is_flagged = True
