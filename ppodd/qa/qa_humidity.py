@@ -34,8 +34,8 @@ class HumidityQA(QAMod):
 
         cmap = ListedColormap(
             np.array([
-                [135/256, 221/256, 255/256],
-                [240/256, 240/256, 240/256]
+                [214/256, 243/256, 255/256],
+                [180/256, 180/256, 180/256]
             ]))
 
         lwc_axis.pcolormesh(cloud.index, [0, 1], _x, cmap=cmap)
