@@ -14,6 +14,7 @@ from dateutil import relativedelta
 
 import numpy as np
 import pandas as pd
+import yaml
 
 
 from ppodd.decades import DecadesVariable
@@ -40,26 +41,51 @@ class FileReader(abc.ABC):
     def __eq__(self, other):
         return self.__class__ == other.__class__
 
-@register(patterns=['.*\.json'])
+
 class FlightConstantsReader(FileReader):
     """
     Read a flight constants file.
     """
+    def _load(self, *args, **kwargs):
+        raise NotImplementedError
 
     def read(self):
         for _file in self.files:
             print('Reading {}'.format(_file.filepath))
-            with open(_file.filepath, 'r') as _consts:
-                consts = json.loads(_consts.read())
+            consts = self._load(_file)
 
             _file.dataset.constants['FLIGHT'] = consts['FLIGHT']
-            date = datetime.datetime.strptime(consts['DATE'], '%Y-%m-%d')
+
+            try:
+                date = datetime.datetime.strptime(consts['DATE'], '%Y-%m-%d')
+            except TypeError:
+                date = consts['DATE']
+
             _file.dataset.constants['DATE'] = date
+
+            _file.dataset.constants['PROJECT'] = consts['PROJECT']
             _file.dataset.constants['REVISION'] = consts['REVISION']
 
             for _mod in consts['MODULES']:
                 for key, value in consts['MODULES'][_mod].items():
                     _file.dataset.constants[key] = value
+
+
+@register(patterns=['.*\.json'])
+class JsonConstantsReader(FlightConstantsReader):
+    def _load(self, _file):
+        with open(_file.filepath, 'r') as _consts:
+            consts = json.loads(_consts.read())
+            return consts
+
+
+@register(patterns=['.*\.yaml'])
+class YamlConstantsReader(FlightConstantsReader):
+    def _load(self, _file):
+        with open(_file.filepath, 'r') as _consts:
+            consts = yaml.load(_consts, Loader=yaml.Loader)
+            return consts
+
 
 @register(patterns=['.*\.zip'])
 class ZipFileReader(FileReader):
@@ -461,18 +487,6 @@ class CrioTcpDefintion(object):
         for f in self.fields:
             if f.short_name == name:
                 return f
-
-
-class JsonConstantsReader(FileReader):
-
-    def read(self):
-        for _file in self.files:
-            with open(_file.filepath, 'r') as _consts:
-                consts = json.loads(_consts.read())
-
-            for _module in consts['MODULES']:
-                for key, value in consts['MODULES'][_module].items():
-                    _file.dataset.add_constant(key, value)
 
 
 class DataField(object):
