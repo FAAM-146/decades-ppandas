@@ -149,8 +149,12 @@ class PPBase(abc.ABC):
         # Flag any gaps caused by asfreq as 3
         variable._df.loc[~np.isfinite(variable._df[flag_name]), flag_name] = 3
 
-        good_start = np.min(np.where(~np.isnan(variable.data)))
-        variable._df = variable._df.iloc[good_start:]
+        try:
+            good_start = np.min(np.where(~np.isnan(variable.data)))
+            variable._df = variable._df.iloc[good_start:]
+        except ValueError:
+            variable.write = False
+            print('Warning: no good data: {}'.format(variable.name))
 
         self.outputs[variable.name] = variable
 
