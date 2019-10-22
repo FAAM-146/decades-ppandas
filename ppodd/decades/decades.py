@@ -9,6 +9,8 @@ import os
 import numpy as np
 import pandas as pd
 
+from .backends import PandasInMemoryBackend
+
 
 class DecadesFile(object):
     def __init__(self, filepath):
@@ -167,7 +169,7 @@ class DecadesVariable(object):
 
 
 class DecadesDataset(object):
-    def __init__(self, date=None):
+    def __init__(self, date=None, backend=PandasInMemoryBackend):
 
         if date is None:
             raise ValueError('Flight date must be given')
@@ -183,6 +185,7 @@ class DecadesDataset(object):
         self._garbage_collect = False
         self._qa_dir = None
         self._takeoff_time = None
+        self._backend = backend()
 
         import ppodd.pod
         import ppodd.qa
@@ -194,17 +197,10 @@ class DecadesDataset(object):
 
     def __getitem__(self, item):
 
-        # When getting a variable, assign its dataframe (_df) attribute from
-        # it's parent dataset
-        for _var in self.inputs:
-            if _var.name == item:
-
-                if _var._df is None:
-                    _var._df = self._dataframes[
-                        _var.name.split('_')[0]
-                    ][_var.frequency][[_var.name]]
-
-                return _var
+        try:
+            return self._backend[item]
+        except KeyError:
+            pass
 
         for _var in self.outputs:
             if _var.name == item:
@@ -268,61 +264,11 @@ class DecadesDataset(object):
             variable: the DecadesVariable to add to this DecadesDataset.
         """
 
-        _var = None
-
-        _dlu = variable.name.split('_')[0]
-        _freq = variable.frequency
-
-        # If the variable index is not unique, select only the last entry.
-        if len(variable._df.index) != len(variable._df.index.unique()):
-            variable._df = variable._df.loc[~variable._df.duplicated(keep='last')]
-
-        if _dlu not in self._dataframes:
-            self._dataframes[_dlu] = {}
-
-        if variable.frequency not in self._dataframes[_dlu]:
-            # The dataframe for the current DLU at the current frequency does
-            # not yet exist, so we need to create it, using the variable
-            # dataframe
-            self._dataframes[_dlu][_freq] = variable._df
-
-        else:
-            # The dataframe does exist, so attempt to merge into it, assuming
-            # that the index in the variable is covered by that in the
-            # dataframe 
-            try:
-                self._dataframes[_dlu][_freq].loc[
-                    variable._df.index, variable.name
-                ] = variable._df[variable.name]
-
-            except KeyError:
-                # The dataframe does not include all of the indicies present in
-                # this variable, therefore we need to reindex
-
-                # Create the new index as the unique union between the
-                # dataframe and the variable. 
-                _index = self._dataframes[_dlu][_freq].index.union(
-                    variable.index).sort_values().unique()
-
-                # Reindex the dataframe
-                _df = self._dataframes[_dlu][_freq].reindex(_index)
-                self._dataframes[_dlu][_freq] = _df
-
-                # And merge in the variable
-                self._dataframes[_dlu][_freq].loc[
-                    variable._df.index, variable.name
-                ] = variable._df[variable.name]
-
-        # Once the variable has been merged into a dataset dataframe, it no
-        # longer needs to maintain its own internal dataframe
-        variable._df = None
-
-        # Append the variable to the list of dataset input variables
-        self.inputs.append(variable)
+        self._backend.add_input(variable)
 
     @property
     def variables(self):
-        return [i.name for i in self.inputs + self.outputs]
+        return self._backend.variables + [i.name for i in self.outputs]
 
     @property
     def files(self):
@@ -461,27 +407,8 @@ class DecadesDataset(object):
 
         required_inputs = self._get_required_data()
 
-        _copied_inputs = self.inputs.copy()
+        self._backend.collect_garbage(required_inputs)
 
-        for var in _copied_inputs:
-            if var.name not in required_inputs:
-
-                try:
-                    _dlu = var.name.split('_')[0]
-                except Exception:
-                    continue
-
-                _freq = var.frequency
-
-                self._dataframes[_dlu][_freq].drop(
-                    var.name, axis=1, inplace=True, errors='ignore'
-                )
-
-                print('Garbage collect: {}'.format(var.name))
-                self.inputs.remove(var)
-                del var
-
-        del _copied_inputs
         gc.collect()
 
     def run_qa(self):
@@ -518,11 +445,16 @@ class DecadesDataset(object):
             for mod in mods:
                 if mod.__name__ is modname:
                     _mod = mod(self)
-                    if _mod.ready():
+                    _mod_ready, _missing = _mod.ready()
+                    if _mod_ready:
                         _mod.process()
                         _mod.finalize()
                     else:
-                        print('Module {} not ready'.format(mod.__name__))
+                        print(
+                            ('Module {} not ready: '
+                             'inputs not available {}').format(
+                                 mod.__name__, ','.join(_missing))
+                        )
             return
 
         self.qa_modules = [qa(self) for qa in ppodd.qa.qa_modules]
@@ -544,7 +476,11 @@ class DecadesDataset(object):
 
             pp_module = self.pp_modules.popleft()
 
-            if not pp_module.ready():
+            _mod_ready, _missing = pp_module.ready()
+            if not _mod_ready:
+                print('{} not ready (missing {})'.format(
+                    pp_module, ', '.join(_missing)
+                ))
                 temp_modules.append(pp_module)
                 module_ran = True
                 continue
@@ -565,4 +501,3 @@ class DecadesDataset(object):
                 self.pp_modules.append(temp_modules.pop())
 
             self._collect_garbage()
-

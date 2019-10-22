@@ -159,11 +159,17 @@ class PPBase(abc.ABC):
         self.outputs[variable.name] = variable
 
     def ready(self):
+        _missing_variables = []
+
         for _name in self.inputs:
             _inputs = (
                 self.dataset.variables +
                 list(self.dataset.constants.keys())
             )
             if _name not in _inputs:
-                return False
-        return True
+                _missing_variables.append(_name)
+
+        if _missing_variables:
+            return False, _missing_variables
+
+        return True, None
