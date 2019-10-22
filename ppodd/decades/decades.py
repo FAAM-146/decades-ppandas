@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 
 from .backends import PandasInMemoryBackend
+from .flags import DecadesClassicFlag
 
 
 class DecadesFile(object):
@@ -31,6 +32,7 @@ class DecadesVariable(object):
 
     def __init__(self, *args, **kwargs):
         name = kwargs.pop('name', None)
+        self.flag = kwargs.pop('flag', DecadesClassicFlag)
 
         self.attrs = {
             '_FillValue': -9999.
@@ -48,36 +50,19 @@ class DecadesVariable(object):
         # We only want to be given at most two columns (variable, flag) and at
         # least one column (variable). Raise an error if this is not the case.
         _columns = [i for i in self._df]
-        if len(_columns) > 2:
+        if len(_columns) != 1:
             raise ValueError('Too many columns in instance DataFrame')
-        if len(_columns) < 1:
-            raise ValueError('Too few columns in instance DataFrame')
 
-        # If there's a column with FLAG in the name, then this is our flag
-        # variable.
-        try:
-            _flag_var = [i for i in _columns if 'FLAG' in i][0]
-            _columns.remove(_flag_var)
-            self.is_flagged = True
-        except (IndexError, TypeError) as e:
-            self.is_flagged = False
 
         # Deal with variable/instance naming. If no 'name' keyword is
         # specified, then insist that the variable and flag are consistently
         # named. Otherwise, rename both to be consistent with the kwarg.
         _var = _columns[0]
         if name is None:
-            if self.is_flagged and _var != _flag_var.replace('_FLAG', ''):
-                raise ValueError(
-                    ('Inconsistent variable/flag names. Expected '
-                     'VAR / VAR_FLAG')
-                )
             self.name = _var
         else:
             self.name = name
             _rename = {_var: name}
-            if self.is_flagged:
-                _rename[_flag_var] = '{}_FLAG'.format(name)
             self._df.rename(columns=_rename, inplace=True)
 
         self.write = write
@@ -105,9 +90,7 @@ class DecadesVariable(object):
             return self._df[self.name]
 
         if attr == 'flag':
-            if not self.is_flagged:
-                raise ValueError('Variable is not flagged.')
-            return self._df['{}_FLAG'.format(self.name)]
+            return self.flag
 
         return getattr(self._df, attr)
 
@@ -116,56 +99,6 @@ class DecadesVariable(object):
             self.attrs[attr] = value
         else:
             super(DecadesVariable, self).__setattr__(attr, value)
-
-    def add_flag(self, flag_data=None, method='merge'):
-        """
-        Add a flag to the DecadesVariable. If no flag_data is given, the flag
-        array is initialized to zero everywhere.
-
-        If the instance already has a flag variable, this can be replaced with
-        method='clobber' or merged with method='merge'. A merge is simply the
-        element-wise maximum of the existing flag and new flag data.
-
-        Kwargs:
-            flag_data: an iterable of flag data, which must be the same length
-                       as the variable data.
-            method: either 'merge' (default) or 'clobber'. Merge is an
-                    element-wise max with the current flag, clobber replaces
-                    the current flag if it exists.
-        """
-
-        _flag_name = '{}_FLAG'.format(self.name)
-
-        if flag_data is not None:
-            if len(flag_data) != len(self.data):
-                raise ValueError(
-                    'Flag data must be the same length as variable'
-                )
-
-            try:
-                flag_data = flag_data.values
-            except AttributeError:
-                pass
-
-        if _flag_name in self._df:
-            self.is_flagged = True
-            if flag_data is not None:
-                if method == 'merge':
-                    self._df[_flag_name] = np.fmax(flag_data, self.flag)
-                elif method == 'clobber':
-                    self._df[_flag_name] = flag_data.astype(np.int8)
-                else:
-                    raise ValueError('Unknown method: {}'.format(method))
-
-            return _flag_name
-
-        if flag_data is None:
-            self._df[_flag_name] = 0
-        else:
-            flag_data[~np.isfinite(flag_data)] = 3
-            self._df[_flag_name] = flag_data.astype(np.int8)
-        self.is_flagged = True
-        return _flag_name
 
 
 class DecadesDataset(object):
