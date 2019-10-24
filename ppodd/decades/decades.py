@@ -32,7 +32,7 @@ class DecadesVariable(object):
 
     def __init__(self, *args, **kwargs):
         name = kwargs.pop('name', None)
-        self.flag = kwargs.pop('flag', DecadesClassicFlag)
+        _flag = kwargs.pop('flag', DecadesClassicFlag)
 
         self.attrs = {
             '_FillValue': -9999.
@@ -68,6 +68,10 @@ class DecadesVariable(object):
         self.write = write
 
         self.attrs['ancillary_variables'] = '{}_FLAG'.format(self.name)
+        self.flag = _flag(self)
+
+    def __len__(self):
+        return len(self._df)
 
     def __str__(self):
         return 'DecadesVariable: {}'.format(self.name)

@@ -1,15 +1,15 @@
-import abc
-
 import numpy as np
 import pandas as pd
 
 
+__all__ = ('DecadesClassicFlag', 'DecadesBitmaskFlag')
+
 REPLACE = 'replace'
 MAXIMUM = 'maximum'
 
-class DecadesFlagABC(abc.ABC):
+class DecadesFlagABC(object):
     """
-    Abstract Base Class for Decades Flagging.
+    Almost Abstract Base Class for Decades Flagging.
     """
 
     def __init__(self, var):
@@ -25,7 +25,6 @@ class DecadesFlagABC(abc.ABC):
         self._var = var
         self._long_name = f'Flag for {var.name}'
 
-    @abc.abstractmethod
     def cfattrs(self):
         """
         Return a dict of flag attributes for cf compliant netCDF files.
@@ -100,7 +99,7 @@ class DecadesClassicFlag(DecadesFlagABC):
             value: the value of a flag to assign a meaning
             meaning: a string describing the cause of flag value value
         """
-        self.meanings[value] = meaning
+        self.meanings[value] = meaning.replace(' ', '_').lower()
 
     def add_flag(self, flag, method=MAXIMUM):
         """
@@ -134,7 +133,7 @@ class DecadesClassicFlag(DecadesFlagABC):
 
 class DecadesBitmaskFlag(DecadesFlagABC):
     """
-    DecadesBitMaskFlag. Defines a strategy that allows multiple mask (boolean)
+    DecadesBitmaskFlag. Defines a strategy that allows multiple mask (boolean)
     flags to be used in a single flag variable.
     """
 
@@ -148,12 +147,12 @@ class DecadesBitmaskFlag(DecadesFlagABC):
 
         _masks = self.masks
 
-        _flag_vals = np.zeros_like(self._df.index)
+        _flag_vals = np.zeros((len(self._df.index),))
 
         for i, meaning in enumerate(_meanings):
-            _flag_vals += _masks[i] * self._df[meaning].astype(np.int8)
+            _flag_vals += _masks[i] * self._df[meaning]
 
-        return pd.Series(_flag_vals, index=self._df.index)
+        return pd.Series(_flag_vals.astype(np.int8), index=self._df.index)
 
     @property
     def masks(self):

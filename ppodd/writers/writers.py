@@ -101,7 +101,7 @@ class NetCDFWriter(DecadesWriter):
 
             ncflag = nc.createVariable(
                 '{}_FLAG'.format(var.name),
-                np.int8, ('Time',), fill_value=-1
+                np.int8, ('Time',), fill_value=var.flag.cfattrs['_FillValue']
             )
         else:
             ncvar = nc.createVariable(
@@ -111,7 +111,8 @@ class NetCDFWriter(DecadesWriter):
 
             ncflag = nc.createVariable(
                 '{}_FLAG'.format(var.name), np.int8,
-                ('Time', 'sps{0:02d}'.format(_freq)), fill_value=-1
+                ('Time', 'sps{0:02d}'.format(_freq)),
+                fill_value=var.flag.cfattrs['_FillValue']
             )
 
         # Write variable attributes, excluding _FillValue, which must be given
@@ -122,7 +123,11 @@ class NetCDFWriter(DecadesWriter):
             setattr(ncvar, attr_key, attr_val)
 
         # Add a few required attributes to the flag variable.
-        ncflag.standard_name = 'status_flag'
+        # ncflag.standard_name = 'status_flag'
+        for attr_key, attr_val in var.flag.cfattrs.items():
+            if attr_key is '_FillValue' or attr_val is None:
+                continue
+            setattr(ncflag, attr_key, attr_val)
 
         # Create a new DatetimeIndex to interpolate to, given frequency
         _end = self.end_time - datetime.timedelta(seconds=1/_freq)
@@ -138,8 +143,8 @@ class NetCDFWriter(DecadesWriter):
             # reindex, filling any missing data with _FillValue, and flagging
             # as a 3
             _data = var.data.reindex(_index).fillna(var.attrs['_FillValue'])
-            _flag = var.flag.reindex(_index)
-            _flag.loc[~np.isfinite(_flag)] = 3
+            _flag = var.flag().reindex(_index)
+            #_flag.loc[~np.isfinite(_flag)] = 3
         else:
             # Variable and flag must be resampled to bring onto the correct
             # frequency and then reindexed. Apply a mean to the data and a pad
@@ -148,7 +153,7 @@ class NetCDFWriter(DecadesWriter):
                 pd_freq[_freq], limit=var.frequency-1
             ).apply('mean').reindex(_index)
 
-            _flag = var.flag.resample(
+            _flag = var.flag().resample(
                 pd_freq[_freq], limit=var.frequency-1
             ).pad().reindex(_index)
 

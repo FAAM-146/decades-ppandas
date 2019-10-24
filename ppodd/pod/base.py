@@ -139,15 +139,15 @@ class PPBase(abc.ABC):
         for item, value in self.declarations[variable.name].items():
             setattr(variable, item, value)
 
-        flag_name = variable.add_flag()
-        if flag is not None:
-            variable.flag = flag
+ #       flag_name = variable.add_flag()
+ #       if flag is not None:
+ #           variable.flag = flag
 
-        # Force the variable to the declared frequency
-        variable._df = variable._df.asfreq(pd_freq[variable.frequency])
+ #       # Force the variable to the declared frequency
+ #       variable._df = variable._df.asfreq(pd_freq[variable.frequency])
 
-        # Flag any gaps caused by asfreq as 3
-        variable._df.loc[~np.isfinite(variable._df[flag_name]), flag_name] = 3
+ #       # Flag any gaps caused by asfreq as 3
+ #       variable._df.loc[~np.isfinite(variable._df[flag_name]), flag_name] = 3
 
         try:
             good_start = np.min(np.where(~np.isnan(variable.data)))
