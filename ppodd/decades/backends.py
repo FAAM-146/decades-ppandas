@@ -36,6 +36,10 @@ class PandasInMemoryBackend(DecadesBackend):
         _dlu = self._dlu_from_variable(variable)
         _freq = variable.frequency
 
+        # If there are entries with duplicate timestamps, only accept the final
+        # one
+        variable._df = variable._df.groupby(variable._df.index).last()
+
         if _dlu not in self._dataframes:
             self._dataframes[_dlu] = {}
 
