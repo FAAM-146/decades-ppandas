@@ -36,10 +36,6 @@ class PandasInMemoryBackend(DecadesBackend):
         _dlu = self._dlu_from_variable(variable)
         _freq = variable.frequency
 
-       # If the variable index is not unique, select only the last entry.
-        if len(variable._df.index) != len(variable._df.index.unique()):
-            variable._df = variable._df.loc[~variable._df.duplicated(keep='last')]
-
         if _dlu not in self._dataframes:
             self._dataframes[_dlu] = {}
 
