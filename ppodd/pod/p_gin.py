@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from ..decades import DecadesVariable
+from ..decades import DecadesVariable, DecadesBitmaskFlag
 from .base import PPBase
 
 
@@ -196,15 +196,20 @@ class Gin(PPBase):
             print('Warning: GIN_HDG_OFFSET not defined')
 
         flag = np.around(self.d['GINDAT_status'] / 3)
-        flag.loc[self.d['GINDAT_lon'] == 0 & (flag < 2)] = 2
-        flag.loc[self.d['GINDAT_lon'] == 0 & (flag < 2)] = 2
+
+        self.d['STATUS_FLAG'] = self.d['GINDAT_status'] != 0
+        self.d['ZERO_FLAG'] = (
+            (self.d['GINDAT_lon'] == 0) & (self.d['GINDAT_lat'] == 0)
+        )
 
         for declaration in self.declarations:
             input_name = 'GINDAT_{}'.format(declaration.split('_')[0].lower())
 
             self.d[declaration] = self.d[input_name]
 
-            dv = DecadesVariable(self.d[declaration])
-            dv.add_flag(flag)
+            dv = DecadesVariable(self.d[declaration], flag=DecadesBitmaskFlag)
+
+            dv.flag.add_mask(self.d.STATUS_FLAG, 'gin status nonzero')
+            dv.flag.add_mask(self.d.ZERO_FLAG, 'latlon identically zero')
 
             self.add_output(dv)
