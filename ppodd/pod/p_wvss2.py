@@ -3,7 +3,8 @@ from collections import OrderedDict
 import numpy as np
 import pandas as pd
 
-from ..decades import DecadesVariable
+from ..decades import DecadesVariable, DecadesBitmaskFlag
+from ..decades import flags
 from .base import PPBase
 
 parameters = OrderedDict()
@@ -105,16 +106,27 @@ class WVSS2(object):
             _key = 'WVSS2{}_{}'.format(self._ident, name)
             _vmr_key = 'WVSS2{}_VMR'.format(self._ident)
 
-            # Flagging generally 1, or 3 where data is missing.
-            interp_df['FLAG'] = 1
+            interp_df['CALIBRATED_FLAG'] = 1
+            interp_df['VMR_RANGE_FLAG'] = 0
+            interp_df['DATA_MISSING_FLAG'] = 0
 
             # Flag VMR outside the design specifications of the instrument
             if _key is _vmr_key:
-                interp_df.loc[interp_df[_key] > VMR_VALID_MAX] = 2
-                interp_df.loc[interp_df[_key] < VMR_VALID_MIN] = 2
-            interp_df.loc[~np.isfinite(interp_df[_key]), 'FLAG'] = 3
 
-            var = DecadesVariable(interp_df[_key], name=_key)
+                interp_df.loc[
+                    interp_df[_key] > VMR_VALID_MAX, 'VMR_RANGE_FLAG'
+                ] = 1
+
+                interp_df.loc[
+                    interp_df[_key] < VMR_VALID_MIN, 'VMR_RANGE_FLAG'
+                ] = 1
+
+            interp_df.loc[
+                ~np.isfinite(interp_df[_key]), 'DATA_MISSING_FLAG'
+            ] = 3
+
+            var = DecadesVariable(interp_df[_key], name=_key,
+                                  flag=DecadesBitmaskFlag)
 
             # Fill in the gaps of the long_name attribute
             long_name = self.declarations[var.name]['long_name']
@@ -124,7 +136,10 @@ class WVSS2(object):
             )
             self.declarations[var.name]['long_name'] = long_name
 
-            var.add_flag(interp_df.FLAG)
+            var.flag.add_mask(interp_df.CALIBRATED_FLAG, 'data uncalibrated')
+            if _key == _vmr_key:
+                var.flag.add_mask(interp_df.VMR_RANGE_FLAG, flags.OUT_RANGE)
+            var.flag.add_mask(interp_df.DATA_MISSING_FLAG, flags.DATA_MISSING)
 
             self.add_output(var)
 
