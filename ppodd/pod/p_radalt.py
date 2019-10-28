@@ -1,4 +1,5 @@
-from ..decades import DecadesVariable
+from ..decades import DecadesVariable, DecadesBitmaskFlag
+from ..decades import flags
 from ..utils.conversions import feet_to_metres
 from ..utils.constants import RADALT_MIN, RADALT_MAX
 from .base import PPBase
@@ -34,6 +35,6 @@ class RadAlt(PPBase):
 
         self.flag()
 
-        dv = DecadesVariable(d['HGT_RADR'])
-        dv.add_flag(d['RANGE_FLAG'])
+        dv = DecadesVariable(d['HGT_RADR'], flag=DecadesBitmaskFlag)
+        dv.flag.add_mask(d['RANGE_FLAG'], flags.OUT_RANGE)
         self.add_output(dv)
