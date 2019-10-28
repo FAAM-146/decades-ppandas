@@ -1,6 +1,6 @@
 import numpy as np
 
-from ..decades import DecadesVariable
+from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..utils.calcs import sp_mach
 from ..utils.constants import SPEED_OF_SOUND, ICAO_STD_TEMP, ICAO_STD_PRESS
 from .base import PPBase
@@ -69,9 +69,9 @@ class AirSpeed(PPBase):
         self.calc_ias()
         self.calc_tas()
 
-        ias = DecadesVariable(self.d['IAS_RVSM'])
-        tas = DecadesVariable(self.d['TAS_RVSM'])
+        ias = DecadesVariable(self.d['IAS_RVSM'], flag=DecadesBitmaskFlag)
+        tas = DecadesVariable(self.d['TAS_RVSM'], flag=DecadesBitmaskFlag)
 
         for _var in (ias, tas):
-            _var.add_flag(self.d['MACHNO_FLAG'])
+            _var.flag.add_mask(self.d['MACHNO_FLAG'], 'mach out of range')
             self.add_output(_var)
