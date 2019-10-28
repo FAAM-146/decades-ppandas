@@ -1,6 +1,7 @@
 import numpy as np
 
-from ..decades import DecadesVariable
+from ..decades import DecadesVariable, DecadesBitmaskFlag
+from ..decades import flags
 from .base import PPBase
 
 class S9Pressure(PPBase):
@@ -51,6 +52,6 @@ class S9Pressure(PPBase):
 
         self.bounds_flag()
 
-        s9 = DecadesVariable(self.d['P9_STAT'])
-        s9.add_flag(self.d['BOUNDS_FLAG'])
+        s9 = DecadesVariable(self.d['P9_STAT'], flag=DecadesBitmaskFlag)
+        s9.flag.add_mask(self.d['BOUNDS_FLAG'], flags.OUT_RANGE)
         self.add_output(s9)
