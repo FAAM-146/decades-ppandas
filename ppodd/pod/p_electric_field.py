@@ -1,3 +1,5 @@
+import numpy as np
+
 from ..decades import DecadesVariable
 from .base import PPBase
 
@@ -19,7 +21,11 @@ class ElectricFieldJci140(PPBase):
     def process(self):
         self.get_dataframe()
         df = self.d.asfreq('1S')
-        df['EXX_JCI'] = df['PRTAFT_jci140_signal']
-        df['EXX_JCI_FLAG'] = 3
 
-        self.add_output(DecadesVariable(df[['EXX_JCI', 'EXX_JCI_FLAG']]))
+        output = DecadesVariable(df['PRTAFT_jci140_signal'], name='EXX_JCI')
+
+        output.flag.add_meaning(0, 'not flagged')
+        output.flag.add_meaning(1, 'uncalibrated counts')
+        output.flag.add_flag(np.ones((len(output),)))
+
+        self.add_output(output)
