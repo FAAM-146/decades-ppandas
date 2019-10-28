@@ -23,7 +23,8 @@ class SignalRegister(PPBase):
             'SREG',
             frequency=2,
             number=27,
-            long_name='Signal Register'
+            long_name='Signal Register',
+            write=False
         )
 
     def process(self):
