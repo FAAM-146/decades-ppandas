@@ -1,4 +1,4 @@
-from ..decades import DecadesVariable
+from ..decades import DecadesVariable, DecadesBitmaskFlag
 from .base import PPBase
 
 class CPC(PPBase):
@@ -38,13 +38,13 @@ class CPC(PPBase):
         d.loc[d['CPC378_optics_temp'] < 40.5, 'OPTICS_TEMP_FLAG'] = 1
         d.loc[d['CPC378_optics_temp'] > 49.5, 'OPTICS_TEMP_FLAG'] = 1
 
-        d.loc[d['CPC378_sample_flow'] < 270, 'SAMPLE_FLOW_FLAG'] = 2
-        d.loc[d['CPC378_sample_flow'] > 330, 'SAMPLE_FLOW_FLAG'] = 2
+        d.loc[d['CPC378_sample_flow'] < 270, 'SAMPLE_FLOW_FLAG'] = 1
+        d.loc[d['CPC378_sample_flow'] > 330, 'SAMPLE_FLOW_FLAG'] = 1
 
-        d.loc[d['CPC378_sheath_flow'] < 270, 'SHEATH_FLOW_FLAG'] = 3
-        d.loc[d['CPC378_sheath_flow'] > 330, 'SHEATH_FLOW_FLAG'] = 3
+        d.loc[d['CPC378_sheath_flow'] < 270, 'SHEATH_FLOW_FLAG'] = 1
+        d.loc[d['CPC378_sheath_flow'] > 330, 'SHEATH_FLOW_FLAG'] = 1
 
-        d.loc[d['CPC378_counts'] >= 1e6, 'SATURATED_FLAG'] = 2
+        d.loc[d['CPC378_counts'] >= 1e6, 'SATURATED_FLAG'] = 1
 
 
     def process(self):
@@ -53,12 +53,14 @@ class CPC(PPBase):
 
         self.flag()
 
-        dv = DecadesVariable(d['CPC378_counts'], name='CPC_CNTS')
+        dv = DecadesVariable(d['CPC378_counts'], name='CPC_CNTS',
+                             flag=DecadesBitmaskFlag)
 
-        for flag in ['SATURATOR_TEMP_FLAG', 'GROWTH_TUBE_FLAG',
-                     'OPTICS_TEMP_FLAG', 'SAMPLE_FLOW_FLAG',
-                     'SHEATH_FLOW_FLAG', 'SATURATED_FLAG']:
-
-            dv.add_flag(d[flag])
+        dv.flag.add_mask(d['SATURATOR_TEMP_FLAG'], 'saturator over temp')
+        dv.flag.add_mask(d['GROWTH_TUBE_FLAG'], 'growth tube temp out of range')
+        dv.flag.add_mask(d['OPTICS_TEMP_FLAG'], 'optics temp out of range')
+        dv.flag.add_mask(d['SAMPLE_FLOW_FLAG'], 'sample flow out of range')
+        dv.flag.add_mask(d['SHEATH_FLOW_FLAG'], 'sheath flow out of range')
+        dv.flag.add_mask(d['SATURATED_FLAG'], 'counter saturated')
 
         self.add_output(dv)
