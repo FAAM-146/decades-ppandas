@@ -1,6 +1,7 @@
 import numpy as np
 
-from ..decades import DecadesVariable
+from ..decades import DecadesVariable, DecadesBitmaskFlag
+from ..decades import flags
 from .base import PPBase
 from ..utils.constants import STEF_BOLTZ
 
@@ -125,11 +126,15 @@ class KippZonenPyrgeometer(PPBase):
         d.loc[d.WOW_IND == 1, 'WOW_FLAG'] = 1
 
         # Create output variables
-        ir_up = DecadesVariable(upp_l_d, name='IR_UP_C')
-        ir_up.add_flag(d['WOW_FLAG'])
+        ir_up = DecadesVariable(
+            upp_l_d, name='IR_UP_C', flag=DecadesBitmaskFlag
+        )
+        ir_up.flag.add_mask(d['WOW_FLAG'], flags.WOW)
 
-        ir_dn = DecadesVariable(low_l_d, name='IR_DN_C')
-        ir_dn.add_flag(d['WOW_FLAG'])
+        ir_dn = DecadesVariable(
+            low_l_d, name='IR_DN_C', flag=DecadesBitmaskFlag
+        )
+        ir_dn.flag.add_mask(d['WOW_FLAG'], flags.WOW)
 
         self.add_output(ir_up)
         self.add_output(ir_dn)
