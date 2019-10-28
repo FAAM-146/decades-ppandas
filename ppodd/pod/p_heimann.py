@@ -1,6 +1,7 @@
 import numpy as np
 
-from ..decades import DecadesVariable
+from ..decades import DecadesVariable, DecadesBitmaskFlag
+from ..decades import flags
 from ..utils.conversions import celsius_to_kelvin
 from .base import PPBase
 
@@ -49,19 +50,22 @@ class Heimann(PPBase):
         Create a flag for Heimann temperature.
 
         Flagging regime:
-            In calibration              -> 3
-            Data missing                -> 3
-            Aircraft on ground          -> 2
-            Aata outside user limits    -> 1
+            In calibration
+            Data missing
+            Aircraft on ground
+            Aata outside user limits
         """
 
-        self.d['FLAG'] = 0
+        self.d['RANGE_FLAG'] = 0
+        self.d['WOW_FLAG'] = 0
+        self.d['CAL_FLAG'] = 0
+        self.d['MISSING_FLAG'] = 0
 
-        self.d.loc[self.d.BTHEIM_U < self.VALID_MIN, 'FLAG'] = 1
-        self.d.loc[self.d.BTHEIM_U > self.VALID_MAX, 'FLAG'] = 1
-        self.d.loc[self.d.WOW_IND == 1, 'FLAG'] = 2
-        self.d.loc[self.d.INCAL == 1, 'FLAG'] = 3
-        self.d.loc[~np.isfinite(self.d.BTHEIM_U), 'FLAG'] = 3
+        self.d.loc[self.d.BTHEIM_U < self.VALID_MIN, 'RANGE_FLAG'] = 1
+        self.d.loc[self.d.BTHEIM_U > self.VALID_MAX, 'RANGE_FLAG'] = 1
+        self.d.loc[self.d.WOW_IND == 1, 'WOW_FLAG'] = 1
+        self.d.loc[self.d.INCAL == 1, 'CAL_FLAG'] = 1
+        self.d.loc[~np.isfinite(self.d.BTHEIM_U), 'MISSING FLAG'] = 1
 
     def process(self):
         """
@@ -105,7 +109,11 @@ class Heimann(PPBase):
         # Create data flags
         self.flag()
 
-        heimann = DecadesVariable(combined)
-        heimann.add_flag(self.d.FLAG)
+        heimann = DecadesVariable(combined, flag=DecadesBitmaskFlag)
+
+        heimann.flag.add_mask(self.d.WOW_FLAG, flags.WOW)
+        heimann.flag.add_mask(self.d.RANGE_FLAG, flags.OUT_RANGE)
+        heimann.flag.add_mask(self.d.CAL_FLAG, flags.CALIBRATION)
+        heimann.flag.add_mask(self.d.MISSING_FLAG, flags.DATA_MISSING)
 
         self.add_output(heimann)
