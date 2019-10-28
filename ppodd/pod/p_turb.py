@@ -1,7 +1,8 @@
 import numpy as np
 import pandas as pd
 
-from ..decades import DecadesVariable
+from ..decades import DecadesVariable, DecadesBitmaskFlag
+from ..decades import flags
 from ..utils import get_range_flag
 from ..utils.calcs import sp_mach
 from .base import PPBase
@@ -177,19 +178,23 @@ class TurbProbe(PPBase):
         aoss = aoss * self.dataset['BET1'] + self.dataset['BET0']
 
         aoa_out = DecadesVariable(
-            pd.Series(aoa, index=d.index), name='AOA'
+            pd.Series(aoa, index=d.index), name='AOA',
+            flag=DecadesBitmaskFlag
         )
 
         aoss_out = DecadesVariable(
-            pd.Series(aoss, index=d.index), name='AOSS'
+            pd.Series(aoss, index=d.index), name='AOSS',
+            flag=DecadesBitmaskFlag
         )
 
         tas_out = DecadesVariable(
-            pd.Series(tas, index=d.index), name='TAS'
+            pd.Series(tas, index=d.index), name='TAS',
+            flag=DecadesBitmaskFlag
         )
 
         psp_turb_out = DecadesVariable(
-            pd.Series(q, index=d.index), name='PSP_TURB'
+            pd.Series(q, index=d.index), name='PSP_TURB',
+            flag=DecadesBitmaskFlag
         )
 
         # Get out-of-range flags
@@ -198,14 +203,14 @@ class TurbProbe(PPBase):
         aoss_flag = get_range_flag(aoss, (-5, 5))
 
         # Add flags to variables
-        aoa_out.add_flag(aoa_flag)
-        aoa_out.add_flag(tas_flag)
-        aoa_out.add_flag(mach_flag)
-        aoss_out.add_flag(aoss_flag)
-        aoss_out.add_flag(tas_flag)
-        aoss_out.add_flag(mach_flag)
-        tas_out.add_flag(tas_flag)
-        psp_turb_out.add_flag(tas_flag)
+        aoa_out.flag.add_mask(aoa_flag, 'aoa out of range')
+        aoa_out.flag.add_mask(tas_flag, 'tas out of range')
+        aoa_out.flag.add_mask(mach_flag, 'mach out of range')
+        aoss_out.flag.add_mask(aoss_flag, 'aoss out of range')
+        aoss_out.flag.add_mask(tas_flag, 'tas out of range')
+        aoss_out.flag.add_mask(mach_flag, 'mach out of range')
+        tas_out.flag.add_mask(tas_flag, flags.OUT_RANGE)
+        psp_turb_out.flag.add_mask(tas_flag, 'tas out of range')
 
         # Add outputs to the dataset
         self.add_output(aoa_out)
