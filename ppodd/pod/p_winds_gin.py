@@ -1,8 +1,10 @@
 import pandas as pd
 import numpy as np
 
-from ..decades import DecadesVariable
+from ..decades import DecadesVariable, DecadesBitmaskFlag
 from .base import PPBase
+
+ROLL_THRESH = 2
 
 
 class GINWinds(PPBase):
@@ -87,5 +89,14 @@ class GINWinds(PPBase):
         self.correct_tas_rvsm()
         self.calc_noturb_wspd()
 
-        self.add_output(DecadesVariable(self.d.U_NOTURB, name='U_NOTURB'))
-        self.add_output(DecadesVariable(self.d.V_NOTURB, name='V_NOTURB'))
+        u = DecadesVariable(self.d.U_NOTURB, flag=DecadesBitmaskFlag)
+        v = DecadesVariable(self.d.V_NOTURB, flag=DecadesBitmaskFlag)
+
+        for var in (u, v):
+            var.flag.add_mask(
+                self.d.ROLL_GIN > ROLL_THRESH,
+                'roll exceeds threshold'
+            )
+
+            self.add_output(var)
+
