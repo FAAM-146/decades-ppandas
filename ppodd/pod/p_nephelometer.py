@@ -21,6 +21,10 @@ class Nephelometer(PPBase):
 
     def declare_outputs(self):
 
+        # Instrument is perm U/S, but we're going to hold on the the code until
+        # we get a new one
+        return
+
         self.declare(
             'NEPH_PR',
             units='hPa',
@@ -164,6 +168,10 @@ class Nephelometer(PPBase):
 
 
     def process(self):
+        # Instrument is perm U/S, but we're going to hold on the the code until
+        # we get a new one
+        return
+
         self.get_dataframe()
         self.flag()
 
