@@ -7,6 +7,12 @@ __all__ = ('DecadesClassicFlag', 'DecadesBitmaskFlag')
 REPLACE = 'replace'
 MAXIMUM = 'maximum'
 
+CALIBRATION = 'in_calibration'
+DATA_GOOD = 'data_good'
+DATA_MISSING = 'data_missing'
+OUT_RANGE = 'data_out_of_range'
+WOW = 'aircraft_on_ground'
+
 class DecadesFlagABC(object):
     """
     Almost Abstract Base Class for Decades Flagging.
