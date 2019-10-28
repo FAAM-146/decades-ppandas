@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from ..decades import DecadesVariable
+from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..utils.calcs import sp_mach, true_air_temp
 from ..utils.conversions import celsius_to_kelvin
 from .base import PPBase
@@ -199,17 +199,20 @@ class RosemountTemperatures(PPBase):
         self.calc_di_tat()
         self.flag_delta_t()
 
-        tat_nd = DecadesVariable(self.d['TAT_ND_R'])
-        tat_di = DecadesVariable(self.d['TAT_DI_R'])
+        tat_nd = DecadesVariable(self.d['TAT_ND_R'], flag=DecadesBitmaskFlag)
+        tat_di = DecadesVariable(self.d['TAT_DI_R'], flag=DecadesBitmaskFlag)
 
-        iat_nd = DecadesVariable(self.d['IAT_ND_R'])
-        iat_di = DecadesVariable(self.d['IAT_DI_R'])
+        iat_nd = DecadesVariable(self.d['IAT_ND_R'], flag=DecadesBitmaskFlag)
+        iat_di = DecadesVariable(self.d['IAT_DI_R'], flag=DecadesBitmaskFlag)
 
         for tat in (tat_nd, tat_di):
-            tat.add_flag(self.d['MACHNO_FLAG'])
-            tat.add_flag(self.d['DT_FLAG'])
+            tat.flag.add_mask(self.d['MACHNO_FLAG'], 'mach_out_of_range')
+            tat.flag.add_mask(
+                self.d['DT_FLAG'],
+                'discrepancy_between_temperatures'
+            )
             self.add_output(tat)
 
         for iat in (iat_nd, iat_di):
-            iat.add_flag(self.d['MACHNO_FLAG'])
+            iat.flag.add_mask(self.d['MACHNO_FLAG'], 'mach_out_of_range')
             self.add_output(iat)
