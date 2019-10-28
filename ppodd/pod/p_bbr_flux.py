@@ -1,9 +1,25 @@
 import numpy as np
 
 from .base import PPBase
-from ..decades import DecadesVariable
+from ..decades import DecadesVariable, DecadesBitmaskFlag
 
 import matplotlib.pyplot as plt
+
+ROLL_LIMIT = 7.
+SUN_ANGLE_MAX = 80.
+
+FLUX_LIMITS = {
+    'UP_SW_MAX': 1380.,
+    'UP_RED_MAX': 700.,
+    'DN_SW_MAX': 1380.,
+    'DN_RED_MAX': 700.,
+
+    'UP_SW_MIN': -20.,
+    'UP_RED_MIN': -20.,
+    'DN_SW_MIN': -20.,
+    'DN_RED_MIN': -20.
+}
+
 
 class BBRFlux(PPBase):
 
@@ -33,16 +49,6 @@ class BBRFlux(PPBase):
             long_name='Corrected downward short wave irradiance, red dome'
         )
 
-        if False:
-            # Masked as we now only run KippZonen Pyrgeometers
-            self.declare(
-                'IR_DN_C',
-                units='W m-2',
-                frequency=1,
-                number=1021,
-                long_name='Corrected downward long wave irradiance'
-            )
-
         self.declare(
             'SW_UP_C',
             units='W m-2',
@@ -59,16 +65,6 @@ class BBRFlux(PPBase):
             number=1020,
             long_name='Corrected upward short wave irradiance, red dome'
         )
-
-        if False:
-            # Masked as we now only run KippZonen Pyrgeometers
-            self.declare(
-                'IR_UP_C',
-                units='W m-2',
-                frequency=1,
-                number=1021,
-                long_name='Corrected upward long wave irradiance'
-            )
 
     def corr_thm(self, therm):
         """
@@ -152,6 +148,8 @@ class BBRFlux(PPBase):
                     np.cos(d.SUNHDG)
                 )
 
+                beta = np.arccos(cos_beta)
+
                 _flux = '{}{}_flux'.format(pos, dome)
 
                 # Thermisor corrections for linearity
@@ -191,11 +189,49 @@ class BBRFlux(PPBase):
 
                     d[_flux].loc[d[_flux] > fcritval] = _above_crit.loc[d[_flux] > fcritval]
 
-        # Create and add outputs
-        sw_dn_c = DecadesVariable(d['UP1_flux'], name='SW_DN_C')
-        sw_up_c = DecadesVariable(d['LP1_flux'], name='SW_UP_C')
-        red_dn_c = DecadesVariable(d['UP2_flux'], name='RED_DN_C')
-        red_up_c = DecadesVariable(d['LP2_flux'], name='RED_UP_C')
 
-        for var in (sw_up_c, sw_dn_c, red_up_c, red_dn_c):
-            self.add_output(var)
+                output_dome_dict = {
+                    'P1': 'SW',
+                    'P2': 'RED'
+                }
+
+                output_pos_dict = {
+                    'U': 'DN',
+                    'L': 'UP'
+                }
+
+                output_name = '{wavelength}_{pos}_C'.format(
+                    wavelength=output_dome_dict[dome],
+                    pos=output_pos_dict[pos]
+                )
+
+                # Create and add outputs
+                output = DecadesVariable(d[_flux], name=output_name,
+                                         flag=DecadesBitmaskFlag)
+
+                output.flag.add_mask(
+                    np.abs(d.ROLL_GIN_rmean) >= ROLL_LIMIT,
+                    'roll limit exceeded'
+                )
+
+                output.flag.add_mask(
+                    beta > SUN_ANGLE_MAX / deg2rad,
+                    'low sun angle'
+                )
+
+                flux_limit_lo = FLUX_LIMITS['{}_{}_MIN'.format(
+                    output_pos_dict[pos],
+                    output_dome_dict[dome]
+                )]
+
+                flux_limit_hi = FLUX_LIMITS['{}_{}_MAX'.format(
+                    output_pos_dict[pos],
+                    output_dome_dict[dome]
+                )]
+
+                output.flag.add_mask(
+                    (d[_flux] < flux_limit_lo) | (d[_flux] > flux_limit_hi),
+                    'flux out of range'
+                )
+
+                self.add_output(output)
