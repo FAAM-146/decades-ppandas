@@ -1,6 +1,7 @@
 import numpy as np
 
 from ..decades import DecadesVariable
+from ..decades import flags
 from .base import PPBase
 
 
@@ -68,9 +69,9 @@ class TPress(PPBase):
 
     def get_range_flag(self, var, limits):
         flag = np.zeros_like(self.d[var])
-        flag[self.d[var] < limits[0]] = 2
-        flag[self.d[var] > limits[1]] = 2
-        flag[self.d[var] == 0] = 3
+        flag[self.d[var] < limits[0]] = 1
+        flag[self.d[var] > limits[1]] = 1
+        flag[self.d[var] == 0] = 1
         return flag
 
     def process(self):
@@ -104,21 +105,31 @@ class TPress(PPBase):
         tbpd_flag = self.get_range_flag('TBPD', (50, 200))
 
         p0_s10_out = DecadesVariable(d.P0_S10)
-        p0_s10_out.add_flag(p0_s10_flag)
+        p0_s10_out.flag.add_meaning(0, flags.DATA_GOOD)
+        p0_s10_out.flag.add_meaning(1, flags.OUT_RANGE)
+        p0_s10_out.flag.add_flag(p0_s10_flag)
         self.add_output(p0_s10_out)
 
         pa_turb_out = DecadesVariable(d.PA_TURB)
-        pa_turb_out.add_flag(pa_turb_flag)
+        pa_turb_out.flag.add_meaning(0, flags.DATA_GOOD)
+        pa_turb_out.flag.add_meaning(1, flags.OUT_RANGE)
+        pa_turb_out.flag.add_flag(pa_turb_flag)
         self.add_output(pa_turb_out)
 
         pb_turb_out = DecadesVariable(d.PB_TURB)
-        pb_turb_out.add_flag(pb_turb_flag)
+        pb_turb_out.flag.add_meaning(0, flags.DATA_GOOD)
+        pb_turb_out.flag.add_meaning(1, flags.OUT_RANGE)
+        pb_turb_out.flag.add_flag(pb_turb_flag)
         self.add_output(pb_turb_out)
 
         tbpc_out = DecadesVariable(d.TBPC)
-        tbpc_out.add_flag(tbpc_flag)
+        tbpc_out.flag.add_meaning(0, flags.DATA_GOOD)
+        tbpc_out.flag.add_meaning(1, flags.OUT_RANGE)
+        tbpc_out.flag.add_flag(tbpc_flag)
         self.add_output(tbpc_out)
 
         tbpd_out = DecadesVariable(d.TBPD)
-        tbpd_out.add_flag(tbpd_flag)
+        tbpd_out.flag.add_meaning(0, flags.DATA_GOOD)
+        tbpd_out.flag.add_meaning(1, flags.OUT_RANGE)
+        tbpd_out.flag.add_flag(tbpd_flag)
         self.add_output(tbpd_out)
