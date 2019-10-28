@@ -330,6 +330,7 @@ class BuckCR2(PPBase):
 
     def get_flag(self, buck_mirr_flag, buck_dewpoint_flag):
         flag = np.zeros(buck_mirr_flag.size, dtype=np.int)
+        flag[buck_dewpoint_flag == 0] = 1
         flag[buck_mirr_flag == 1] = 2
         flag[buck_dewpoint_flag == 2] = 3
         return flag
@@ -423,7 +424,7 @@ class BuckCR2(PPBase):
 
         # Get the flagging array
         flag = self.get_flag(buck_mirr_cln_flag, buck_dewpoint_flag)
-        flag[~np.isfinite(buck_mirr_temp)] = 3
+        flag[~np.isfinite(buck_mirr_temp)] = 4
 
         _index = self.d.index
 
@@ -454,5 +455,11 @@ class BuckCR2(PPBase):
 
         # Add flag to outputs and add to the dataset
         for dv in (vmr_buck, vmr_unc, tdew_cr2, tdew_c_u, tdewcr2c):
-            dv.add_flag(flag)
+            dv.flag.add_meaning(0, 'data good')
+            dv.flag.add_meaning(1, 'not controlling')
+            dv.flag.add_meaning(2, 'mirror contaminated')
+            dv.flag.add_meaning(3, 'in balance cycle')
+            dv.flag.add_meaning(4, 'data missing')
+
+            dv.flag.add_flag(flag)
             self.add_output(dv)
