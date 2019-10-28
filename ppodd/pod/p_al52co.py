@@ -1,7 +1,8 @@
 import datetime
 import numpy as np
+import pandas as pd
 
-from ..decades import DecadesVariable
+from ..decades import DecadesVariable, DecadesBitmaskFlag
 from .base import PPBase
 from ..utils import flagged_avg
 
@@ -9,6 +10,7 @@ INIT_SKIP = 100         # Number of datapoints to skip at the start
 SENS_CUTOFF = 0         # Sensitivity vals at or below considered bad
 CAL_FLUSH_TIME = 3      # Time for system to flush after a cal
 CAL_PRESS_THRESH = 3.4  # Flag when cal_press is higher than this
+CO_VALID_MIN = -10      # Flag if CO below this value
 
 
 class AL52CO(PPBase):
@@ -45,22 +47,37 @@ class AL52CO(PPBase):
         """
         Create a flag for the CO output.
 
-        Flag info:
-            CO concentration < -10  --> 3
-            In calibration & 3s after calibration --> 3
-            CO counts identically zero --> 3
-            Calibration gas press. > 3.4 --> 3
-            Aircraft on ground --> 1
+        Returns:
+            fdf: a pd.DataFrame with 6 boolean columns, each giving the state
+                 of a mask flag.
         """
 
+        WOW_FLAG = 'aircraft on ground'
+        CO_RANGE_FLAG = 'co out of range'
+        IN_CAL_FLAG = 'in calibration'
+        PRESSURE_FLAG = 'cal chamber pressure high'
+        NO_CAL_FLAG = 'no calibration'
+        ZERO_COUNTS_FLAG = 'counts zero'
+
         d = self.d
-        flag_var = 'CO_AERO_FLAG'
+        fdf = pd.DataFrame(index=self.d.index)
+
+        fdf[WOW_FLAG] = 0
+        fdf[CO_RANGE_FLAG] = 0
+        fdf[IN_CAL_FLAG] = 0
+        fdf[PRESSURE_FLAG] = 0
+        fdf[NO_CAL_FLAG] = 0
+        fdf[ZERO_COUNTS_FLAG] = 0
 
         # In the processing, we nan out the start of the data, we need to
         # replace this so that the .shift()).cumsum() method works.
         d['AL52CO_cal_status'].fillna(method='bfill', inplace=True)
-        d[flag_var] = 0
-        d.loc[d['CO_AERO'] < -10, flag_var] = 3
+
+        # Flag when the aircraft is on the ground
+        fdf.loc[d['WOW_IND'] != 0, WOW_FLAG] = 1
+
+        # Out of range flagging
+        fdf.loc[d['CO_AERO'] < CO_VALID_MIN, CO_RANGE_FLAG] = 1
 
         # We want to flag not only the times when the instrument is in
         # calibration, but also a few seconds afterwards, while the calibration
@@ -76,19 +93,19 @@ class AL52CO(PPBase):
         for group in groups:
             start = group[1].index[0]
             end = group[1].index[-1] + datetime.timedelta(seconds=CAL_FLUSH_TIME)
-            d.loc[start:end, flag_var] = 3
+            fdf.loc[start:end, IN_CAL_FLAG] = 1
 
         # Flag when pressure in the calibration chamber is high
-        d.loc[d['AL52CO_calpress'] > CAL_PRESS_THRESH, flag_var] = 3
+        fdf.loc[d['AL52CO_calpress'] > CAL_PRESS_THRESH, PRESSURE_FLAG] = 1
 
         # Flag when counts are identically zero
-        d.loc[d['AL52CO_counts'] == 0, flag_var] = 3
+        fdf.loc[d['AL52CO_counts'] == 0, ZERO_COUNTS_FLAG] = 1
 
-        # Flag when the aircraft is on the ground
-        d.loc[d['WOW_IND'] != 0, flag_var] = 1
+        # Flag before the first calibration
+        first_cal_start = d.loc[d['AL52CO_cal_status'] > 0].index[0]
+        fdf.loc[d.index <= first_cal_start, NO_CAL_FLAG] = 1
 
-        first_cal_start = d.loc[d['AL52CO_cal_status'] > 0].first('1s').index[0]
-        d.loc[d.index <= first_cal_start, flag_var] = 3
+        return fdf
 
     def process(self):
         """
@@ -115,6 +132,8 @@ class AL52CO(PPBase):
         # Mask erroneous values in the sensitivity
         d.loc[d['AL52CO_sens'] <= SENS_CUTOFF, 'AL52CO_sens'] = np.nan
         d['AL52CO_sens'].fillna(method='bfill', inplace=True)
+        d['AL52CO_sens'].fillna(method='ffill', inplace=True)
+
 
         # Mask erroneous values in the zero
         d.loc[d['AL52CO_zero'] == 0, 'AL52CO_zero'] = np.nan
@@ -125,7 +144,6 @@ class AL52CO(PPBase):
         d['CAL_FLAG'] = d.AL52CO_sens.diff() != 0
         indicies = np.where(d.CAL_FLAG != 0)[0]
         indicies_p2 = indicies + 2
-        indicies_p2 = indicies_p2[np.where(indicies_p2 < len(indicies))]
         d.loc[d.index[indicies_p2], 'CAL_FLAG'] = 1
         d.loc[d.index[indicies], 'CAL_FLAG'] = 0
 
@@ -140,10 +158,16 @@ class AL52CO(PPBase):
         # Calculate concentration using interpolated sens & zero
         d['CO_AERO'] = (d.AL52CO_counts - d.ZERO) / d.SENS
 
-        # Flag the output
-        self.flag()
+        # Flag build the qa flag dataframe
+        flag_df = self.flag()
+
+        # AL52CO output
+        co_out = DecadesVariable(d['CO_AERO'], name='CO_AERO',
+                                 flag=DecadesBitmaskFlag)
+
+        # Add flagging to the output
+        for mask in flag_df.columns:
+            co_out.flag.add_mask(flag_df[mask].values, mask)
 
         # Write output
-        self.add_output(
-            DecadesVariable(d[['CO_AERO', 'CO_AERO_FLAG']], name='CO_AERO')
-        )
+        self.add_output(co_out)
