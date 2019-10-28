@@ -1,6 +1,6 @@
 import numpy as np
 
-from ..decades import DecadesVariable
+from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..utils import get_range_flag
 from ..utils.conversions import celsius_to_kelvin
 from .base import PPBase
@@ -50,17 +50,16 @@ class GeneralEastern(PPBase):
 
         control_lims = self.dataset['GELIMS']
 
-        d['CONTROL_FLAG'] = 0
+        d['CONTROL_MISSING_FLAG'] = 0
+        d['CONTROL_RANGE_FLAG'] = 0
 
         # Missing or 0 data flagged as 3
-        d.loc[d['CORCON_ge_cont'] == 0, 'CONTROL_FLAG'] = 3
-        d.loc[np.isnan(d['CORCON_ge_cont']), 'CONTROL_FLAG'] = 3
+        d.loc[d['CORCON_ge_cont'] == 0, 'CONTROL_MISSING_FLAG'] = 1
+        d.loc[np.isnan(d['CORCON_ge_cont']), 'CONTROL_MISSING_FLAG'] = 1
 
         # Out of range data flagged as 2
-        d.loc[d['CORCON_ge_cont'] > control_lims[0], 'CONTROL_FLAG'] = 2
-        d.loc[d['CORCON_ge_cont'] < control_lims[1], 'CONTROL_FLAG'] = 2
-
-        return d['CONTROL_FLAG']
+        d.loc[d['CORCON_ge_cont'] > control_lims[0], 'CONTROL_RANGE_FLAG'] = 1
+        d.loc[d['CORCON_ge_cont'] < control_lims[1], 'CONTROL_RANGE_FLAG'] = 1
 
     def process(self):
         """
@@ -76,13 +75,14 @@ class GeneralEastern(PPBase):
         )
 
         # Build flag arrays
-        control_flag = self.flag_control()
-        range_flag = get_range_flag(d['TDEW_GE'], TDEW_VALID_RANGE)
+        self.flag_control()
+        range_flag = get_range_flag(d['TDEW_GE'], TDEW_VALID_RANGE, flag_val=1)
 
         # Create the output variable and add the flags
-        tdew = DecadesVariable(d['TDEW_GE'])
-        tdew.add_flag(control_flag)
-        tdew.add_flag(range_flag)
+        tdew = DecadesVariable(d['TDEW_GE'], flag=DecadesBitmaskFlag)
+        tdew.flag.add_mask(d['CONTROL_MISSING_FLAG'], 'control data missing')
+        tdew.flag.add_mask(d['CONTROL_RANGE_FLAG'], 'control out of range')
+        tdew.flag.add_mask(range_flag, 'dewpoint out of range')
 
         # Add the output to the parent Dataset
         self.add_output(tdew)
