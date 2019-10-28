@@ -1,6 +1,6 @@
 import numpy as np
 
-from ..decades import DecadesVariable
+from ..decades import DecadesVariable, DecadesBitmaskFlag
 from .base import PPBase
 
 class PSAP(PPBase):
@@ -71,14 +71,13 @@ class PSAP(PPBase):
 
         self.flag()
 
-        psap_flo = DecadesVariable(d['PSAP_FLO'])
-        psap_lin = DecadesVariable(d['PSAP_LIN'])
-        psap_log = DecadesVariable(d['PSAP_LOG'])
-        psap_tra = DecadesVariable(d['PSAP_TRA'])
+        psap_flo = DecadesVariable(d['PSAP_FLO'], flag=DecadesBitmaskFlag)
+        psap_lin = DecadesVariable(d['PSAP_LIN'], flag=DecadesBitmaskFlag)
+        psap_log = DecadesVariable(d['PSAP_LOG'], flag=DecadesBitmaskFlag)
+        psap_tra = DecadesVariable(d['PSAP_TRA'], flag=DecadesBitmaskFlag)
 
         for dv in (psap_flo, psap_lin, psap_log, psap_tra):
-            dv.add_flag(d['TRA_FLAG'])
-            dv.add_flag(d['FLO_FLAG'])
-            dv.add_flag(d['COM_FLAG'])
+            dv.flag.add_mask(d['TRA_FLAG'], 'Transmittance out of range')
+            dv.flag.add_mask(d['FLO_FLAG'], 'Flow out of range')
             self.add_output(dv)
 
