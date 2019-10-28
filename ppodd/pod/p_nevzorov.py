@@ -3,7 +3,8 @@ import pandas as pd
 
 from scipy.optimize import curve_fit
 
-from ..decades import DecadesVariable
+from ..decades import DecadesVariable, DecadesBitmaskFlag
+from ..decades import flags
 from .base import PPBase
 
 
@@ -443,37 +444,43 @@ class Nevzorov(PPBase):
             # Create and write output variables
             w_c = DecadesVariable(
                 (col_p - fitted_K * ref_p) / (self.d.TAS_RVSM * area * nvl),
-                name='NV_{ins}_C'.format(ins=ins.upper())
+                name='NV_{ins}_C'.format(
+                    ins=ins.upper()
+                ), flag=DecadesBitmaskFlag
             )
             if not fit_success:
                 w_c.write = False
 
             w_u = DecadesVariable(
                 (col_p - K * ref_p) / (self.d.TAS_RVSM * area * nvl),
-                name='NV_{ins}_U'.format(ins=ins.upper())
+                name='NV_{ins}_U'.format(ins=ins.upper()),
+                flag=DecadesBitmaskFlag
             )
 
             col_power = DecadesVariable(
-                col_p, name='NV_{ins}_COL_P'.format(ins=ins.upper())
+                col_p, name='NV_{ins}_COL_P'.format(ins=ins.upper()),
+                flag=DecadesBitmaskFlag
             )
 
             ref_power = DecadesVariable(
-                ref_p, name='NV_{ins}_REF_P'.format(ins=ins.upper())
+                ref_p, name='NV_{ins}_REF_P'.format(ins=ins.upper()),
+                flag=DecadesBitmaskFlag
             )
 
             for _var in (w_c, w_u, col_power):
-                _var.add_flag(self.d['flag'])
+                _var.flag.add_mask(self.d['flag'], flags.WOW)
                 self.add_output(_var)
 
             if _vanetype == '1t1l2r':
                 _var = ref_power
-                _var.add_flag(self.d['flag'])
+                _var.flag.add_mask(self.d['flag'], flags.WOW)
                 self.add_output(_var)
+
             elif ins is 'twc':
                 _var = DecadesVariable(
-                   ref_p, name='NV_REF_P'
+                   ref_p, name='NV_REF_P', flag=DecadesBitmaskFlag
                 )
-                _var.add_flag(self.d['flag'])
+                _var.flag.add_mask(self.d['flag'], flags.WOW)
                 self.add_output(_var)
 
         self.add_output(DecadesVariable(clear_air, name='NV_CLEAR_AIR_MASK'))
