@@ -1,9 +1,14 @@
 import pandas as pd
 import numpy as np
 
-from ..decades import DecadesVariable
+from ..decades import DecadesVariable, DecadesBitmaskFlag
 from .base import PPBase
 
+PALT_MIN = -2000
+PALT_MAX = 50000
+
+IAS_MIN = -50
+IAS_MAX = 500
 
 class RioRvsm(PPBase):
 
@@ -46,8 +51,8 @@ class RioRvsm(PPBase):
         d['PALT_FEET'] = d['PRTAFT_pressure_alt'] * 4
         d['FLAG_ALT'] = 0
 
-        d.loc[d['PALT_FEET'] < -2000, 'FLAG_ALT'] = 1
-        d.loc[d['PALT_FEET'] > 50000, 'FLAG_ALT'] = 1
+        d.loc[d['PALT_FEET'] < PALT_MIN, 'FLAG_ALT'] = 1
+        d.loc[d['PALT_FEET'] > PALT_MAX, 'FLAG_ALT'] = 1
 
         d['PALT_METRES'] = d['PALT_FEET'] / 3.28084
 
@@ -81,9 +86,8 @@ class RioRvsm(PPBase):
         d = self.d
         d['IAS'] = d['PRTAFT_ind_air_speed'] * 0.514444 / 32.0
         d['IAS_FLAG'] = 0
-        d.loc[d['IAS'] < -50, 'IAS_FLAG'] = 1
-        d.loc[d['IAS'] > 500, 'IAS_FLAG'] = 1
-        d.loc[d['FLAG_ALT'] == 1, 'IAS_FLAG'] = 1
+        d.loc[d['IAS'] < IAS_MIN, 'IAS_FLAG'] = 1
+        d.loc[d['IAS'] > IAS_MAX, 'IAS_FLAG'] = 1
 
     def calc_mach(self):
         d = self.d
@@ -98,8 +102,11 @@ class RioRvsm(PPBase):
 
         ps_rvsm = pd.DataFrame([], index=d.index)
         ps_rvsm['PS_RVSM'] = d['P']
-        ps_rvsm['PS_RVSM_FLAG'] = d['FLAG_ALT'].astype(np.int8)
-        ps_rvsm = ps_rvsm.asfreq(self.freq[32]).interpolate()
+
+        ps_rvsm = DecadesVariable(ps_rvsm, name='PS_RVSM',
+                                  flag=DecadesBitmaskFlag)
+
+        ps_rvsm.flag.add_mask(d.FLAG_ALT, 'altitude out of range')
 
         return ps_rvsm
 
@@ -108,8 +115,11 @@ class RioRvsm(PPBase):
 
         palt_rvs = pd.DataFrame([], index=d.index)
         palt_rvs['PALT_RVS'] = d['PALT_METRES']
-        palt_rvs['PALT_RVS_FLAG'] = d['FLAG_ALT'].astype(np.int8)
-        palt_rvs = palt_rvs.asfreq(self.freq[32]).interpolate()
+
+        palt_rvs = DecadesVariable(palt_rvs, name='PALT_RVS',
+                                   flag=DecadesBitmaskFlag)
+
+        palt_rvs.flag.add_mask(d.FLAG_ALT, 'altitude out of range')
 
         return palt_rvs
 
@@ -117,8 +127,12 @@ class RioRvsm(PPBase):
         d = self.d
         q_rvsm = pd.DataFrame([], index=d.index)
         q_rvsm['Q_RVSM'] = d['PITOT']
-        q_rvsm['Q_RVSM_FLAG'] = d['IAS_FLAG']
-        q_rvsm = q_rvsm.asfreq(self.freq[32]).interpolate()
+
+        q_rvsm = DecadesVariable(q_rvsm, name='Q_RVSM',
+                                 flag=DecadesBitmaskFlag)
+
+        q_rvsm.flag.add_mask(d.FLAG_ALT, 'altitude out of range')
+        q_rvsm.flag.add_mask(d.IAS_FLAG, 'ias out of range')
 
         return q_rvsm
 
@@ -132,14 +146,10 @@ class RioRvsm(PPBase):
         self.calc_mach()
         self.calc_pitot()
 
-        self.add_output(
-            DecadesVariable(self.calc_ps_rvsm(), name='PS_RVSM')
-        )
+        ps_rvsm = self.calc_ps_rvsm()
+        q_rvsm = self.calc_q_rvsm()
+        palt_rvs = self.calc_palt_rvs()
 
-        self.add_output(
-            DecadesVariable(self.calc_palt_rvs(), name='PALT_RVS')
-        )
-
-        self.add_output(
-            DecadesVariable(self.calc_q_rvsm(), name='Q_RVSM')
-        )
+        self.add_output(ps_rvsm)
+        self.add_output(palt_rvs)
+        self.add_output(q_rvsm)
