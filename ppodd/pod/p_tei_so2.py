@@ -2,7 +2,8 @@ from datetime import timedelta
 
 import numpy as np
 
-from ..decades import DecadesVariable
+from ..decades import DecadesVariable, DecadesBitmaskFlag
+from ..decades import flags
 from ..utils import flagged_avg
 from .base import PPBase
 
@@ -44,18 +45,17 @@ class TecoSO2(PPBase):
             instrument in alarm --> 3
         """
         d = self.d
-        flag = 'SO2_TECO_FLAG'
 
-        d[flag] = 0
+        d['WOW_FLAG'] = (d.WOW == 1)
+        d['ZERO_FLAG'] = 0
+        d['CALIB_FLAG'] = 0
+        d['ALARM_FLAG'] = 0
 
-        # Aicraft on ground is flagged as 1
-        d.loc[d.WOW_IND == 1, flag] = 1
-
-        # Before first zero is flagged as 2
+        # Before first zero is flagged
         first_zero = d.loc[d.zero_flag == 1].index[0]
-        d.loc[d.index < first_zero, flag] = 2
+        d.loc[d.index < first_zero, 'ZERO_FLAG'] = 1
 
-        # Instrument in calibration is flagged as 3
+        # Instrument in calibration is flagged
         _groups = (d.zero_flag != d.zero_flag.shift()).cumsum()
         _groups[d.zero_flag == 0] = np.nan
         _groups.dropna(inplace=True)
@@ -63,11 +63,11 @@ class TecoSO2(PPBase):
         for group in groups:
             start = group[1].index[0]
             end = group[1].index[-1] + timedelta(seconds=CAL_FLUSH_END)
-            d.loc[start:end, flag] = 3
+            d.loc[start:end, 'CALIB_FLAG'] = 1
 
         # Instrument in alarm is flagged as 3
         alarm = self.d.CHTSOO_flags.apply(lambda x: str(x)[-4:-1] != '000')
-        d.loc[alarm, flag] = 3
+        d.loc[alarm, 'ALARM_FLAG'] = 3
 
     def process(self):
         """
@@ -106,6 +106,10 @@ class TecoSO2(PPBase):
         # Build QA Flag for the SO2
         self.flag()
 
-        self.add_output(
-            DecadesVariable(self.d[['SO2_TECO', 'SO2_TECO_FLAG']])
-        )
+        SO2 = DecadesVariable(self.d['SO2_TECO'], flag=DecadesBitmaskFlag)
+        SO2.flag.add_mask(d.WOW_FLAG, flags.WOW)
+        SO2.flag.add_mask(d.ZERO_FLAG, 'before first zero')
+        SO2.flag.add_mask(d.CALIB_FLAG, flags.CALIBRATION)
+        SO2.flag.add_mask(d.ALARM_FLAG, 'in alarm')
+
+        self.add_output(SO2)
