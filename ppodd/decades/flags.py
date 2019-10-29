@@ -166,9 +166,7 @@ class DecadesBitmaskFlag(DecadesFlagABC):
         Return an array containing flag_mask values. Canonically, this is an
         array of 2**n for integer n in 0 .. #masks.
         """
-        return np.atleast_1d(
-           [np.int8(2**i) for i in range(len(self._df.columns))]
-        )
+        return [int(2**i) for i in range(len(self._df.columns))]
 
     @property
     def cfattrs(self):
@@ -178,8 +176,8 @@ class DecadesBitmaskFlag(DecadesFlagABC):
         """
         return {
             'long_name': self._long_name,
-            '_FillValue': np.int8(0),
-            'valid_range': [np.int8(1), np.int8(2 * self.masks[-1] - 1)],
+            '_FillValue': 0,
+            'valid_range': [1, 2 * int(self.masks[-1]) - 1],
             'flag_masks': self.masks,
             'flag_meanings': ' '.join(self._df.columns)
         }
