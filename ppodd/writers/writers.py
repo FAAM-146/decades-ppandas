@@ -1,10 +1,13 @@
 import abc
 import datetime
+import json
+import os
 
 import numpy as np
 import pandas as pd
 
 from netCDF4 import Dataset
+import sqlite3
 
 from ..utils import pd_freq
 
@@ -16,47 +19,15 @@ class DecadesWriter(abc.ABC):
 
     def __init__(self, dataset, *args, **kwargs):
         self.dataset = dataset
+        self.output_freqs = []
+        self.start_time = None
+        self.end_time = None
+        self._get_time_bounds()
+        self.output_freqs = self._get_output_freqs()
 
     @abc.abstractmethod
     def write(self, filename):
         """Write some output"""
-
-
-class NetCDFWriter(DecadesWriter):
-    """
-    Write a DecadesDataset to NetCDF.
-
-    A NetCDFWriter takes a DecadesDataset instance in its constructor and will
-    write this dataset to file when its write method is called. This can
-    include an optional freq keyword to force the output to a specified
-    frequency.
-    """
-
-    def __init__(self, *args, **kwargs):
-        self.output_freqs = []
-        self.start_time = None
-        self.end_time = None
-        self.nc = None
-        self.sps_vars = {}
-
-        super().__init__(*args, **kwargs)
-
-        self._get_time_bounds()
-        self.output_freqs = self._get_output_freqs()
-
-    def _get_output_freqs(self):
-        """Get all of the required output frequencies"""
-        output_freqs = []
-
-        for var in self.dataset.outputs:
-
-            if not var.write:
-                continue
-
-            if var.frequency not in output_freqs:
-                output_freqs.append(var.frequency)
-
-        return output_freqs
 
     def _get_time_bounds(self):
         """Get the earliest and latest times of all output variables"""
@@ -79,6 +50,103 @@ class NetCDFWriter(DecadesWriter):
 
         self.start_time = start_time
         self.end_time = end_time
+
+    def _get_output_freqs(self):
+        """Get all of the required output frequencies"""
+        output_freqs = []
+
+        for var in self.dataset.outputs:
+
+            if not var.write:
+                continue
+
+            if var.frequency not in output_freqs:
+                output_freqs.append(var.frequency)
+
+        return output_freqs
+
+
+class SQLiteWriter(DecadesWriter):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def _initdb(self, filename):
+        self.conn = sqlite3.connect(filename)
+        c = self.conn.cursor()
+
+        c.execute('CREATE TABLE var_meta (name text, meta text)')
+
+        self.conn.commit()
+
+    def _write_var(self, var):
+
+        print('Writing {}'.format(var.name))
+
+        _sql = 'CREATE TABLE {} (time integer, data real, flag integer)'
+        c = self.conn.cursor()
+        c.execute(_sql.format(var.name))
+
+        _times = var.data.index.astype(np.int64) / 1e9
+        _data = var.data.values
+        _flags = var.flag()
+
+        _pairs = [
+            (_time, _datum, _flag)
+            for _time, _datum, _flag in zip(_times, _data, _flags)
+        ]
+
+        _sql = 'INSERT INTO {} values (?, ?, ?)'.format(var.name)
+        c.executemany(_sql, _pairs)
+
+        _meta = {
+            'data': {
+                'long_name': var.long_name,
+                'name': var.name,
+                'frequency': var.frequency,
+            },
+            'flag': var.flag.cfattrs
+        }
+
+        for n, i in var.flag.cfattrs.items():
+            print(n, i, type(i))
+
+        temp = json.dumps(_meta)
+        print(temp)
+
+        _sql = 'INSERT INTO var_meta VALUES (?, ?)'
+        c.execute(_sql, (var.name, json.dumps(_meta)))
+
+        self.conn.commit()
+
+    def write(self, filename):
+        if os.path.exists(filename):
+            print('Warning: overwriting SQLite3 DB file')
+            os.remove(filename)
+
+        self._initdb(filename)
+
+        for var in self.dataset.outputs:
+            if var.write:
+                self._write_var(var)
+
+        self.conn.close()
+
+
+class NetCDFWriter(DecadesWriter):
+    """
+    Write a DecadesDataset to NetCDF.
+
+    A NetCDFWriter takes a DecadesDataset instance in its constructor and will
+    write this dataset to file when its write method is called. This can
+    include an optional freq keyword to force the output to a specified
+    frequency.
+    """
+
+    def __init__(self, *args, **kwargs):
+        self.nc = None
+        self.sps_vars = {}
+
+        super().__init__(*args, **kwargs)
 
     def _write_var(self, nc, var):
         """

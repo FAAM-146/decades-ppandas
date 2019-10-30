@@ -87,9 +87,9 @@ class DecadesClassicFlag(DecadesFlagABC):
             _cfattrs['standard_name'] = 'status_flag'
 
         _cfattrs['long_name'] = self._long_name
-        _cfattrs['_FillValue'] = np.int8(-128)
+        _cfattrs['_FillValue'] = int(-128)
         _cfattrs['flag_values'] = [
-            np.int8(i) for i in sorted(self.meanings.keys())
+            i for i in sorted(self.meanings.keys())
         ]
         _cfattrs['flag_meanings'] = ' '.join(
             self.meanings[i] for i in _cfattrs['flag_values']

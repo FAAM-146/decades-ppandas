@@ -30,24 +30,7 @@ class NetCDFStructure(object):
                     _vars[_var][_attr_key] = _attr_val
 
             _flag_var = '{}_FLAG'.format(_var)
-            _vars[_flag_var] = {}
-            _vars[_flag_var]['standard_name'] = 'status_flag'
-            _vars[_flag_var]['_FillValue'] = '-128b'
-
-            try:
-                _vars[_flag_var]['flag_values'] = ', '.join(
-                    ['{}b'.format(i) for i in d[_var].flag_meta.keys()]
-                )
-
-                _vars[_flag_var]['flag_meanings'] = ' '.join(
-                    ['{}'.format(i) for i in d[_var].flag_meta.values()]
-                )
-            except Exception:  # TODO: what do we expect here - KeyError?
-                pass
-
-            _vars[_flag_var]['long_name'] = 'Flag for {}'.format(
-                d[_var].long_name
-            )
+            _vars[_flag_var] = d[_var].flag.cfattrs
 
         self._vars = _vars
 
