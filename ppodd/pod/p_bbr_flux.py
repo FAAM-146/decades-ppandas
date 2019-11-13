@@ -148,8 +148,10 @@ class BBRFlux(PPBase):
                     np.cos(d.SUNHDG)
                 )
 
+                # Angle of the sun - for low sun flagging
                 beta = np.arccos(cos_beta)
 
+                # Key for the flux from the current dome
                 _flux = '{}{}_flux'.format(pos, dome)
 
                 # Thermisor corrections for linearity
@@ -167,6 +169,8 @@ class BBRFlux(PPBase):
 
                 # Make a copy of the critical value (diffuse vs direct)
                 fcritval = d.FCRIT.copy(deep=True)
+
+                # Red dome has half the critical value
                 if dome is 'P2':
                     fcritval /= 2
 
@@ -181,7 +185,7 @@ class BBRFlux(PPBase):
                                       for i in index])
 
                 # For the upper BBRs, apply the pitch and roll corrections when
-                # in direct sunlight (flux <=> fcrit)
+                # in direct sunlight (flux >= fcrit)
                 if pos is 'U':
                     _above_crit = d[_flux] / (
                         1. - (d._fdir * (1. - d._ceff * (cos_beta / np.cos(d.ZENRAD))))
@@ -209,16 +213,19 @@ class BBRFlux(PPBase):
                 output = DecadesVariable(d[_flux], name=output_name,
                                          flag=DecadesBitmaskFlag)
 
+                # Flag when the aircraft is in a significant roll
                 output.flag.add_mask(
                     np.abs(d.ROLL_GIN_rmean) >= ROLL_LIMIT,
                     'roll limit exceeded'
                 )
 
+                # Flag when sun angle is too low
                 output.flag.add_mask(
                     beta > SUN_ANGLE_MAX / deg2rad,
                     'low sun angle'
                 )
 
+                # Flag when out of range
                 flux_limit_lo = FLUX_LIMITS['{}_{}_MIN'.format(
                     output_pos_dict[pos],
                     output_dome_dict[dome]
