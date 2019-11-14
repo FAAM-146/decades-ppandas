@@ -33,7 +33,7 @@ class PSAP(PPBase):
 
         self.declare(
             'PSAP_FLO',
-            units='standard l min-1',
+            units='l min-1',
             frequency=1,
             long_name='PSAP Flow'
         )

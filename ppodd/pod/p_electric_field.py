@@ -11,7 +11,7 @@ class ElectricFieldJci140(PPBase):
     def declare_outputs(self):
         self.declare(
             'EXX_JCI',
-            units='adc_counts',
+            units='1',
             frequency=1,
             standard_name=None,
             long_name=('Raw data from the Fwd Core Console JCI static '

@@ -30,7 +30,7 @@ class Gin(PPBase):
             units='degree_east',
             frequency=32,
             long_name='Longitude from POS AV 510 GPS-aided Inertial Navigation unit',
-            standard_name='latitude',
+            standard_name='longitude',
             number=611
         )
 
@@ -99,7 +99,7 @@ class Gin(PPBase):
 
         self.declare(
             'WAND_GIN',
-            units='deg s-1',
+            units='degree s-1',
             frequency=32,
             long_name='GIN wander angle',
             standard_name=None,
