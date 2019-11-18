@@ -191,7 +191,7 @@ class PPBase(abc.ABC):
             _type, _values = val
 
             if _type == 'const':
-                d.constants[key] = values
+                d.constants[key] = _values
 
             elif _type == 'data':
                 var = DecadesVariable(
