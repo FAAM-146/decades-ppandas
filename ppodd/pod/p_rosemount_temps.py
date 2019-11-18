@@ -5,6 +5,7 @@ from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..utils.calcs import sp_mach, true_air_temp
 from ..utils.conversions import celsius_to_kelvin
 from .base import PPBase
+from .shortcuts import *
 
 class RosemountTemperatures(PPBase):
     """
@@ -24,6 +25,20 @@ class RosemountTemperatures(PPBase):
         'CORCON_ndi_temp',          #  Non deiced temperature counts (DLU)
         'PRTAFT_deiced_temp_flag'   #  Deiced heater indicator flag (DLU)
     ]
+
+    test = {
+        'TRFCTR': ('const', [1., 1.]),
+        'CALDIT': ('const', [0, 0, 0]),
+        'CALNDT': ('const', [0, 0, 0]),
+        'NDTSENS': ('const', 'ndi_serial'),
+        'DITSENS': ('const', 'dit_serial'),
+        'PS_RVSM': ('data', _a(1000, 300, -1)),
+        'Q_RVSM': ('data', 250*(_o(700))),
+        'CORCON_di_temp': ('data', _a(225, 245, .0286)*1000),
+        'CORCON_ndi_temp': ('data', _a(225, 245, .0286)*1000),
+        'PRTAFT_deiced_temp_flag': ('data', _c([_z(200), _o(300), _z(200)])
+        ),
+    }
 
     def declare_outputs(self):
         """
