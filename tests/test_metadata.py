@@ -42,22 +42,11 @@ def init_module(module):
         d: A DecadesDataset, in which module has been run.
     """
 
-    _time = datetime.datetime.now()
-    d = DecadesDataset(_time)
-
-    if hasattr(module, 'TEST_SETUP'):
-        d.constants.update(module.TEST_SETUP)
-
-    _mod = module(d)
-
-    for dec in _mod.declarations:
-        data = pd.DataFrame(index=(_time,))
-        data[dec] = 0
-        _mod.add_output(DecadesVariable(data, name=dec))
-
+    _mod = module.test_instance()
+    _mod.process()
     _mod.finalize()
 
-    return d
+    return _mod.dataset
 
 
 def get_standard_names():
@@ -115,8 +104,8 @@ def long_name(module):
     """
     def do_test(self):
         d = init_module(module)
-        for var in d.variables:
-            self.assertTrue(hasattr(d[var], 'long_name'))
+        for var in d.outputs:
+            self.assertTrue(hasattr(var, 'long_name'))
     return do_test
 
 
@@ -132,9 +121,9 @@ def valid_units(module):
     """
     def do_test(self):
         d = init_module(module)
-        for var in d.variables:
-            if hasattr(d[var], 'units'):
-                _unit = Units(d[var].units)
+        for var in d.outputs:
+            if hasattr(var, 'units'):
+                _unit = Units(var.units)
                 self.assertTrue(_unit.isvalid)
     return do_test
 
@@ -150,11 +139,11 @@ def valid_standard_name(module):
     """
     def do_test(self):
         d = init_module(module)
-        for var in d.variables:
-            if (hasattr(d[var], 'standard_name')
-                    and d[var].standard_name is not None):
+        for var in d.outputs:
+            if (hasattr(var, 'standard_name')
+                    and var.standard_name is not None):
                 self.assertIn(
-                    d[var].standard_name, names
+                    var.standard_name, names
                 )
     return do_test
 
@@ -171,16 +160,16 @@ def valid_units_for_name(module):
     """
     def do_test(self):
         d = init_module(module)
-        for var in d.variables:
-            if not (hasattr(d[var], 'standard_name')
-                        and hasattr(d[var], 'units')):
+        for var in d.outputs:
+            if not (hasattr(var, 'standard_name')
+                        and hasattr(var, 'units')):
                 continue
 
-            output_units = Units(d[var].units)
+            output_units = Units(var.units)
 
             try:
                 canonical_units = Units(
-                    names[d[var].standard_name]
+                    names[var.standard_name]
                 )
             except KeyError:
                 # Invalid standard name
