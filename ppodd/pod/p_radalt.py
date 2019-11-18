@@ -1,3 +1,5 @@
+import numpy as np
+
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..decades import flags
 from ..utils.conversions import feet_to_metres
@@ -9,6 +11,10 @@ class RadAlt(PPBase):
     inputs = [
         'PRTAFT_rad_alt'    # Radar altitude (dlu)
     ]
+
+    test = {
+        'PRTAFT_rad_alt': ('data', np.arange(0, 32000, 4))
+    }
 
     def declare_outputs(self):
         self.declare(
