@@ -1,9 +1,11 @@
 import abc
+import datetime
 
 import numpy as np
 import pandas as pd
 
 from ..utils import pd_freq
+from ..decades import DecadesDataset, DecadesVariable
 
 class PPBase(abc.ABC):
 
@@ -20,6 +22,7 @@ class PPBase(abc.ABC):
     }
 
     inputs = []
+    test = {}
 
     def __init__(self, dataset):
         self.dataset = dataset
@@ -173,3 +176,35 @@ class PPBase(abc.ABC):
             return False, _missing_variables
 
         return True, None
+
+    @classmethod
+    def test_instance(cls):
+        """
+        Return a test instance of a postprocessing module, initialized with a
+        DecadesDataset containing the modules test data.
+        """
+        now = datetime.datetime.now().replace(microsecond=0)
+        d = DecadesDataset(now.date())
+        mod = cls(d)
+
+        for key, val in cls.test.items():
+            _type, _values = val
+
+            if _type == 'const':
+                d.constants[key] = values
+
+            elif _type == 'data':
+                var = DecadesVariable(
+                    pd.Series(
+                        _values,
+                        index=pd.date_range(
+                            start=now, freq='S', periods=len(_values)
+                        )
+                    ),
+                    name=key,
+                    frequency=1
+                )
+
+                d.add_input(var)
+
+        return mod
