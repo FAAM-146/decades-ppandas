@@ -4,6 +4,7 @@ import pandas as pd
 
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 from .base import PPBase
+from .shortcuts import _c, _o, _z
 from ..utils import flagged_avg
 
 INIT_SKIP = 100         # Number of datapoints to skip at the start
@@ -32,6 +33,24 @@ class AL52CO(PPBase):
         'AL52CO_counts',
         'WOW_IND'
     ]
+
+    @staticmethod
+    def test():
+        return {
+            'AL52CO_sens': (
+                'data',  _c([45 * _o(25), 46 * _o(25), 47 * _o(25), 48 *
+                             _o(25)] *2)
+            ),
+            'AL52CO_zero': (
+                'data', _c(
+                    [45 * _o(25), 46 * _o(25), 47 * _o(25), 48 * _o(25)] * 2
+                ) * 1000
+            ),
+            'AL52CO_counts': ('data', 38000 * _o(200)),
+            'AL52CO_calpress': ('data', _c([1.5 * _o(20), 3*_o(5)] * 8)),
+            'AL52CO_cal_status': ('data', _c([_z(20), _o(5)] * 7 + [_z(25)])),
+            'WOW_IND': ('data', _c([_o(110), _z(80), _o(10)]))
+        }
 
     def declare_outputs(self):
         self.declare(
@@ -72,6 +91,7 @@ class AL52CO(PPBase):
         # In the processing, we nan out the start of the data, we need to
         # replace this so that the .shift()).cumsum() method works.
         d['AL52CO_cal_status'].fillna(method='bfill', inplace=True)
+        d['AL52CO_cal_status'].fillna(method='ffill', inplace=True)
 
         # Flag when the aircraft is on the ground
         fdf.loc[d['WOW_IND'] != 0, WOW_FLAG] = 1
