@@ -19,7 +19,6 @@ class SolarAngles(PPBase):
             'SOL_AZIM',
             units='degree',
             frequency=1,
-            number=642,
             long_name='Solar azimuth derived from aircraft position and time',
             standard_name='solar_azimuth_angle'
         )
@@ -28,7 +27,6 @@ class SolarAngles(PPBase):
             'SOL_ZEN',
             units='degree',
             frequency=1,
-            number=643,
             long_name='Solar zenith derived from aircraft position and time',
             standard_name='solar_zenith_angle'
         )

@@ -17,7 +17,6 @@ class CabinTemp(PPBase):
             'CAB_TEMP',
             units='degC',
             frequency=1,
-            number=660,
             long_name='Cabin temperature at the core consoles'
         )
 

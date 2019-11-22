@@ -22,7 +22,6 @@ class SignalRegister(PPBase):
         self.declare(
             'SREG',
             frequency=2,
-            number=27,
             long_name='Signal Register',
             write=False
         )

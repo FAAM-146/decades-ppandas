@@ -26,7 +26,6 @@ class TPress(PPBase):
             'P0_S10',
             units='hPa',
             frequency=32,
-            number=773,
             long_name=('Calibrated differential pressure between centre (P0) '
                        'port and S10 static'),
         )
@@ -35,7 +34,6 @@ class TPress(PPBase):
             'PA_TURB',
             units='hPa',
             frequency=32,
-            number=774,
             long_name=('Calibrated differential pressure between turbulence '
                        'probe vertical ports')
         )
@@ -44,7 +42,6 @@ class TPress(PPBase):
             'PB_TURB',
             units='hPa',
             frequency=32,
-            number=775,
             long_name=('Calibrated differential pressure between turbulence '
                        'probe horizontal ports')
         )
@@ -53,7 +50,6 @@ class TPress(PPBase):
             'TBPC',
             units='hPa',
             frequency=32,
-            number=776,
             long_name='TURB PROBE Ca',
             write=False
         )
@@ -62,7 +58,6 @@ class TPress(PPBase):
             'TBPD',
             units='hPa',
             frequency=32,
-            number=777,
             long_name='TURB PROBE Cb',
             write=False
         )

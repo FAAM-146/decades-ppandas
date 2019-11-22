@@ -29,7 +29,6 @@ class Nephelometer(PPBase):
             'NEPH_PR',
             units='hPa',
             frequency=1,
-            number=760,
             long_name='Internal sample pressure of the Nephelometer'
         )
 
@@ -37,7 +36,6 @@ class Nephelometer(PPBase):
             'NEPH_T',
             units='K',
             frequency=1,
-            number=761,
             long_name='Internal sample temperature of the Nephelometer'
         )
 
@@ -45,7 +43,6 @@ class Nephelometer(PPBase):
             'NEPH_RH',
             units='%',
             frequency=1,
-            number=768,
             long_name='Relative humidity from TSI 3563 Nephelometer'
         )
 
@@ -53,7 +50,6 @@ class Nephelometer(PPBase):
             'TSC_BLUU',
             units='m-1',
             frequency=1,
-            number=762,
             long_name=('Uncorrected blue total scattering coefficient from '
                        'TSI 3563 Nephelometer')
         )
@@ -62,7 +58,6 @@ class Nephelometer(PPBase):
             'TSC_GRNU',
             units='m-1',
             frequency=1,
-            number=763,
             long_name=('Uncorrected red total scattering coefficient from '
                        'TSI 3563 Nephelometer')
         )
@@ -71,7 +66,6 @@ class Nephelometer(PPBase):
             'TSC_REDU',
             units='m-1',
             frequency=1,
-            number=764,
             long_name=('Uncorrected red total scattering coefficient from '
                        'TSI 3563 Nephelometer')
         )
@@ -80,7 +74,6 @@ class Nephelometer(PPBase):
             'BSC_BLUU',
             units='m-1',
             frequency=1,
-            number=765,
             long_name=('Uncorrected blue back scattering coefficient from '
                        'TSI 3563 Nephelometer')
         )
@@ -89,7 +82,6 @@ class Nephelometer(PPBase):
             'BSC_GRNU',
             units='m-1',
             frequency=1,
-            number=766,
             long_name=('Uncorrected green back scattering coefficient from '
                        'TSI 3563 Nephelometer')
         )
@@ -98,7 +90,6 @@ class Nephelometer(PPBase):
             'BSC_REDU',
             units='m-1',
             frequency=1,
-            number=767,
             long_name=('Uncorrected red back scattering coefficient from '
                        'TSI 3563 Nephelometer')
         )

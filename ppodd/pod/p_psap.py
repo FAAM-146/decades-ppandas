@@ -17,7 +17,6 @@ class PSAP(PPBase):
             'PSAP_LIN',
             units='m-1',
             frequency=1,
-            number=648,
             long_name=('Uncorrected absorbtion coefficient at 565nm, linear, '
                        'from PSAP')
         )
@@ -26,7 +25,6 @@ class PSAP(PPBase):
             'PSAP_LOG',
             units='1',
             frequency=1,
-            number=649,
             long_name=('Uncorrected absorption coefficient at 565nm, log, '
                        'from PSAP')
         )

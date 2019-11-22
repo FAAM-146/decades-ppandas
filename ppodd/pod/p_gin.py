@@ -21,8 +21,7 @@ class Gin(PPBase):
             units='degree_north',
             frequency=32,
             long_name='Latitude from POS AV 510 GPS-aided Inertial Navigation unit',
-            standard_name='latitude',
-            number=610
+            standard_name='latitude'
         )
 
         self.declare(
@@ -30,8 +29,7 @@ class Gin(PPBase):
             units='degree_east',
             frequency=32,
             long_name='Longitude from POS AV 510 GPS-aided Inertial Navigation unit',
-            standard_name='longitude',
-            number=611
+            standard_name='longitude'
         )
 
         self.declare(
@@ -39,8 +37,7 @@ class Gin(PPBase):
             units='m',
             frequency=32,
             long_name='Altitude from POS AV 510 GPS-aided Inertial Navigation unit',
-            standard_name='altitude',
-            number=612
+            standard_name='altitude'
         )
 
         self.declare(
@@ -48,8 +45,7 @@ class Gin(PPBase):
             units='m s-1',
             frequency=32,
             long_name='Aircraft velocity north from POS AV 510 GPS-aided Inertial Navigation unit',
-            standard_name=None,
-            number=613
+            standard_name=None
         )
 
         self.declare(
@@ -57,8 +53,7 @@ class Gin(PPBase):
             units='m s-1',
             frequency=32,
             long_name='Aircraft velocity east from POS AV 510 GPS-aided Inertial Navigation unit',
-            standard_name=None,
-            number=614
+            standard_name=None
         )
 
         self.declare(
@@ -66,8 +61,7 @@ class Gin(PPBase):
             units='m s-1',
             frequency=32,
             long_name='Aircraft velocity down from POS AV 510 GPS-aided Inertial Navigation unit',
-            standard_name=None,
-            number=615
+            standard_name=None
         )
 
         self.declare(
@@ -75,8 +69,7 @@ class Gin(PPBase):
             units='degree',
             frequency=32,
             long_name='Roll angle from POS AV 510 GPS-aided Inertial Navigation unit',
-            standard_name='platform_roll_angle',
-            number=616
+            standard_name='platform_roll_angle'
         )
 
         self.declare(
@@ -84,8 +77,7 @@ class Gin(PPBase):
             units='degree',
             frequency=32,
             long_name='Pitch angle from POS AV 510 GPS-aided Inertial Navigation unit',
-            standard_name='platform_pitch_angle',
-            number=617
+            standard_name='platform_pitch_angle'
         )
 
         self.declare(
@@ -93,8 +85,7 @@ class Gin(PPBase):
             units='degree',
             frequency=32,
             long_name='Heading from POS AV 510 GPS-aided Inertial Navigation unit',
-            standard_name='platform_yaw_angle',
-            number=618
+            standard_name='platform_yaw_angle'
         )
 
         self.declare(
@@ -102,8 +93,7 @@ class Gin(PPBase):
             units='degree s-1',
             frequency=32,
             long_name='GIN wander angle',
-            standard_name=None,
-            number=619
+            standard_name=None
         )
 
         self.declare(
@@ -111,8 +101,7 @@ class Gin(PPBase):
             units='degree',
             frequency=32,
             long_name='Aircraft track angle from POS AV 510 GPS-aided Inertial Navigation unit',
-            standard_name='platform_course',
-            number=620
+            standard_name='platform_course'
         )
 
         self.declare(
@@ -120,8 +109,7 @@ class Gin(PPBase):
             units='m s-1',
             frequency=32,
             long_name='Groundspeed from POS AV 510 GPS-aided Inertial Navigation unit',
-            standard_name='platform_speed_wrt_ground',
-            number=621
+            standard_name='platform_speed_wrt_ground'
         )
 
         self.declare(
@@ -129,8 +117,7 @@ class Gin(PPBase):
             units='degree s-1',
             frequency=32,
             long_name='Rate-of-change of GIN roll angle',
-            standard_name='platform_roll_rate',
-            number=622
+            standard_name='platform_roll_rate'
         )
 
         self.declare(
@@ -138,8 +125,7 @@ class Gin(PPBase):
             units='degree s-1',
             frequency=32,
             long_name='Rate-of-change of GIN pitch angle',
-            standard_name='platform_pitch_rate',
-            number=623
+            standard_name='platform_pitch_rate'
         )
 
         self.declare(
@@ -147,8 +133,7 @@ class Gin(PPBase):
             units='degree s-1',
             frequency=32,
             long_name='Rate-of-change of GIN heading',
-            standard_name='platform_yaw_rate',
-            number=624
+            standard_name='platform_yaw_rate'
         )
 
         self.declare(
@@ -156,8 +141,7 @@ class Gin(PPBase):
             units='m s-2',
             frequency=32,
             long_name='Acceleration along the aircraft longitudinal axis (GIN) (positive forward)',
-            standard_name=None,
-            number=625
+            standard_name=None
         )
 
         self.declare(
@@ -165,8 +149,7 @@ class Gin(PPBase):
             units='m s-2',
             frequency=32,
             long_name='Acceleration along the aircraft transverse axis (GIN) (positive starboard)',
-            standard_name=None,
-            number=626
+            standard_name=None
         )
 
         self.declare(
@@ -174,8 +157,7 @@ class Gin(PPBase):
             units='m s-2',
             frequency=32,
             long_name='Acceleration along the aircraft vertical axis (GIN) (positive down)',
-            standard_name=None,
-            number=627
+            standard_name=None
         )
 
     def process(self):

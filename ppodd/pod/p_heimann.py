@@ -25,7 +25,6 @@ class Heimann(PPBase):
             'BTHEIM_U',
             units='K',
             frequency=4,
-            number=537,
             long_name=('Uncorrected brightness temperature from the Heimann '
                        'radiometer')
         )

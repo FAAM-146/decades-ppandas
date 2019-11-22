@@ -49,7 +49,6 @@ class RosemountTemperatures(PPBase):
             'TAT_DI_R',
             units='degK',
             frequency=32,
-            number=520,
             long_name=('True air temperature from the Rosemount deiced '
                        'temperature sensor'),
             standard_name='air_temperature'
@@ -59,7 +58,6 @@ class RosemountTemperatures(PPBase):
             'TAT_ND_R',
             units='degK',
             frequency=32,
-            number=520,
             long_name=('True air temperature from the Rosemount non-deiced '
                        'temperature sensor'),
             standard_name='air_temperature'

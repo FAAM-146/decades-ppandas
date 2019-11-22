@@ -158,7 +158,6 @@ class Nevzorov(PPBase):
             'NV_TWC_U',
             units='gram m-3',
             frequency=64,
-            number=605,
             long_name=('Uncorrected total condensed water content from the '
                        'Nevzorov probe')
         )
@@ -167,7 +166,6 @@ class Nevzorov(PPBase):
             'NV_TWC_C',
             units='gram m-3',
             frequency=64,
-            number=609,
             long_name=('Corrected total condensed water content from the '
                        'Nevzorov probe')
         )
@@ -197,7 +195,6 @@ class Nevzorov(PPBase):
             'NV_LWC_U',
             units='gram m-3',
             frequency=64,
-            number=602,
             long_name=('Uncorrected liquid water content from the Nevzorov '
                        'probe'),
             standard_name='mass_concentration_of_liquid_water_in_air'
@@ -207,7 +204,6 @@ class Nevzorov(PPBase):
             'NV_LWC_C',
             units='gram m-3',
             frequency=64,
-            number=608,
             long_name='Corrected liquid water content from the Nevzorov probe',
             standard_name='mass_concentration_of_liquid_water_in_air'
         )
@@ -242,7 +238,6 @@ class Nevzorov(PPBase):
             'NV_LWC1_U',
             units='gram m-3',
             frequency=64,
-            number=602,
             long_name=('Uncorrected liquid water content from the Nevzorov '
                        'probe (1st collector)'),
             standard_name='mass_concentration_of_liquid_water_in_air'
@@ -252,7 +247,6 @@ class Nevzorov(PPBase):
             'NV_LWC1_C',
             units='gram m-3',
             frequency=64,
-            number=608,
             long_name=('Corrected liquid water content from the Nevzorov probe'
                        ' (1st collector)'),
             standard_name='mass_concentration_of_liquid_water_in_air'
@@ -262,7 +256,6 @@ class Nevzorov(PPBase):
             'NV_LWC2_U',
             units='gram m-3',
             frequency=64,
-            number=602,
             long_name=('Uncorrected liquid water content from the Nevzorov '
                        'probe (2nd collector)'),
             standard_name='mass_concentration_of_liquid_water_in_air'
@@ -272,7 +265,6 @@ class Nevzorov(PPBase):
             'NV_LWC2_C',
             units='gram m-3',
             frequency=64,
-            number=608,
             long_name=('Corrected liquid water content from the Nevzorov probe'
                        ' (2nd collector)'),
             standard_name='mass_concentration_of_liquid_water_in_air'

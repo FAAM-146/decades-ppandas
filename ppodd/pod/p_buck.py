@@ -27,7 +27,6 @@ class BuckCR2(PPBase):
             'VMR_CR2',
             units='ppmv',
             frequency=1,
-            number=783,
             long_name=('Water vapour volume mixing ratio measured by the Buck '
                        'CR2'),
             standard_name='volume_mixing_ratio_of_water_in_air'
@@ -37,7 +36,6 @@ class BuckCR2(PPBase):
             'VMR_C_U',
             units='ppmv',
             frequency=1,
-            number=784,
             long_name=('Uncertainty estimate for water vapour volume mixing '
                        'ratio measured by the Buck CR2')
         )
@@ -46,7 +44,6 @@ class BuckCR2(PPBase):
             'TDEW_CR2',
             units='degK',
             frequency=1,
-            number=785,
             long_name='Mirror Temperature measured by the Buck CR2 Hygrometer',
             standard_name='dew_point_temperature'
         )
@@ -55,7 +52,6 @@ class BuckCR2(PPBase):
             'TDEW_C_U',
             units='degK',
             frequency=1,
-            number=786,
             long_name='Uncertainty estimate for Buck CR2 Mirror Temperature'
         )
 

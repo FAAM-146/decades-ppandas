@@ -21,7 +21,6 @@ class RadAlt(PPBase):
             'HGT_RADR',
             units='m',
             frequency=2,
-            number=575,
             long_name='Radar height from the aircraft radar altimeter',
             standard_name='height'
         )

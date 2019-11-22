@@ -19,7 +19,6 @@ class RioRvsm(PPBase):
             'PS_RVSM',
             units='hPa',
             frequency=32,
-            number=576,
             standard_name='air_pressure',
             long_name=('Static pressure from the aircraft RVSM (air data) '
                        'system')
@@ -29,7 +28,6 @@ class RioRvsm(PPBase):
             'Q_RVSM',
             units='hPa',
             frequency=32,
-            number=577,
             standard_name=None,
             long_name=('Pitot static pressure inverted from RVSM (air data) '
                        'system indicated airspeed')
@@ -39,7 +37,6 @@ class RioRvsm(PPBase):
             'PALT_RVS',
             units='m',
             frequency=32,
-            number=578,
             standard_name='barometric_altitude',
             long_name=('Pressure altitude from the aircraft RVSM (air data) '
                        'system')
