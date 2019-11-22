@@ -187,7 +187,12 @@ class PPBase(abc.ABC):
         d = DecadesDataset(now.date())
         mod = cls(d)
 
-        for key, val in cls.test.items():
+        if callable(cls.test):
+            _test = cls.test()
+        else:
+            _test = cls.test
+
+        for key, val in _test.items():
             _type, _values = val
 
             if _type == 'const':
