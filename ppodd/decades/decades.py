@@ -27,7 +27,7 @@ class DecadesVariable(object):
 
     NC_ATTRS = [
         'long_name', 'frequency', 'standard_name', 'units', 'number',
-        '_FillValue', 'valid_min', 'valid_max'
+        '_FillValue', 'valid_min', 'valid_max', 'featureType'
     ]
 
     def __init__(self, *args, **kwargs):
@@ -35,7 +35,8 @@ class DecadesVariable(object):
         _flag = kwargs.pop('flag', DecadesClassicFlag)
 
         self.attrs = {
-            '_FillValue': -9999.
+            '_FillValue': -9999.,
+            'featureType': 'trajectory'
         }
 
         write = kwargs.pop('write', True)
