@@ -227,10 +227,10 @@ class HumidityQA(QAMod):
         # Calculate whether agreement is 'good' or not.
         _diff = np.abs(_ge - _cr2).mean()
         if _diff > 1:
-            _text = 'Some disagreement out of cloud ($\Delta T_D > 1 K$)'
+            _text = 'Some disagreement out of cloud ($\\Delta T_D > 1 K$)'
             _col = 'red'
         else:
-            _text = 'Good agreement out of cloud ($\Delta T_D < 1 K$)'
+            _text = 'Good agreement out of cloud ($\\Delta T_D < 1 K$)'
             _col = 'green'
 
         # Add text to figure
