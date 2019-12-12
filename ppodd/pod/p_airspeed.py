@@ -4,6 +4,7 @@ from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..utils.calcs import sp_mach
 from ..utils.constants import SPEED_OF_SOUND, ICAO_STD_TEMP, ICAO_STD_PRESS
 from .base import PPBase
+from .shortcuts import _l, _o
 
 class AirSpeed(PPBase):
 
@@ -13,6 +14,13 @@ class AirSpeed(PPBase):
         'Q_RVSM',           #  Pitot-static pressure (derived)
         'TAT_DI_R'          #  Deiced true air temp (derived)
     ]
+
+    test = {
+        'TASCORR': [1.],
+        'PS_RVSM': _l(1000, 300, 100),
+        'Q_RVSM': 250. * _o(100),
+        'TAT_DI_R': _l(25, -40, 100)
+    }
 
     def declare_outputs(self):
 

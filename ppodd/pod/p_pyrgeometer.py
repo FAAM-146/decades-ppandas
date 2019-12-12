@@ -72,7 +72,6 @@ class KippZonenPyrgeometer(PPBase):
             'IR_DN_C',
             units='W m-2',
             frequency=1,
-            number=1021,
             long_name='Corrected downward longwave irradiance',
             write=False
         )
@@ -81,7 +80,6 @@ class KippZonenPyrgeometer(PPBase):
             'IR_UP_C',
             units='W m-2',
             frequency=1,
-            number=1024,
             long_name='Corrected upward longwave irradiance',
             write=False
         )

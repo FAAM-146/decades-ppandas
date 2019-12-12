@@ -36,7 +36,6 @@ class BBRFlux(PPBase):
             'SW_DN_C',
             units='W m-2',
             frequency=1,
-            number=1019,
             standard_name='downwelling_shortwave_flux_in_air',
             long_name='Corrected downward short wave irradiance, clear dome'
         )
@@ -45,7 +44,6 @@ class BBRFlux(PPBase):
             'RED_DN_C',
             units='W m-2',
             frequency=1,
-            number=1020,
             long_name='Corrected downward short wave irradiance, red dome'
         )
 
@@ -53,7 +51,6 @@ class BBRFlux(PPBase):
             'SW_UP_C',
             units='W m-2',
             frequency=1,
-            number=1019,
             standard_name='upwelling_shortwave_flux_in_air',
             long_name='Corrected upward short wave irradiance, clear dome'
         )
@@ -62,7 +59,6 @@ class BBRFlux(PPBase):
             'RED_UP_C',
             units='W m-2',
             frequency=1,
-            number=1020,
             long_name='Corrected upward short wave irradiance, red dome'
         )
 

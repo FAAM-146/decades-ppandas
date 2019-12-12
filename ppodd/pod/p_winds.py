@@ -29,7 +29,6 @@ class TurbWinds(PPBase):
             'V_C',
             units='m s-1',
             frequency=32,
-            number=714,
             long_name='Northward wind component from turbulence probe and GIN',
             standard_name='northward_wind'
         )
@@ -38,7 +37,6 @@ class TurbWinds(PPBase):
              'U_C',
              units='m s-1',
              frequency=32,
-             number=715,
              long_name='Eastward wind component from turbulence probe and GIN',
              standard_name='eastward_wind'
          )
@@ -47,7 +45,6 @@ class TurbWinds(PPBase):
             'W_C',
             units='m s-1',
             frequency=32,
-            number=716,
             long_name='Vertical wind component from turbulence probe and GIN',
             standard_name='upward_air_velocity'
         )

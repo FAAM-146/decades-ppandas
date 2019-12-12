@@ -30,7 +30,6 @@ class GeneralEastern(PPBase):
             'TDEW_GE',
             units='degK',
             frequency=4,
-            number=529,
             long_name='Dew Point from the General Eastern instrument',
             standard_name='dew_point_temperature'
         )

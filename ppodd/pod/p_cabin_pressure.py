@@ -22,7 +22,6 @@ class CabinPressure(PPBase):
             'CAB_PRES',
             units='hPa',
             frequency=1,
-            number=579,
             long_name='Cabin Pressure'
         )
 

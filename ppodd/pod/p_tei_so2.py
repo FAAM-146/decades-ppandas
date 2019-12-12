@@ -27,7 +27,6 @@ class TecoSO2(PPBase):
             'SO2_TECO',
             units='ppb',
             frequency=1,
-            number=740,
             long_name=('Mole fraction of Sulphur Dioxide in air from TECO 43 '
                        'instrument'),
             standard_name='mole_fraction_of_sulfur_dioxide_in_air'

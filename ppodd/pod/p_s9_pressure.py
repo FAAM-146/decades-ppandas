@@ -23,7 +23,6 @@ class S9Pressure(PPBase):
             'P9_STAT',
             units='hPa',
             frequency=32,
-            number=579,
             long_name='Static pressure from S9 fuselage ports',
             standard_name='air_pressure'
         )

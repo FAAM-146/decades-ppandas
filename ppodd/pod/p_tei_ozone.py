@@ -20,7 +20,6 @@ class TeiOzone(PPBase):
             'O3_TECO',
             units='ppb',
             frequency=1,
-            number=574,
             long_name=('Mole fraction of Ozone in air from the TECO 49 '
                        'instrument'),
             standard_name='mole_fraction_of_ozone_in_air'

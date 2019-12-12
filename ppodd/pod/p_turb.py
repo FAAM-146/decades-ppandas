@@ -42,7 +42,6 @@ class TurbProbe(PPBase):
             'AOA',
             units='degree',
             frequency=32,
-            number=548,
             long_name=('Angle of attack from the turbulence probe (positive, '
                        'flow upwards wrt a/c axes)')
         )
@@ -51,7 +50,6 @@ class TurbProbe(PPBase):
             'AOSS',
             units='degree',
             frequency=32,
-            number=549,
             long_name=('Angle of sideslip from the turbulence probe '
                        '(positive, flow from left)')
         )
@@ -60,7 +58,6 @@ class TurbProbe(PPBase):
             'TAS',
             units='m s-1',
             frequency=32,
-            number=779,
             long_name='True airspeed (dry-air) from turbulence probe',
             standard_name='platform_speed_wrt_air'
         )
@@ -69,7 +66,6 @@ class TurbProbe(PPBase):
             'PSP_TURB',
             units='hPa',
             frequency=32,
-            number=781,
             long_name=('Pitot-static pressure from centre-port measurements '
                        'corrrected for AoA and AoSS')
         )
