@@ -32,24 +32,7 @@ class DecadesWriter(abc.ABC):
     def _get_time_bounds(self):
         """Get the earliest and latest times of all output variables"""
 
-        start_time = datetime.datetime.max
-        end_time = datetime.datetime.min
-
-        for var in self.dataset.outputs:
-
-            if not var.write:
-                continue
-
-            if var.data.index[0] < start_time:
-                start_time = var.data.index[0]
-
-            if var.data.index[-1] > end_time:
-                end_time = var.data.index[-1]
-
-        start_time = start_time.replace(microsecond=0)
-
-        self.start_time = start_time
-        self.end_time = end_time
+        self.start_time, self.end_time = self.dataset.time_bounds()
 
     def _get_output_freqs(self):
         """Get all of the required output frequencies"""

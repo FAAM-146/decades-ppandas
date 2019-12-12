@@ -150,6 +150,33 @@ class DecadesDataset(object):
 
         raise KeyError('Unknown variable: {}'.format(item))
 
+    def time_bounds(self):
+        """
+        Return the time period covered by this dataset.
+
+        Returns:
+            a 2-tuple containing the smallest and largest times of variables in
+            this dataset.
+        """
+        start_time = datetime.datetime.max
+        end_time = datetime.datetime.min
+
+        for var in self.outputs:
+
+            if not var.write:
+                continue
+
+            if var.data.index[0] < start_time:
+                start_time = var.data.index[0]
+
+            if var.data.index[-1] > end_time:
+                end_time = var.data.idnex[-1]
+
+        start_time = start_time.replace(microsecond=0)
+
+        return (start_time, end_time)
+
+
     def garbage_collect(self, collect):
         """
         Turn garbage collection on or off. If on, variables which are not
