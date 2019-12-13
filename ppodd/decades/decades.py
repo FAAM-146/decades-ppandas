@@ -26,7 +26,7 @@ class DecadesFile(object):
 class DecadesVariable(object):
 
     NC_ATTRS = [
-        'long_name', 'frequency', 'standard_name', 'units', 'number',
+        'long_name', 'frequency', 'standard_name', 'units',
         '_FillValue', 'valid_min', 'valid_max', 'featureType'
     ]
 
