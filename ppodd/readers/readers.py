@@ -57,12 +57,12 @@ class FlightConstantsReader(FileReader):
             for key, value in consts['Globals'].items():
                 if type(value) is list:
                     value = '\n'.join(value)
-                if type(value) is dict:
-                    for _key, _value in value.items():
-                        _file.dataset.globals['_'.join((key, _key))] = _value
-                    continue
+#                if type(value) is dict:
+#                    for _key, _value in value.items():
+#                        _file.dataset.add_global('_'.join((key, _key)), _value)
+#                    continue
 
-                _file.dataset.globals[key] = value
+                _file.dataset.add_global(key, value)
 
             for mod_name, mod_content in consts['Constants'].items():
                 for key, value in mod_content.items():

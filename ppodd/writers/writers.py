@@ -249,7 +249,7 @@ class NetCDFWriter(DecadesWriter):
                     'sps{0:02d}'.format(self.write_freq), self.write_freq
                 )
 
-    def _write_constant(self, nc, key, value):
+    def _write_global(self, nc, key, value):
         """
         Write a (key, value) pair to a given netCDF handle as global
         attributes. If value is a datetime, coerce to date string. If value is
@@ -311,5 +311,5 @@ class NetCDFWriter(DecadesWriter):
             self.time[:] = dates.values.astype(np.int64) / 1e9
 
             # Write flight constants as global attributes
-            for const in self.dataset.constants.items():
-                self._write_constant(nc, *const)
+            for _global in self.dataset.globals.items():
+                self._write_global(nc, *_global)

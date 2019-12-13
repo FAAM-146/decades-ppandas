@@ -116,10 +116,9 @@ class DecadesDataset(object):
         self.readers = []
         self.definitions = []
         self.constants = {}
-        self.globals = {}
+        self._globals = {}
         self.inputs = []
         self.outputs = []
-        self.attrs = {}
         self._dataframes = {}
         self._garbage_collect = False
         self._qa_dir = None
@@ -147,11 +146,6 @@ class DecadesDataset(object):
 
         try:
             return self.constants[item]
-        except KeyError:
-            pass
-
-        try:
-            return self.globals[item]
         except KeyError:
             pass
 
@@ -193,6 +187,60 @@ class DecadesDataset(object):
             self._garbage_collect = True
             return
         self._garbage_collect = False
+
+    @property
+    def _dynamic_globals(self):
+        _globals = {}
+        try:
+            _globals['geospatial_lat_min'] = self['LAT_GIN'].data.min()
+            _globals['geospatial_lat_max'] = self['LAT_GIN'].data.max()
+        except KeyError:
+            pass
+
+        try:
+            _globals['geospatial_lon_min'] = self['LON_GIN'].data.min()
+            _globals['geospatial_lon_max'] = self['LON_GIN'].data.max()
+        except KeyError:
+            pass
+
+        try:
+            _globals['geospatial_vertical_min'] = self['ALT_GIN'].data.min()
+            _globals['geospatial_vertical_max'] = self['ALT_GIN'].data.max()
+            _globals['geospatial_vertical_positive'] = 'up'
+        except KeyError:
+            pass
+
+        _time_bnds = self.time_bounds()
+        _strf_pattern = '%Y-%m-%dT%H:%M:%SZ'
+
+        _globals['time_coverage_start'] = _time_bnds[0].strftime(_strf_pattern)
+        _globals['time_coverage_end'] = _time_bnds[-1].strftime(_strf_pattern)
+
+        return _globals
+
+    @property
+    def globals(self):
+        """
+        Returns:
+            A dict containing dataset globals. This is a combination of
+            the self._globals dict and globals generated on the fly from the
+            contents of the dateset, via self._dynamic_globals
+        """
+
+        _globals = {}
+        _globals.update(self._globals)
+        _globals.update(self._dynamic_globals)
+        return _globals
+
+    def add_global(self, key, value):
+        """
+        Add a global key/value pair to the dataset globals.
+
+        Args:
+            key: the name of the global attribute to add
+            value: the value of the global attribute <key>
+        """
+        self._globals[key] = value
 
     @property
     def qa_dir(self):

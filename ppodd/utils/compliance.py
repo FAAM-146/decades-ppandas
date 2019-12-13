@@ -6,7 +6,7 @@ import json
 import ppodd.pod
 from ppodd.decades import DecadesDataset, DecadesVariable
 
-__all__ = ['NetCDFStructure', 'GlobalAttrs']
+__all__ = ['NetCDFStructure']
 
 class NetCDFStructure(object):
     def __init__(self):
@@ -45,26 +45,3 @@ class NetCDFStructure(object):
     @property
     def dict(self):
         return self._vars
-
-
-class GlobalAttrs(object):
-    def __init__(self, dataset):
-        self.dataset = dataset
-
-    def __getattr__(self, attr):
-        return self.dataset[attr]
-
-    def __call__(self):
-        _time_bounds = self.dataset.time_bounds()
-        _strf_pattern = '%Y-%m-%dT%H:%M:%SZ'
-
-        return {
-            'geospatial_lat_min': self['LAT_GIN'].data.min(),
-            'geospatial_lat_max': self['LAT_GIN'].data.max(),
-            'geospatial_lon_min': self['LON_GIN'].data.min(),
-            'geospatial_lon_max': self['LON_GIN'].data.max(),
-            'geospatial_vertical_min': self['ALT_GIN'].data.min(),
-            'geospatial_vertical_max': self['ALT_GIN'].data.max(),
-            'time_coverage_start': _time_bounds[0].strftime(_strf_pattern),
-            'time_coverage_end': _time_bounds[1].strftime(_strf_pattern)
-        }
