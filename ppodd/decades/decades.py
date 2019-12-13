@@ -177,7 +177,7 @@ class DecadesDataset(object):
                 start_time = var.data.index[0]
 
             if var.data.index[-1] > end_time:
-                end_time = var.data.idnex[-1]
+                end_time = var.data.index[-1]
 
         start_time = start_time.replace(microsecond=0)
 
