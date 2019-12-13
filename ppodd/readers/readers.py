@@ -54,20 +54,18 @@ class FlightConstantsReader(FileReader):
             print('Reading {}'.format(_file.filepath))
             consts = self._load(_file)
 
-            _file.dataset.constants['FLIGHT'] = consts['FLIGHT']
+            for key, value in consts['Globals'].items():
+                if type(value) is list:
+                    value = '\n'.join(value)
+                if type(value) is dict:
+                    for _key, _value in value.items():
+                        _file.dataset.globals['_'.join((key, _key))] = _value
+                    continue
 
-            try:
-                date = datetime.datetime.strptime(consts['DATE'], '%Y-%m-%d')
-            except TypeError:
-                date = consts['DATE']
+                _file.dataset.globals[key] = value
 
-            _file.dataset.constants['DATE'] = date
-
-            _file.dataset.constants['PROJECT'] = consts['PROJECT']
-            _file.dataset.constants['REVISION'] = consts['REVISION']
-
-            for _mod in consts['MODULES']:
-                for key, value in consts['MODULES'][_mod].items():
+            for mod_name, mod_content in consts['Constants'].items():
+                for key, value in mod_content.items():
                     _file.dataset.constants[key] = value
 
 
