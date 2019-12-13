@@ -45,7 +45,7 @@ class TecoSO2(PPBase):
         """
         d = self.d
 
-        d['WOW_FLAG'] = (d.WOW == 1)
+        d['WOW_FLAG'] = (d.WOW_IND == 1)
         d['ZERO_FLAG'] = 0
         d['CALIB_FLAG'] = 0
         d['ALARM_FLAG'] = 0
@@ -106,9 +106,9 @@ class TecoSO2(PPBase):
         self.flag()
 
         SO2 = DecadesVariable(self.d['SO2_TECO'], flag=DecadesBitmaskFlag)
-        SO2.flag.add_mask(d.WOW_FLAG, flags.WOW)
-        SO2.flag.add_mask(d.ZERO_FLAG, 'before first zero')
-        SO2.flag.add_mask(d.CALIB_FLAG, flags.CALIBRATION)
-        SO2.flag.add_mask(d.ALARM_FLAG, 'in alarm')
+        SO2.flag.add_mask(self.d.WOW_FLAG, flags.WOW)
+        SO2.flag.add_mask(self.d.ZERO_FLAG, 'before first zero')
+        SO2.flag.add_mask(self.d.CALIB_FLAG, flags.CALIBRATION)
+        SO2.flag.add_mask(self.d.ALARM_FLAG, 'in alarm')
 
         self.add_output(SO2)
