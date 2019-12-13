@@ -103,7 +103,7 @@ class DecadesVariable(object):
         if attr in DecadesVariable.NC_ATTRS:
             self.attrs[attr] = value
         else:
-            super(DecadesVariable, self).__setattr__(attr, value)
+            super().__setattr__(attr, value)
 
 
 class DecadesDataset(object):
@@ -116,6 +116,7 @@ class DecadesDataset(object):
         self.readers = []
         self.definitions = []
         self.constants = {}
+        self.globals = {}
         self.inputs = []
         self.outputs = []
         self.attrs = {}
@@ -146,6 +147,11 @@ class DecadesDataset(object):
 
         try:
             return self.constants[item]
+        except KeyError:
+            pass
+
+        try:
+            return self.globals[item]
         except KeyError:
             pass
 
