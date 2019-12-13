@@ -28,7 +28,6 @@ class AirSpeed(PPBase):
             'IAS_RVSM',
             units='m s-1',
             frequency=32,
-            number=516,
             long_name=('Indicated air speed from the aircraft RVSM '
                        '(air data) system')
         )
@@ -37,7 +36,6 @@ class AirSpeed(PPBase):
             'TAS_RVSM',
             units='m s-1',
             frequency=32,
-            number=517,
             long_name=('True air speed from the aircraft RVSM (air data) '
                        'system and deiced temperature'),
             standard_name='platform_speed_wrt_air'
