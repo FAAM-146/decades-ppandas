@@ -3,6 +3,8 @@ import re
 import importlib
 import sys
 
+import numpy as np
+
 from .base import PPBase
 
 def load_plugins():
@@ -30,7 +32,11 @@ def compile_cython():
     Does a basic cython compile if required.
     """
     import pyximport
-    pyximport.install()
+    pyximport.install(
+        setup_args={
+            'include_dirs': np.get_include()
+        }
+    )
 
 
 compile_cython()
