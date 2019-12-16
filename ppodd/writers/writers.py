@@ -271,7 +271,7 @@ class NetCDFWriter(DecadesWriter):
         if type(value) is dict:
             for _key, _val in value.items():
                 _key = '{}_{}'.format(key, _key)
-                self._write_constant(nc, _key, _val)
+                self._write_global(nc, _key, _val)
             return
 
         setattr(nc, key, value)
