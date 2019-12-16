@@ -32,7 +32,7 @@ class PPBase(abc.ABC):
         self.d = None
 
     def __str__(self):
-        return 'PP module: {}'.format(self.__class__.__name__)
+        return self.__class__.__name__
 
     @abc.abstractmethod
     def declare_outputs(self):
@@ -64,6 +64,13 @@ class PPBase(abc.ABC):
                 )
 
         for name, output in self.outputs.items():
+            # Apply any modifications specified in self.dataset._variable_mods
+            # - canonically as specified in the flight constants file
+            if name in self.dataset._variable_mods:
+                for key, value in self.dataset._variable_mods[name].items():
+                    setattr(output, key, value)
+
+            # And append the output to the dataset
             self.dataset.outputs.append(output)
 
     def onto(self, dataframe, index, limit=1, period=None):

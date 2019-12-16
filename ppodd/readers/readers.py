@@ -57,16 +57,18 @@ class FlightConstantsReader(FileReader):
             for key, value in consts['Globals'].items():
                 if type(value) is list:
                     value = '\n'.join(value)
-#                if type(value) is dict:
-#                    for _key, _value in value.items():
-#                        _file.dataset.add_global('_'.join((key, _key)), _value)
-#                    continue
 
                 _file.dataset.add_global(key, value)
 
             for mod_name, mod_content in consts['Constants'].items():
                 for key, value in mod_content.items():
                     _file.dataset.constants[key] = value
+
+            for key, val in consts['Modifications']['Variables'].items():
+                _file.dataset._variable_mods[key] = val
+
+            for pp_mod in consts['Modifications']['Exclude']:
+                _file.dataset._mod_exclusions.append(pp_mod)
 
 
 @register(patterns=['.*\.json'])

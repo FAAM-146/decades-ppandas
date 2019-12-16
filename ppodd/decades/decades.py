@@ -27,7 +27,7 @@ class DecadesVariable(object):
 
     NC_ATTRS = [
         'long_name', 'frequency', 'standard_name', 'units',
-        '_FillValue', 'valid_min', 'valid_max', 'featureType'
+        '_FillValue', 'valid_min', 'valid_max', 'comment'
     ]
 
     def __init__(self, *args, **kwargs):
@@ -36,7 +36,6 @@ class DecadesVariable(object):
 
         self.attrs = {
             '_FillValue': -9999.,
-            'featureType': 'trajectory'
         }
 
         write = kwargs.pop('write', True)
@@ -66,7 +65,7 @@ class DecadesVariable(object):
             _rename = {_var: name}
             self._df.rename(columns=_rename, inplace=True)
 
-        self.write = write
+        self._write = write
 
         self.attrs['ancillary_variables'] = '{}_FLAG'.format(self.name)
         self.flag = _flag(self)
@@ -105,6 +104,14 @@ class DecadesVariable(object):
         else:
             super().__setattr__(attr, value)
 
+    @property
+    def write(self):
+        return self._write
+
+    @write.setter
+    def write(self, write):
+        self._write = write
+
 
 class DecadesDataset(object):
     def __init__(self, date=None, backend=PandasInMemoryBackend):
@@ -116,6 +123,8 @@ class DecadesDataset(object):
         self.readers = []
         self.definitions = []
         self.constants = {}
+        self._variable_mods = {}
+        self._mod_exclusions = []
         self._globals = {}
         self.inputs = []
         self.outputs = []
@@ -501,6 +510,10 @@ class DecadesDataset(object):
                     pp_module, ', '.join(_missing)
                 ))
                 temp_modules.append(pp_module)
+                module_ran = True
+                continue
+            if str(pp_module) in self._mod_exclusions:
+                print('Skipping {} (excluded)'.format(pp_module))
                 module_ran = True
                 continue
             try:
