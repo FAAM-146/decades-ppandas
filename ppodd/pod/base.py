@@ -185,13 +185,18 @@ class PPBase(abc.ABC):
         return True, None
 
     @classmethod
-    def test_instance(cls):
+    def test_instance(cls, dataset=None):
         """
         Return a test instance of a postprocessing module, initialized with a
         DecadesDataset containing the modules test data.
         """
         now = datetime.datetime.now().replace(microsecond=0)
-        d = DecadesDataset(now.date())
+
+        if dataset is None:
+            d = DecadesDataset(now.date())
+        else:
+            d = dataset
+
         mod = cls(d)
 
         if callable(cls.test):
@@ -210,7 +215,7 @@ class PPBase(abc.ABC):
                     pd.Series(
                         _values,
                         index=pd.date_range(
-                            start=now, freq='S', periods=len(_values)
+                            start=d.date, freq='S', periods=len(_values)
                         )
                     ),
                     name=key,
