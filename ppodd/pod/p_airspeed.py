@@ -15,12 +15,14 @@ class AirSpeed(PPBase):
         'TAT_DI_R'          #  Deiced true air temp (derived)
     ]
 
-    test = {
-        'TASCORR': [1.],
-        'PS_RVSM': _l(1000, 300, 100),
-        'Q_RVSM': 250. * _o(100),
-        'TAT_DI_R': _l(25, -40, 100)
-    }
+    @staticmethod
+    def test():
+        return {
+            'TASCORR': ('const', 1.),
+            'PS_RVSM': ('data', _l(1000, 300, 100)),
+            'Q_RVSM': ('data', 250. * _o(100)),
+            'TAT_DI_R': ('data', _l(25, -40, 100))
+        }
 
     def declare_outputs(self):
 
