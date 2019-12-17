@@ -89,10 +89,10 @@ class DecadesClassicFlag(DecadesFlagABC):
         _cfattrs['long_name'] = self._long_name
         _cfattrs['_FillValue'] = int(-128)
         _cfattrs['flag_values'] = [
-            i for i in sorted(self.meanings.keys())
+            np.int8(i) for i in sorted(_meanings.keys())
         ]
         _cfattrs['flag_meanings'] = ' '.join(
-            self.meanings[i] for i in _cfattrs['flag_values']
+            _meanings[i] for i in _cfattrs['flag_values']
         )
 
         return _cfattrs
@@ -178,7 +178,7 @@ class DecadesBitmaskFlag(DecadesFlagABC):
             'long_name': self._long_name,
             '_FillValue': 0,
             'valid_range': [1, 2 * int(self.masks[-1]) - 1],
-            'flag_masks': self.masks,
+            'flag_masks': [np.int8(i) for i in self.masks],
             'flag_meanings': ' '.join(self._df.columns)
         }
 
