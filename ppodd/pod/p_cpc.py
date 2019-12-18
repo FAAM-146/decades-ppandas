@@ -1,5 +1,6 @@
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 from .base import PPBase
+from .shortcuts import _c, _l, _o, _z
 
 class CPC(PPBase):
 
@@ -11,6 +12,19 @@ class CPC(PPBase):
         'CPC378_growth_tube_temp',
         'CPC378_optics_temp'
     ]
+
+    @staticmethod
+    def test():
+        return {
+            'CPC378_counts': (
+                'data', _c([_z(30), _l(0, 2e4, 15), _l(2e4, 0, 15), _z(40)])
+            ),
+            'CPC378_sample_flow': ('data', 300 * _o(100)),
+            'CPC378_sheath_flow': ('data', 300 * _o(100)),
+            'CPC378_saturator_temp': ('data', 2 * _o(100)),
+            'CPC378_growth_tube_temp': ('data', 45 * _o(100)),
+            'CPC378_optics_temp': ('data', 45 * _o(100))
+        }
 
     def declare_outputs(self):
 

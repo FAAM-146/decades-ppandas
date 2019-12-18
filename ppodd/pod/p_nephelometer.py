@@ -2,6 +2,7 @@ import numpy as np
 
 from ..decades import DecadesVariable
 from .base import PPBase
+from .shortcuts import _z
 
 class Nephelometer(PPBase):
 
@@ -18,6 +19,25 @@ class Nephelometer(PPBase):
         'AERACK_neph_status',
         'AERACK_neph_mode'
     ]
+
+    @staticmethod
+    def test():
+
+        # Instrument U/S, no thought put into test data
+        return {
+            'AERACK_neph_total_blue': ('data', _z(100)),
+            'AERACK_neph_total_green': ('data', _z(100)),
+            'AERACK_neph_pressure': ('data', _z(100)),
+            'AERACK_neph_temp': ('data', _z(100)),
+            'AERACK_neph_backscatter_blue': ('data', _z(100)),
+            'AERACK_neph_backscatter_green': ('data', _z(100)),
+            'AERACK_neph_backscatter_red': ('data', _z(100)),
+            'AERACK_neph_total_red': ('data', _z(100)),
+            'AERACK_neph_humidity': ('data', _z(100)),
+            'AERACK_neph_status': ('data', _z(100)),
+            'AERACK_neph_mode': ('data', _z(100))
+        }
+
 
     def declare_outputs(self):
 

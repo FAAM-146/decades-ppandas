@@ -3,6 +3,7 @@ import pandas as pd
 
 from ..decades import DecadesVariable
 from .base import PPBase
+from .shortcuts import _c, _o, _z
 
 
 class SignalRegister(PPBase):
@@ -16,6 +17,13 @@ class SignalRegister(PPBase):
         'PRTAFT_heimann_calib_flag',
         'PRTAFT_deiced_temp_flag'
     ]
+
+    @staticmethod
+    def test():
+        return {
+            'PRTAFT_heimann_calib_flag': ('data', _c([_o(10), _z(90)])),
+            'PRTAFT_deiced_temp_flag': ('data', _c([_z(30), _o(30), _z(40)]))
+        }
 
     def declare_outputs(self):
 

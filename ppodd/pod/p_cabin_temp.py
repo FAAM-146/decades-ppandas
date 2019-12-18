@@ -1,6 +1,7 @@
 import numpy as np
 
 from .base import PPBase
+from .shortcuts import _c, _l
 from ..decades import DecadesVariable
 from ..decades import flags
 
@@ -11,6 +12,15 @@ class CabinTemp(PPBase):
         'CALCABT',
         'CORCON_cabin_t',
     ]
+
+    @staticmethod
+    def test():
+        return {
+            'CALCABT': ('const', [-263, 1.5e-4]),
+            'CORCON_cabin_t': (
+                'data', _c([_l(180e4, 185e4, 50), _l(185e4, 180e4, 50)])
+            )
+        }
 
     def declare_outputs(self):
         self.declare(

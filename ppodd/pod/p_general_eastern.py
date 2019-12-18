@@ -4,6 +4,7 @@ from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..utils import get_range_flag
 from ..utils.conversions import celsius_to_kelvin
 from .base import PPBase
+from .shortcuts import _o
 
 TDEW_VALID_RANGE = (195, 394)
 
@@ -20,6 +21,15 @@ class GeneralEastern(PPBase):
         'CORCON_ge_dew',    #  Gen. East. dewpoint (DLU)
         'CORCON_ge_cont'    #  Gen. East. control signal (DLU)
     ]
+
+    @staticmethod
+    def test():
+        return {
+            'GELIMS': ('const', [7000, 5000]),
+            'CALGE': ('const', [-80, 4e-3, -2.5e-10]),
+            'CORCON_ge_dew': ('data', 125e2 * _o(100)),
+            'CORCON_ge_cont': ('data', 5000 * _o(100))
+        }
 
     def declare_outputs(self):
         """

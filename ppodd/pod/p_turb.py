@@ -6,6 +6,7 @@ from ..decades import flags
 from ..utils import get_range_flag
 from ..utils.calcs import sp_mach
 from .base import PPBase
+from .shortcuts import _o, _z
 
 MAX_ITERS = 5
 
@@ -35,6 +36,32 @@ class TurbProbe(PPBase):
         'TBPC',      # (derived)
         'TBPD'       # (derived)
     ]
+
+    @staticmethod
+    def test():
+        return {
+            'AOA_A0': ('const', [0.34, 0.28, -.56]),
+            'AOA_A1': ('const', [-6.1e-2, -5.3e-2, 1.0]),
+            'AOSS_B0': ('const', [-2e-2, 0.0, 0.0]),
+            'AOSS_B1': ('const', [5.8e-2, -1.7e-2, 0.0]),
+            'TOLER': ('const', .02),
+            'TASCOR1': ('const', 1),
+            'ALPH0': ('const', -.41),
+            'ALPH1': ('const', 1.1),
+            'BET0': ('const', -0.7),
+            'BET1': ('const', 0.95),
+            'IAS_RVSM': ('data', 120 * _o(100)),
+            'TAT_DI_R': ('data', 250 * _o(100)),
+            'TAT_ND_R': ('data', 250 * _o(100)),
+            'PS_RVSM': ('data', 500 * _o(100)),
+            'Q_RVSM': ('data', 80 * _o(100)),
+            'PALT_RVS': ('data', 1e5 * _o(100)),
+            'P0_S10': ('data', 80 * _o(100)),
+            'PA_TURB': ('data', 5 * _o(100)),
+            'PB_TURB': ('data', _z(100)),
+            'TBPC': ('data', 120 * _o(100)),
+            'TBPD': ('data', _z(100))
+        }
 
     def declare_outputs(self):
 

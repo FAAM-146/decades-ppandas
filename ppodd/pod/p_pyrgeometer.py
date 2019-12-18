@@ -3,6 +3,7 @@ import numpy as np
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..decades import flags
 from .base import PPBase
+from .shortcuts import _c, _o, _z
 from ..utils.constants import STEF_BOLTZ
 
 
@@ -62,6 +63,16 @@ class KippZonenPyrgeometer(PPBase):
         'UPPBBR_radiometer_3_temp',
         'WOW_IND'
     ]
+
+    @staticmethod
+    def test():
+        return {
+            'LOWBBR_radiometer_3_sig': ('data', 5e3 * _o(100)),
+            'LOWBBR_radiometer_3_temp': ('data', 2e2 * _o(100)),
+            'UPPBBR_radiometer_3_sig': ('data', 5e3 * _o(100)),
+            'UPPBBR_radiometer_3_temp': ('data', 2e2 * _o(100)),
+            'WOW_IND': ('data', _c([_o(30), _z(50), _o(20)]))
+        }
 
     def declare_outputs(self):
         """

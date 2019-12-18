@@ -6,6 +6,7 @@ from scipy.optimize import curve_fit
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..decades import flags
 from .base import PPBase
+from .shortcuts import _o, _z
 
 
 def get_no_cloud_mask(twc_col_p, wow, window_secs=3, min_period=5, freq=64):
@@ -146,8 +147,41 @@ class Nevzorov(PPBase):
 
     instruments = {
         '1t1l2r': ('twc', 'lwc'),
-        '1t2l1r': ('twc', 'lwc1', 'lwc2')
+        '1t2l1r': ('twc', 'lwc1', 'lwc2'),
     }
+
+    @staticmethod
+    def test():
+        return {
+            'VANETYPE': ('const', '1t2l1r'),
+            'CLWCIREF': ('const', [-5.8e-2, 3.3e-4, 5e-1]),
+            'CLWCVREF': ('const', [-5.8e-2, 3.3e-4, 2.0]),
+            'CLWCICOL': ('const', [-5.8e-2, 3.3e-4, 5e-1]),
+            'CLWCVCOL': ('const', [-5.8e-2, 3.3e-4, 2.0]),
+            'CTWCIREF': ('const', [-5.8e-2, 3.3e-4, 5e-1]),
+            'CTWCVREF': ('const', [-5.8e-2, 3.3e-4, 2.0]),
+            'CTWCICOL': ('const', [-5.8e-2, 3.3e-4, 5e-1]),
+            'CTWCVCOL': ('const', [-5.8e-2, 3.3e-4, 2.0]),
+            'CALNVTWC': ('const', [0.70, 0.5e-4]),
+            'CALNVLWC': ('const', [1.35, 0.25e-4]),
+            'CALNVLWC1': ('const', [1.35, 0.258e-4]),
+            'CALNVLWC2': ('const', [1.95, 0.381e-4]),
+            'CALNVL': ('const', 2589.0),
+            'CALRSL': ('const', [0.75E-4, 110]),
+            'CALRST': ('const', [1.2E-4, 110]),
+            'CORCON_nv_lwc_vcol': ('data', 7500 * _o(100)),
+            'CORCON_nv_lwc_icol': ('data', 1e4 * _o(100)),
+            'CORCON_nv_lwc_vref': ('data', 6e4 * _o(100)),
+            'CORCON_nv_lwc_iref': ('data', 9e3 * _o(100)),
+            'CORCON_nv_twc_vcol': ('data', 5e3 * _o(100)),
+            'CORCON_nv_twc_icol': ('data', 8e3 * _o(100)),
+            'CORCON_nv_twc_vref': ('data', 8e3 * _o(100)),
+            'CORCON_nv_twc_iref': ('data', 12e3 * _o(100)),
+            'TAS_RVSM': ('data', 250 * _o(100)),
+            'IAS_RVSM': ('data', 200 * _o(100)),
+            'PS_RVSM': ('data', 500 * _o(100)),
+            'WOW_IND': ('data', _z(100))
+        }
 
     def _declare_outputs_common(self):
         """

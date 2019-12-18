@@ -3,6 +3,7 @@ import pandas as pd
 
 from ..decades import DecadesVariable
 from .base import PPBase
+from .shortcuts import _o, _z
 
 from .c_winds import c_winds
 
@@ -23,6 +24,24 @@ class TurbWinds(PPBase):
         'AOA',
         'AOSS'
     ]
+
+    @staticmethod
+    def test():
+        return {
+            'INSPOSN': ('const', [16, -.8, -.4]),
+            'TAS': ('data', 120 * _o(100)),
+            'VELN_GIN': ('data', 100 * _o(100)),
+            'VELE_GIN': ('data', 100 * _o(100)),
+            'VELD_GIN': ('data', _z(100)),
+            'ROLL_GIN': ('data', _z(100)),
+            'PTCH_GIN': ('data', 6 * _o(100)),
+            'HDG_GIN': ('data', _z(100)),
+            'ROLR_GIN': ('data', _z(100)),
+            'PITR_GIN': ('data', _z(100)),
+            'HDGR_GIN': ('data', _z(100)),
+            'AOA': ('data', 6 * _o(100)),
+            'AOSS': ('data', _z(100))
+        }
 
     def declare_outputs(self):
         self.declare(

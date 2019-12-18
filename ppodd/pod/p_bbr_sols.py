@@ -1,4 +1,5 @@
 from .base import PPBase
+from .shortcuts import _o, _z
 from ..decades import DecadesVariable
 
 
@@ -25,6 +26,35 @@ class BBRSols(PPBase):
         'LOWBBR_radiometer_2_temp',
         'LOWBBR_radiometer_3_temp'
     ]
+
+    @staticmethod
+    def test():
+        return {
+            'CALUP1S': ('const', [6, .05, 128., -6e-3]),
+            'CALUP2S': ('const', [1, .03, 128., -6e-3]),
+            'CALUIRS': ('const', [-1e3, 0.1, 134, -6e-3]),
+            'CALLP1S': ('const', [.6, .04, 128, -6e-3]),
+            'CALLP2S': ('const', [.25, .025, 128, -6e-3]),
+            'CALLIRS': ('const', [-500, -.03, 134, -6e-3]),
+            'UPPBBR_radiometer_1_sig': ('data', 15000 * _o(100)),
+            'UPPBBR_radiometer_2_sig': ('data', 7000 * _o(100)),
+            'UPPBBR_radiometer_3_sig': ('data', -54 * _o(100)),
+            'UPPBBR_radiometer_1_zero': ('data', _z(100)),
+            'UPPBBR_radiometer_2_zero': ('data', _z(100)),
+            'UPPBBR_radiometer_3_zero': ('data', _z(100)),
+            'UPPBBR_radiometer_1_temp': ('data', 20000 * _o(100)),
+            'UPPBBR_radiometer_2_temp': ('data', 20000 * _o(100)),
+            'UPPBBR_radiometer_3_temp': ('data', _z(100)),
+            'LOWBBR_radiometer_1_sig': ('data', 8000 * _o(100)),
+            'LOWBBR_radiometer_2_sig': ('data', 8000 * _o(100)),
+            'LOWBBR_radiometer_3_sig': ('data', -38 * _o(100)),
+            'LOWBBR_radiometer_1_zero': ('data', _z(100)),
+            'LOWBBR_radiometer_2_zero': ('data', _z(100)),
+            'LOWBBR_radiometer_3_zero': ('data', _z(100)),
+            'LOWBBR_radiometer_1_temp': ('data', 20000 * _o(100)),
+            'LOWBBR_radiometer_2_temp': ('data', 20000 * _o(100)),
+            'LOWBBR_radiometer_3_temp': ('data', -10000 * _o(100))
+        }
 
     def declare_outputs(self):
         """

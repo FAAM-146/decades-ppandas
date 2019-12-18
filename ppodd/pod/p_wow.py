@@ -2,11 +2,18 @@ import pandas as pd
 
 from ..decades import DecadesVariable
 from .base import PPBase
+from .shortcuts import _c, _o, _z
 
 
 class WeightOnWheels(PPBase):
 
     inputs = ['PRTAFT_wow_flag']
+
+    @staticmethod
+    def test():
+        return {
+            'PRTAFT_wow_flag': ('data', _c([_o(20), _z(60), _o(20)]))
+        }
 
     def declare_outputs(self):
         self.declare(

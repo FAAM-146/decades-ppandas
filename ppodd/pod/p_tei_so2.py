@@ -6,6 +6,7 @@ from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..decades import flags
 from ..utils import flagged_avg
 from .base import PPBase
+from .shortcuts import _c, _o, _z
 
 CAL_FLUSH_START = 3
 CAL_FLUSH_END = 5
@@ -21,6 +22,18 @@ class TecoSO2(PPBase):
         'CHTSOO_sensitivity',
         'WOW_IND'
     ]
+
+    @staticmethod
+    def test():
+        #TODO: These values require more thought
+        return {
+            'CHTSOO_conc': ('data', _o(100)),
+            'CHTSOO_flags': ('data', [b'cc0000'] * 100),
+            'CHTSOO_V6': ('data', _c([_z(40), _o(20), _z(40)])),
+            'CHTSOO_V8': ('data', _z(100)),
+            'CHTSOO_sensitivity': ('data', _o(100)),
+            'WOW_IND': ('data', _c([_o(10), _z(80), _o(10)]))
+        }
 
     def declare_outputs(self):
         self.declare(

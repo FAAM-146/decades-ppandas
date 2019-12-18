@@ -3,6 +3,7 @@ import numpy as np
 from ..decades import DecadesVariable
 from ..decades import flags
 from .base import PPBase
+from .shortcuts import _o, _z
 
 
 class TPress(PPBase):
@@ -19,6 +20,21 @@ class TPress(PPBase):
         'CORCON_tp_top_s10',
         'CORCON_tp_right_s10'
     ]
+
+    @staticmethod
+    def test():
+        return {
+            'CALTP1': ('const', [.88, 5.5e-3, 2e-9, -3.6e-14]),
+            'CALTP2': ('const', [-.14, 2.1e-5, 2e-15, -5.64e-23]),
+            'CALTP3': ('const', [-.73, 2.1e-5, 1.5e-15, 5.57e-22]),
+            'CALTP4': ('const', [1.5, 1.0e-2]),
+            'CALTP5': ('const', [-1.2, 1.0e-2]),
+            'CORCON_tp_p0_s10': ('data', 15e3 * _o(100)),
+            'CORCON_tp_up_down': ('data', 15e4 * _o(100)),
+            'CORCON_tp_left_right': ('data', _z(100)),
+            'CORCON_tp_top_s10': ('data', 11e3 * _o(100)),
+            'CORCON_tp_right_s10': ('data', 10e3 * _o(100))
+        }
 
     def declare_outputs(self):
 

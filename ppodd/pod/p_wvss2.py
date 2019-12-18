@@ -6,6 +6,7 @@ import pandas as pd
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..decades import flags
 from .base import PPBase
+from .shortcuts import _z
 
 parameters = OrderedDict()
 parameters['VMR'] = {
@@ -49,7 +50,12 @@ class WVSS2(object):
                 '{}_ident'.format(self.unit)
             ].data[0].decode()
         except KeyError:
-            return
+            if not self.test_mode:
+                return
+
+            self._ident = self.__class__.test()[
+                '{}_ident'.format(self.unit)
+            ][1][0].decode()
 
         for name, attrs in parameters.items():
             self.declare(
@@ -147,6 +153,26 @@ class WVSS2(object):
 class WVSS2A(WVSS2, PPBase):
     unit = 'WVSS2A'
 
+    @staticmethod
+    def test():
+        return {
+            'WVSS2A_ident': ('data', [b'F'] * 100),
+            'WVSS2A_utc_time_msec': ('data', _z(100)),
+            'WVSS2A_serial_data':  (
+                'data', b'14500  990  35  12000 20000 260 72 50 50 1 1\n'
+            )
+        }
+
 
 class WVSS2B(WVSS2, PPBase):
     unit = 'WVSS2B'
+
+    @staticmethod
+    def test():
+        return {
+            'WVSS2B_ident': ('data', [b'R'] * 100),
+            'WVSS2B_utc_time_msec': ('data', _z(100)),
+            'WVSS2B_serial_data':  (
+                'data', b'14500  990  35  12000 20000 260 72 50 50 1 1\n'
+            )
+        }

@@ -3,6 +3,7 @@ import numpy as np
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..decades import flags
 from .base import PPBase
+from .shortcuts import _c, _o, _z
 
 class TeiOzone(PPBase):
 
@@ -13,6 +14,16 @@ class TeiOzone(PPBase):
         'TEIOZO_FlowB',
         'WOW_IND'
     ]
+
+    @staticmethod
+    def test():
+        return {
+            'TEIOZO_conc': ('data', 50 * _o(100)),
+            'TEIOZO_flag': ('data', [b'0C100000'] * 100),
+            'TEIOZO_FlowA': ('data', .7 * _o(100)),
+            'TEIOZO_FlowB': ('data', .7 * _o(100)),
+            'WOW_IND': ('data', _c([_o(20), _z(60), _o(20)]))
+        }
 
     def declare_outputs(self):
 

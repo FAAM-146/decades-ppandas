@@ -2,11 +2,18 @@ import numpy as np
 
 from ..decades import DecadesVariable
 from .base import PPBase
+from .shortcuts import _o
 
 
 class ElectricFieldJci140(PPBase):
 
     inputs = ['PRTAFT_jci140_signal']
+
+    @staticmethod
+    def test():
+        return {
+            'PRTAFT_jci140_signal': ('data', 50 * _o(100))
+        }
 
     def declare_outputs(self):
         self.declare(

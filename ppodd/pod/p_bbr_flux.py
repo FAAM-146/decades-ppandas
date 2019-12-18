@@ -1,6 +1,7 @@
 import numpy as np
 
 from .base import PPBase
+from .shortcuts import _l, _o, _z, _c
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 
 import matplotlib.pyplot as plt
@@ -29,6 +30,40 @@ class BBRFlux(PPBase):
         'LP1S', 'LP2S', 'LIRS', 'LP1Z', 'LP2Z', 'LIRZ', 'LP1T', 'LP2T', 'LIRT',
         'SOL_AZIM', 'SOL_ZEN', 'ROLL_GIN', 'PTCH_GIN', 'HDG_GIN'
     ]
+
+    @staticmethod
+    def test():
+        return {
+            'CALCUCF': ('const', [0, 0, 0, -3, 0, 1]),
+            'CALCURF': ('const', [0, 0, 0, -3, 0, 1]),
+            'CALCUIF': ('const', [0, 0, 0, -3, 0, 1]),
+            'CALCLCF': ('const', [0, 0, 0, 0, 0, 1]),
+            'CALCLRF': ('const', [0, 0, 0, 0, 0, 1]),
+            'CALCLIF': ('const', [0, 0, 0, 0, 0, 1]),
+            'UP1S': ('data', 600 * _o(100)),
+            'UP2S': ('data', 300 * _o(100)),
+            'UIRS': ('data', _z(100)),
+            'UP1Z': ('data', _z(100)),
+            'UP2Z': ('data', _z(100)),
+            'UIRZ': ('data', _z(100)),
+            'UP1T': ('data', 250 * _o(100)),
+            'UP2T': ('data', 250 * _o(100)),
+            'UIRT': ('data', 400 * _o(100)),
+            'LP1S': ('data', 300 * _o(100)),
+            'LP2S': ('data', 150 * _o(100)),
+            'LIRS': ('data', _z(100)),
+            'LP1Z': ('data', _z(100)),
+            'LP2Z': ('data', _z(100)),
+            'LIRZ': ('data', _z(100)),
+            'LP1T': ('data', 250 * _o(100)),
+            'LP2T': ('data', 250 * _o(100)),
+            'LIRT': ('data', 400 * _o(100)),
+            'SOL_AZIM': ('data', _l(200, 250, 100)),
+            'SOL_ZEN': ('data', _l(25, 50, 100)),
+            'ROLL_GIN': ('data', _c([_l(0, 5, 50), _l(5, 0, 50)])),
+            'PTCH_GIN': ('data', 6 * _o(100)),
+            'HDG_GIN': ('data', _z(100))
+        }
 
     def declare_outputs(self):
 

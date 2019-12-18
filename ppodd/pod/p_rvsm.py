@@ -3,6 +3,7 @@ import numpy as np
 
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 from .base import PPBase
+from .shortcuts import _l, _o
 
 PALT_MIN = -2000
 PALT_MAX = 50000
@@ -13,6 +14,13 @@ IAS_MAX = 500
 class RioRvsm(PPBase):
 
     inputs = ['PRTAFT_pressure_alt', 'PRTAFT_ind_air_speed']
+
+    @staticmethod
+    def test():
+        return {
+            'PRTAFT_pressure_alt': ('data', _l(0, 3000, 100)),
+            'PRTAFT_ind_air_speed': ('data', 150 * _o(100))
+        }
 
     def declare_outputs(self):
         self.declare(

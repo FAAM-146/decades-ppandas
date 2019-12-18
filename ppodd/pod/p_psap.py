@@ -2,6 +2,7 @@ import numpy as np
 
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 from .base import PPBase
+from .shortcuts import _o
 
 class PSAP(PPBase):
 
@@ -11,6 +12,15 @@ class PSAP(PPBase):
         'AERACK_psap_log',          #  PSAP log (dlu)
         'AERACK_psap_transmission'  #  PSAP transmission (dlu)
     ]
+
+    @staticmethod
+    def test():
+        return {
+            'AERACK_psap_flow': ('data', 2 * _o(100)),
+            'AERACK_psap_lin': ('data', 1e5 * _o(100)),
+            'AERACK_psap_log': ('data', _o(100)),
+            'AERACK_psap_transmission': ('data', _o(100))
+        }
 
     def declare_outputs(self):
         self.declare(

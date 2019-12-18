@@ -5,6 +5,7 @@ from pysolar.solar import get_altitude, get_azimuth
 
 from ..decades import DecadesVariable
 from .base import PPBase
+from .shortcuts import _o, _z
 
 
 class SolarAngles(PPBase):
@@ -13,6 +14,13 @@ class SolarAngles(PPBase):
         'LAT_GIN',
         'LON_GIN'
     ]
+
+    @staticmethod
+    def test():
+        return {
+            'LAT_GIN': ('data', 60 * _o(100)),
+            'LON_GIN': ('data', _z(100))
+        }
 
     def declare_outputs(self):
         self.declare(

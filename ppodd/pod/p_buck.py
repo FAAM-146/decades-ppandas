@@ -7,6 +7,7 @@ from scipy.optimize import fsolve
 
 from ..decades import DecadesVariable
 from .base import PPBase
+from .shortcuts import _o, _z
 
 
 class BuckCR2(PPBase):
@@ -20,6 +21,18 @@ class BuckCR2(PPBase):
         'AERACK_buck_mirr_cln_flag',
         'PS_RVSM'
     ]
+
+    @staticmethod
+    def test():
+        return {
+            'BUCK': ('const', [0, 1]),
+            'AERACK_buck_ppm': ('data', 2000 * _o(100)),
+            'AERACK_buck_mirr_temp': ('data', -10 * _o(100)),
+            'AERACK_buck_pressure': ('data', 800 * _o(100)),
+            'AERACK_buck_dewpoint_flag': ('data', _o(100)),
+            'AERACK_buck_mirr_cln_flag': ('data', _z(100)),
+            'PS_RVSM': ('data', 800 * _o(100))
+        }
 
     def declare_outputs(self):
 

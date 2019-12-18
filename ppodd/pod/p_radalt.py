@@ -5,6 +5,7 @@ from ..decades import flags
 from ..utils.conversions import feet_to_metres
 from ..utils.constants import RADALT_MIN, RADALT_MAX
 from .base import PPBase
+from .shortcuts import _l
 
 class RadAlt(PPBase):
 
@@ -12,9 +13,11 @@ class RadAlt(PPBase):
         'PRTAFT_rad_alt'    # Radar altitude (dlu)
     ]
 
-    test = {
-        'PRTAFT_rad_alt': ('data', np.arange(0, 32000, 4))
-    }
+    @staticmethod
+    def test():
+        return {
+            'PRTAFT_rad_alt': ('data', _l(0, 32000, 100))
+        }
 
     def declare_outputs(self):
         self.declare(

@@ -3,6 +3,7 @@ import numpy as np
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..decades import flags
 from .base import PPBase
+from .shortcuts import _o
 
 class S9Pressure(PPBase):
     """
@@ -13,6 +14,13 @@ class S9Pressure(PPBase):
         'CALS9SP',
         'CORCON_s9_press'
     ]
+
+    @staticmethod
+    def test():
+        return {
+            'CALS9SP': ('const', [-130, .035, 1.85e-9]),
+            'CORCON_s9_press': ('data', 850 * _o(100))
+        }
 
     def declare_outputs(self):
         """

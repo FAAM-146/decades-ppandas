@@ -3,6 +3,7 @@ import numpy as np
 
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 from .base import PPBase
+from .shortcuts import _o, _z
 
 ROLL_THRESH = 2
 
@@ -18,6 +19,18 @@ class GINWinds(PPBase):
         'ROLL_GIN',
         'TAT_DI_R'
     ]
+
+    @staticmethod
+    def test():
+        return {
+            'GIN_HDG_OFFSET': ('const', 0),
+            'VELE_GIN': ('data', 100 * _o(100)),
+            'VELN_GIN': ('data', 100 * _o(100)),
+            'HDG_GIN': ('data', _z(100)),
+            'TAS_RVSM': ('data', 130 * _o(100)),
+            'ROLL_GIN': ('data', _z(100)),
+            'TAT_DI_R': ('data', 250 * _o(100))
+        }
 
     def declare_outputs(self):
         self.declare(

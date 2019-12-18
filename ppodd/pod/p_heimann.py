@@ -4,6 +4,7 @@ from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..decades import flags
 from ..utils.conversions import celsius_to_kelvin
 from .base import PPBase
+from .shortcuts import _c, _o, _z
 
 
 class Heimann(PPBase):
@@ -19,6 +20,17 @@ class Heimann(PPBase):
         'CORCON_heim_c',
         'WOW_IND'
     ]
+
+    @staticmethod
+    def test():
+        return {
+            'PRTCCAL': ('const', [-20, 2e-3, 0]),
+            'HEIMCAL': ('const', [-45, 3e-3, 0]),
+            'SREG': ('data', _z(100)),
+            'CORCON_heim_t': ('data', 2e5 * _o(100)),
+            'CORCON_heim_c': ('data', 185e2 * _o(100)),
+            'WOW_IND': ('data', _c([_o(20), _z(80)]))
+        }
 
     def declare_outputs(self):
         self.declare(

@@ -3,6 +3,7 @@ import pandas as pd
 
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 from .base import PPBase
+from .shortcuts import _l, _o, _z
 
 
 class Gin(PPBase):
@@ -14,6 +15,30 @@ class Gin(PPBase):
         'GINDAT_rolr', 'GINDAT_pitr', 'GINDAT_hdgr', 'GINDAT_aclf',
         'GINDAT_acls', 'GINDAT_acld', 'GINDAT_status'
         ]
+
+    @staticmethod
+    def test():
+        return {
+            'GINDAT_lat': ('data', _l(60, 60.1, 100)),
+            'GINDAT_lon': ('data', _l(0, .1, 100)),
+            'GINDAT_alt': ('data', _l(0, 1000, 100)),
+            'GINDAT_veln': ('data', 100 * _o(100)),
+            'GINDAT_vele': ('data', 100 * _o(100)),
+            'GINDAT_veld': ('data', _z(100)),
+            'GINDAT_roll': ('data', _z(100)),
+            'GINDAT_ptch': ('data', 6 * _o(100)),
+            'GINDAT_hdg': ('data', 45 * _o(100)),
+            'GINDAT_wand': ('data', -150 * _o(100)),
+            'GINDAT_trck': ('data', 45 * _o(100)),
+            'GINDAT_gspd': ('data', 120 * _o(100)),
+            'GINDAT_rolr': ('data', _z(100)),
+            'GINDAT_pitr': ('data', _z(100)),
+            'GINDAT_hdgr': ('data', _z(100)),
+            'GINDAT_aclf': ('data', _z(100)),
+            'GINDAT_acls': ('data', _z(100)),
+            'GINDAT_acld': ('data', _z(100)),
+            'GINDAT_status': ('data', _o(100))
+        }
 
     def declare_outputs(self):
         self.declare(
