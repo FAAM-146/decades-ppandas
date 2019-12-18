@@ -24,10 +24,11 @@ class PPBase(abc.ABC):
     inputs = []
     test = {}
 
-    def __init__(self, dataset):
+    def __init__(self, dataset, test_mode=False):
         self.dataset = dataset
         self.outputs = {}
         self.declarations = {}
+        self.test_mode = test_mode
         self.declare_outputs()
         self.d = None
 
@@ -197,7 +198,7 @@ class PPBase(abc.ABC):
         else:
             d = dataset
 
-        mod = cls(d)
+        mod = cls(d, test_mode=True)
 
         if callable(cls.test):
             _test = cls.test()
