@@ -41,8 +41,7 @@ class BuckCR2(PPBase):
             units='ppmv',
             frequency=1,
             long_name=('Water vapour volume mixing ratio measured by the Buck '
-                       'CR2'),
-            standard_name='volume_mixing_ratio_of_water_in_air'
+                       'CR2')
         )
 
         self.declare(
