@@ -329,7 +329,8 @@ class TcpFileReader(FileReader):
                     name=variable_name,
                     long_name=definition.get_field(_name).long_name,
                     units='RAW',
-                    frequency=frequency
+                    frequency=frequency,
+                    write=False
                 )
 
                 if variable.index.size != variable.index.unique().size:
