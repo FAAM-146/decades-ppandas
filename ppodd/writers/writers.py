@@ -298,9 +298,12 @@ class NetCDFWriter(DecadesWriter):
             self._init_netcdf(nc)
 
             # Write each variable in turn
-            for var in self.dataset.outputs:
+            for _var in self.dataset.variables:
+                var = self.dataset[_var]
                 if var.write:
                     self._write_var(nc, var)
+                else:
+                    continue
 
             # Create an index for the Time variable
             dates = pd.date_range(self.start_time, self.end_time,
