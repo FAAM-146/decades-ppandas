@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 
 from ..decades import DecadesVariable, DecadesBitmaskFlag
+from ..utils import pd_freq
 from .base import PPBase
 from .shortcuts import _l, _o
 
@@ -105,8 +106,7 @@ class RioRvsm(PPBase):
     def calc_ps_rvsm(self):
         d = self.d
 
-        ps_rvsm = pd.DataFrame([], index=d.index)
-        ps_rvsm['PS_RVSM'] = d['P']
+        ps_rvsm = d['P']
 
         ps_rvsm = DecadesVariable(ps_rvsm, name='PS_RVSM',
                                   flag=DecadesBitmaskFlag)
@@ -118,8 +118,7 @@ class RioRvsm(PPBase):
     def calc_palt_rvs(self):
         d = self.d
 
-        palt_rvs = pd.DataFrame([], index=d.index)
-        palt_rvs['PALT_RVS'] = d['PALT_METRES']
+        palt_rvs = d['PALT_METRES']
 
         palt_rvs = DecadesVariable(palt_rvs, name='PALT_RVS',
                                    flag=DecadesBitmaskFlag)
@@ -130,8 +129,7 @@ class RioRvsm(PPBase):
 
     def calc_q_rvsm(self):
         d = self.d
-        q_rvsm = pd.DataFrame([], index=d.index)
-        q_rvsm['Q_RVSM'] = d['PITOT']
+        q_rvsm = d['PITOT']
 
         q_rvsm = DecadesVariable(q_rvsm, name='Q_RVSM',
                                  flag=DecadesBitmaskFlag)
@@ -143,7 +141,9 @@ class RioRvsm(PPBase):
 
     def process(self):
 
-        self.get_dataframe()
+        _start, _end = self.dataset[self.inputs[0]].time_bounds()
+        _index = pd.date_range(start=_start, end=_end, freq=pd_freq[32])
+        self.get_dataframe(method='onto', index=_index, limit=2)
 
         self.calc_altitude()
         self.calc_pressure()
