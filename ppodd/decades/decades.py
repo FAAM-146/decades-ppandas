@@ -104,6 +104,9 @@ class DecadesVariable(object):
         else:
             super().__setattr__(attr, value)
 
+    def time_bounds(self):
+        return (self.index[0], self.index[-1])
+
     @property
     def write(self):
         return self._write
@@ -116,10 +119,7 @@ class DecadesVariable(object):
 class DecadesDataset(object):
     def __init__(self, date=None, backend=PandasInMemoryBackend):
 
-        if date is None:
-            raise ValueError('Flight date must be given')
-
-        self.date = date
+        self._date = date
         self.readers = []
         self.definitions = []
         self.constants = {}
@@ -196,6 +196,23 @@ class DecadesDataset(object):
             self._garbage_collect = True
             return
         self._garbage_collect = False
+
+    @property
+    def date(self):
+        if self._date:
+            return datetime.datetime.combine(
+                self._date, datetime.datetime.min.time()
+            )
+
+        try:
+            return datetime.datetime.combine(
+                self._globals['date'], datetime.datetime.min.time()
+            )
+        except KeyError:
+            pass
+
+        raise AttributeError('No date has been set')
+
 
     @property
     def _dynamic_globals(self):
