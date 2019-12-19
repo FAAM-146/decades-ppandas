@@ -550,3 +550,11 @@ class DecadesDataset(object):
                 self.pp_modules.append(temp_modules.pop())
 
             self._collect_garbage()
+
+        # Modify any attributes on inputs, canonically specified in flight
+        # constants file.
+        for var in self._backend.inputs:
+            name = var.name
+            if name in self._variable_mods:
+                for key, value in self._variable_mods[name].items():
+                    setattr(var, key, value)
