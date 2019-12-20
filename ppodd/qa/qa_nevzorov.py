@@ -91,7 +91,7 @@ class NevzorovQA(QAMod):
         lwc_axis.set_yticks([])
 
     def run(self):
-        with QAFigure(self.dataset, 'Nevzorov') as fig:
+        with QAFigure(self.dataset, 'Nevzorov', landscape=True) as fig:
             self.make_power_timeseries(fig)
             self.make_uncorrected_timeseries(fig)
             self.make_corrected_timeseries(fig)
