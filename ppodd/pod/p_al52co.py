@@ -10,7 +10,6 @@ from ..utils import flagged_avg
 INIT_SKIP = 100         # Number of datapoints to skip at the start
 SENS_CUTOFF = 0         # Sensitivity vals at or below considered bad
 CAL_FLUSH_TIME = 3      # Time for system to flush after a cal
-CAL_PRESS_THRESH = 3.4  # Flag when cal_press is higher than this
 CO_VALID_MIN = -10      # Flag if CO below this value
 
 
@@ -74,7 +73,6 @@ class AL52CO(PPBase):
         WOW_FLAG = 'aircraft on ground'
         CO_RANGE_FLAG = 'co out of range'
         IN_CAL_FLAG = 'in calibration'
-        PRESSURE_FLAG = 'cal chamber pressure high'
         NO_CAL_FLAG = 'no calibration'
         ZERO_COUNTS_FLAG = 'counts zero'
 
@@ -84,7 +82,6 @@ class AL52CO(PPBase):
         fdf[WOW_FLAG] = 0
         fdf[CO_RANGE_FLAG] = 0
         fdf[IN_CAL_FLAG] = 0
-        fdf[PRESSURE_FLAG] = 0
         fdf[NO_CAL_FLAG] = 0
         fdf[ZERO_COUNTS_FLAG] = 0
 
@@ -114,9 +111,6 @@ class AL52CO(PPBase):
             start = group[1].index[0]
             end = group[1].index[-1] + datetime.timedelta(seconds=CAL_FLUSH_TIME)
             fdf.loc[start:end, IN_CAL_FLAG] = 1
-
-        # Flag when pressure in the calibration chamber is high
-        fdf.loc[d['AL52CO_calpress'] > CAL_PRESS_THRESH, PRESSURE_FLAG] = 1
 
         # Flag when counts are identically zero
         fdf.loc[d['AL52CO_counts'] == 0, ZERO_COUNTS_FLAG] = 1
