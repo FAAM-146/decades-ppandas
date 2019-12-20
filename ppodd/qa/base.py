@@ -68,6 +68,16 @@ class QAFigure(object):
         self.subtitle = subtitle
         self.dataset = dataset
 
+        try:
+            self.flightnum = self.dataset.globals['flight_number']
+        except KeyError:
+            self.flightnum = 'nXXX'
+
+        try:
+            self.flight_date = self.dataset.globals['date']
+        except KeyError:
+            raise
+
         self._fig.text(
             .5, .97, 'QA: {}'.format(title),
             horizontalalignment='center',
@@ -112,7 +122,7 @@ class QAFigure(object):
             _save_path = '.'
 
         _save_file = '{}_{}.png'.format(
-            self.dataset['FLIGHT'], self.title.replace(' ', '')
+            self.flightnum, self.title.replace(' ', '')
         )
 
         _save_file = os.path.join(_save_path, _save_file)
@@ -133,8 +143,8 @@ class QAFigure(object):
 
         self.set_subtitle(
             'Report for {flight}, on {date}'.format(
-                flight=self.dataset['FLIGHT'].upper(),
-                date=self.dataset['DATE'].strftime('%Y-%m-%d')
+                flight=self.flightnum.upper(),
+                date=self.flight_date.strftime('%Y-%m-%d')
             )
         )
 
