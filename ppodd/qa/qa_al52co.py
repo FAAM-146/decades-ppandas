@@ -6,21 +6,22 @@ from .base import QAMod, QAFigure
 from ppodd.pod.p_al52co import CAL_FLUSH_TIME
 
 
-
-class GINQA(QAMod):
+class AL52QA(QAMod):
     inputs = [
         'CO_AERO',
         'AL52CO_lamptemp',
         'AL52CO_lampflow',
         'AL52CO_monoflow',
         'AL52CO_lamptemp',
-        'AL52CO_cal_status'
+        'AL52CO_cal_status',
+        'AL52CO_cellpress',
+        'AL52CO_conc'
     ]
 
     def make_lamptemp(self, fig):
         lamptemp = self.dataset['AL52CO_lamptemp'].data
         ax = fig.timeseries_axes([.1, .8, .8, .1], labelx=False)
-        ax.plot(lamptemp.loc[lamptemp<100], label='Lamp temp.')
+        ax.plot(lamptemp.loc[lamptemp < 100], label='Lamp temp.')
         ax.legend(fontsize=6)
         ax.set_ylabel('Temp. (degC)')
 
@@ -29,7 +30,7 @@ class GINQA(QAMod):
         monoflow = self.dataset['AL52CO_monoflow'].data
         ax = fig.timeseries_axes([.1, .69, .8, .1], labelx=False)
         ax.plot(lampflow, label='Lamp flow')
-        ax.plot(monoflow.loc[monoflow!=0], label='Mono flow')
+        ax.plot(monoflow.loc[monoflow != 0], label='Mono flow')
         ax.legend(fontsize=6)
         ax.set_ylabel('Flow (sccm)')
 
@@ -69,7 +70,7 @@ class GINQA(QAMod):
         """
         QA plotting entry point.
         """
-        with QAFigure(self.dataset, 'AL52 CO') as fig:
+        with QAFigure(self.dataset, 'AL52 Carbon Monoxide') as fig:
 
             cal = self.dataset['AL52CO_cal_status'].data.copy()
             _groups = (cal != cal.shift()).cumsum()
