@@ -132,6 +132,7 @@ class DecadesDataset(object):
         self._garbage_collect = False
         self._qa_dir = None
         self._takeoff_time = None
+        self._decache = False
         self._backend = backend()
 
         import ppodd.pod
@@ -196,6 +197,12 @@ class DecadesDataset(object):
             self._garbage_collect = True
             return
         self._garbage_collect = False
+
+    def decache(self, dc):
+        if dc:
+            self._decache = True
+            return
+        self._decache = False
 
     @property
     def date(self):
@@ -550,6 +557,7 @@ class DecadesDataset(object):
                 self.pp_modules.append(temp_modules.pop())
 
             self._collect_garbage()
+            self._backend.decache()
 
         # Modify any attributes on inputs, canonically specified in flight
         # constants file.
