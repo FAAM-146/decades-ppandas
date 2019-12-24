@@ -427,17 +427,24 @@ class DecadesDataset(object):
 
     @property
     def takeoff_time(self):
+        """
+        Return the latest takeoff time of the data set, as determined by the
+        last time at which PRTAFT_wow_flag changing 1 -> 0
+        """
+
         if self._takeoff_time is not None:
             return self._takeoff_time
 
-        if 'PRTAFT' not in self._dataframes:
+        try:
+            wow = self['PRTAFT_wow_flag']
+        except KeyError:
             return None
 
-        series = self._dataframes['PRTAFT'][1]['PRTAFT_wow_flag']
+        series = wow.data
 
-        self._takeoff_time =  series.diff().where(
-            series.diff()==-1
-        ).dropna().tail(1).index
+        self._takeoff_time = series.diff().where(
+            series.diff() == -1
+        ).dropna().tail(1).index[0]
 
         return self._takeoff_time
 
