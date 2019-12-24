@@ -48,7 +48,11 @@ class WVSS2(object):
         try:
             self._ident = self.dataset[
                 '{}_ident'.format(self.unit)
-            ].data[0].decode()
+            ].data[0]
+
+            if type(self._ident) is bytes:
+                self._ident = self._ident.decode()
+
         except KeyError:
             if not self.test_mode:
                 return
