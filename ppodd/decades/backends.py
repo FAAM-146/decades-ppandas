@@ -1,3 +1,9 @@
+import os
+import sqlite3 as sql
+import numpy as np
+import pandas as pd
+
+
 class DecadesBackend(object):
 
     def __init__(self):
@@ -7,9 +13,125 @@ class DecadesBackend(object):
     def _dlu_from_variable(self, variable):
         return variable.name.split('_')[0]
 
+    def decache(self):
+        for var in self.inputs:
+            var._df = None
+
     @property
     def variables(self):
         return [i.name for i in self.inputs + self.outputs]
+
+
+class Sqlite3Backend(DecadesBackend):
+
+    def __init__(self):
+        self.db_file = '_decades_pp.sql'
+        if os.path.exists(self.db_file):
+            print('warning: removing previous sql file')
+            os.remove(self.db_file)
+        self.conn = sql.connect(self.db_file)
+        super(Sqlite3Backend, self).__init__()
+
+    def _check_table(self, table):
+        sql_query = (
+            'SELECT name FROM sqlite_master WHERE type="table" '
+            'AND name="{table_name}";'.format(table_name=table)
+        )
+
+        c = self.conn.cursor()
+        c.execute(sql_query)
+        return c.fetchone()
+
+    def _create_table(self, dlu, name, _type):
+        if _type is bytes:
+            _dtype = 'TEXT'
+        else:
+            _dtype = 'REAL'
+
+        sql_query = (
+            'CREATE table {dlu} (time INTEGER primary key, {name} {dtype})'
+        ).format(dlu=name, name=name, dtype=_dtype)
+
+        c = self.conn.cursor()
+        c.execute(sql_query)
+        self.conn.commit()
+
+    def _add_column(self, variable):
+        dlu = self._dlu_from_variable(variable)
+        name = variable.name
+
+        _type = type(variable.data[0])
+
+        if not self._check_table(name):
+            self._create_table(dlu, name, _type=_type)
+
+    def _conv_type(self, variable):
+        if type(variable.data[0]) is bytes:
+            return [i.decode() for i in variable.data]
+        return variable.data.astype(float)
+
+    def _add_data(self, variable):
+        _index = variable.data.index.astype(int)
+        _data = self._conv_type(variable)
+
+        _table = variable.name
+        sql_query = (
+            'INSERT into {table} (time, {var}) VALUES (?, ?) '
+        )
+        sql_query = sql_query.format(table=_table, var=variable.name)
+        c = self.conn.cursor()
+        c.executemany(sql_query, zip(_index, _data))
+        self.conn.commit()
+
+    def add_input(self, variable):
+        # If a timestamp is duplicated, only keep the last one
+        variable._df = variable._df.groupby(variable._df.index).last()
+
+        self._add_column(variable)
+        self._add_data(variable)
+        variable._df = None
+        self.inputs.append(variable)
+
+    def collect_garbage(self, required_inputs):
+        _copied_inputs = self.inputs.copy()
+
+        for var in _copied_inputs:
+            if var.name not in required_inputs:
+                sql_query = 'DROP table {}'.format(var.name)
+                print('GC: {}'.format(sql_query))
+                c = self.conn.cursor()
+                try:
+                    c.execute(sql_query)
+                    self.inputs.remove(var)
+                except sql.OperationalError:
+                    continue
+            del var
+        del _copied_inputs
+        self.conn.commit()
+
+    def __getitem__(self, item):
+        for _var in self.inputs:
+            if _var.name == item:
+
+                if _var._df is not None:
+                    return _var
+
+                _table = item
+                sql_query = 'SELECT time, {item} FROM {table} ORDER BY time ASC'.format(
+                    table=_table, item=item
+                )
+                c = self.conn.cursor()
+                try:
+                    c.execute(sql_query)
+                except sql.OperationalError:
+                    break
+                results = c.fetchall()
+                _time, _data = zip(*results)
+                _time = np.array(_time, dtype='datetime64[ns]')
+                _var._df = pd.DataFrame({item: _data}, index=_time)
+                return _var
+
+        raise KeyError('No input: {}'.format(item))
 
 
 class PandasInMemoryBackend(DecadesBackend):
