@@ -573,3 +573,6 @@ class DecadesDataset(object):
             if name in self._variable_mods:
                 for key, value in self._variable_mods[name].items():
                     setattr(var, key, value)
+
+        # cleanup any rubbish that the backend may have left behind.
+        self._backend.cleanup()
