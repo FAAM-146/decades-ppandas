@@ -440,7 +440,7 @@ class DecadesDataset(object):
         except KeyError:
             return None
 
-        series = wow.data
+        series = wow.data.astype(np.int8)
 
         self._takeoff_time = series.diff().where(
             series.diff() == -1
@@ -481,7 +481,7 @@ class DecadesDataset(object):
 
     def _trim_data(self):
         if self.takeoff_time is not None:
-            CUTOFF = self.takeoff_time[0] - datetime.timedelta(hours=4)
+            CUTOFF = self.takeoff_time - datetime.timedelta(hours=4)
             for key, value in self._dataframes.items():
                 dlu = self._dataframes[key]
                 for key, value in dlu.items():
