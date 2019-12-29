@@ -1,4 +1,7 @@
+import gc
+import glob
 import os
+import pickle
 import sqlite3 as sql
 import numpy as np
 import pandas as pd
@@ -16,6 +19,13 @@ class DecadesBackend(object):
     def decache(self):
         for var in self.inputs:
             var._df = None
+        gc.collect()
+
+    def collect_garbage(self, required_inputs):
+        pass
+
+    def cleanup(self):
+        pass
 
     @property
     def variables(self):
@@ -109,6 +119,9 @@ class Sqlite3Backend(DecadesBackend):
         del _copied_inputs
         self.conn.commit()
 
+    def cleanup(self):
+        os.remove('_decades_pp.sql')
+
     def __getitem__(self, item):
         for _var in self.inputs:
             if _var.name == item:
@@ -132,6 +145,40 @@ class Sqlite3Backend(DecadesBackend):
                 return _var
 
         raise KeyError('No input: {}'.format(item))
+
+
+class PandasPickleBackend(DecadesBackend):
+
+    def __getitem__(self, item):
+        for _var in self.inputs:
+            if _var.name == item:
+                if _var._df is not None:
+                    return _var
+
+                try:
+                    with open('{}.pkl'.format(item), 'rb') as pkl:
+                        _df = pickle.load(pkl)
+                except Exception:
+                    break
+
+                _var._df = _df
+                return _var
+
+        raise KeyError('No input: {}'.format(item))
+
+    def add_input(self, variable):
+        _df = variable._df
+        _name = variable.name
+
+        with open('{}.pkl'.format(_name), 'wb') as pkl:
+            pickle.dump(_df, pkl)
+
+        variable._df = None
+        self.inputs.append(variable)
+
+    def cleanup(self):
+        for _file in glob.glob('*.pkl'):
+            os.remove(_file)
 
 
 class PandasInMemoryBackend(DecadesBackend):
