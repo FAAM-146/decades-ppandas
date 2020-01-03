@@ -57,7 +57,7 @@ class QAFigure(object):
 
     def __init__(self, dataset, title, subtitle=None, landscape=False):
 
-        _figsize = (6, 6*1.414)
+        _figsize = (8, 8*1.414)
         if landscape:
             _figsize = _figsize[::-1]
 
@@ -121,7 +121,7 @@ class QAFigure(object):
         else:
             _save_path = '.'
 
-        _save_file = '{}_{}.png'.format(
+        _save_file = '{}_{}.pdf'.format(
             self.flightnum, self.title.replace(' ', '')
         )
 
