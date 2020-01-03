@@ -9,6 +9,8 @@ import os
 import numpy as np
 import pandas as pd
 
+import ppodd
+
 from .backends import PandasInMemoryBackend
 from .flags import DecadesClassicFlag
 
@@ -143,6 +145,8 @@ class DecadesDataset(object):
             [pp(self) for pp in ppodd.pod.pp_modules]
         )
 
+        self._default_globals()
+
     def __getitem__(self, item):
 
         try:
@@ -220,9 +224,31 @@ class DecadesDataset(object):
 
         raise AttributeError('No date has been set')
 
+    def _interpolate_globals(self):
+        """
+        Interpolate across global attributes, allowing placeholders to be used
+        in globals in the flight constants file.
+        """
+        for key, value in self._globals.items():
+            if isinstance(value, str):
+                self._globals[key] = self._globals[key].format(**self._globals)
+
+    def _default_globals(self):
+        """
+        Add some default globals, which are dependent on dates / software
+        versions etc. These can be overridden in the flight constants file, but
+        probably shouldn't be.
+        """
+        self.add_global('processing_software_version', ppodd.__version__)
+        self.add_global('processing_software_commit', ppodd.githash())
+        self.add_global('revision_date', datetime.date.today())
 
     @property
     def _dynamic_globals(self):
+        """
+        Define globals which are dependent on the data e.g. times, bounding
+        boxes and suchlike.
+        """
         _globals = {}
         try:
             _globals['geospatial_lat_min'] = self['LAT_GIN'].data.min()
@@ -255,7 +281,7 @@ class DecadesDataset(object):
     def globals(self):
         """
         Returns:
-            A dict containing dataset globals. This is a combination of
+            An OrderedDict containing dataset globals. This is a combination of
             the self._globals dict and globals generated on the fly from the
             contents of the dateset, via self._dynamic_globals
         """
@@ -263,7 +289,12 @@ class DecadesDataset(object):
         _globals = {}
         _globals.update(self._globals)
         _globals.update(self._dynamic_globals)
-        return _globals
+
+        sorted_globals = collections.OrderedDict()
+        for key in sorted(_globals.keys()):
+            sorted_globals[key] = _globals[key]
+
+        return sorted_globals
 
     def add_global(self, key, value):
         """
@@ -424,6 +455,7 @@ class DecadesDataset(object):
 
         self.readers = None
         gc.collect()
+        self._interpolate_globals()
 
     @property
     def takeoff_time(self):
