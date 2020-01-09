@@ -251,20 +251,20 @@ class DecadesDataset(object):
         """
         _globals = {}
         try:
-            _globals['geospatial_lat_min'] = self['LAT_GIN'].data.min()
-            _globals['geospatial_lat_max'] = self['LAT_GIN'].data.max()
+            _globals['geospatial_lat_min'] = self['LAT_GIN'].data.min
+            _globals['geospatial_lat_max'] = self['LAT_GIN'].data.max
         except KeyError:
             pass
 
         try:
-            _globals['geospatial_lon_min'] = self['LON_GIN'].data.min()
-            _globals['geospatial_lon_max'] = self['LON_GIN'].data.max()
+            _globals['geospatial_lon_min'] = self['LON_GIN'].data.min
+            _globals['geospatial_lon_max'] = self['LON_GIN'].data.max
         except KeyError:
             pass
 
         try:
-            _globals['geospatial_vertical_min'] = self['ALT_GIN'].data.min()
-            _globals['geospatial_vertical_max'] = self['ALT_GIN'].data.max()
+            _globals['geospatial_vertical_min'] = self['ALT_GIN'].data.min
+            _globals['geospatial_vertical_max'] = self['ALT_GIN'].data.max
             _globals['geospatial_vertical_positive'] = 'up'
         except KeyError:
             pass
@@ -272,8 +272,8 @@ class DecadesDataset(object):
         _time_bnds = self.time_bounds()
         _strf_pattern = '%Y-%m-%dT%H:%M:%SZ'
 
-        _globals['time_coverage_start'] = _time_bnds[0].strftime(_strf_pattern)
-        _globals['time_coverage_end'] = _time_bnds[-1].strftime(_strf_pattern)
+        _globals['time_coverage_start'] = lambda: _time_bnds[0].strftime(_strf_pattern)
+        _globals['time_coverage_end'] = lambda: _time_bnds[-1].strftime(_strf_pattern)
 
         return _globals
 

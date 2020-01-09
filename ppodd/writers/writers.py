@@ -9,7 +9,7 @@ import pandas as pd
 from netCDF4 import Dataset
 import sqlite3
 
-from ..utils import pd_freq
+from ..utils import pd_freq, try_to_call
 
 __all__ = ['SQLiteWriter', 'NetCDFWriter']
 
@@ -315,5 +315,5 @@ class NetCDFWriter(DecadesWriter):
             self.time[:] = dates.values.astype(np.int64) / 1e9
 
             # Write flight constants as global attributes
-            for _global in self.dataset.globals.items():
-                self._write_global(nc, *_global)
+            for _gkey, _gval in self.dataset.globals.items():
+                self._write_global(nc, _gkey, try_to_call(_gval))

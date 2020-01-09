@@ -110,6 +110,16 @@ def flagged_avg(df, flag_col, data_col, fill_nan=None, flag_value=1,
         df.loc[means.index, out_name] = means.values
 
 
+def try_to_call(call, compliance=False):
+    try:
+        if compliance:
+            if callable(call):
+                return '<derived from file>'
+        return call()
+    except TypeError:
+        return call
+
+
 class Either(object):
 
     def __init__(self, *args, name=None):
