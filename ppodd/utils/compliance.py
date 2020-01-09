@@ -11,27 +11,28 @@ __all__ = ['NetCDFVariableVocabulary']
 
 class NetCDFVariableVocabulary(object):
     def __init__(self):
-        self.d = DecadesDataset(datetime.datetime.now())
+        _vars = {}
 
         for pp_module in ppodd.pod.pp_modules:
-            _mod = pp_module.test_instance(dataset=self.d)
+            _mod = pp_module.test_instance()
+            _mod.process()
+            _mod.finalize()
+            for _var in _mod.outputs:
+                _vars[_var] = {}
+                for attrk, attrv in _mod.outputs[_var].attrs.items():
+                    if attrv is not None:
+                        _vars[_var][attrk] = attrv
 
-        self.d.process()
-        _vars = {}
-        for _var in self.d.outputs:
-            _vars[_var.name] = {}
-            _attrs = self.d[_var.name].attrs
-            for _attr_key, _attr_val in _attrs.items():
-                if _attr_val is not None:
-                    _vars[_var.name][_attr_key] = self._escape_np(_attr_val)
-
-            _flag_var = '{}_FLAG'.format(_var.name)
-
-            _vars[_flag_var] = self._escape_np_dict(
-                self.d[_var.name].flag.cfattrs
-            )
+                _flag_var = '{}_FLAG'.format(_var)
+                _vars[_flag_var] = {}
+                for attrk, attrv in _mod.outputs[_var].flag.cfattrs.items():
+                    if attrv is not None:
+                        _vars[_flag_var][attrk] = self._escape_np(attrv)
 
         self._vars = _vars
+
+    def __getitem__(self, key):
+        return self._vars[key]
 
     def _escape_np(self, item):
         _np_ints = (np.int8, np.int16, np.int32, np.int64)
@@ -65,7 +66,7 @@ class NetCDFVariableVocabulary(object):
 
     @property
     def json(self):
-        return json.dumps(self._vars)
+        return json.dumps(self._vars, indent=4)
 
     @property
     def dict(self):

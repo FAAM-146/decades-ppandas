@@ -472,7 +472,10 @@ class DecadesDataset(object):
         except KeyError:
             return None
 
-        series = wow.data.astype(np.int8)
+        try:
+            series = wow.data.astype(np.int8)
+        except ValueError:
+            return None
 
         self._takeoff_time = series.diff().where(
             series.diff() == -1
