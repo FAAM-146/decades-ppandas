@@ -315,5 +315,5 @@ class NetCDFWriter(DecadesWriter):
             self.time[:] = dates.values.astype(np.int64) / 1e9
 
             # Write flight constants as global attributes
-            for _gkey, _gval in self.dataset.globals.items():
-                self._write_global(nc, _gkey, try_to_call(_gval))
+            for _gkey, _gval in self.dataset.globals().items():
+                self._write_global(nc, _gkey, _gval)

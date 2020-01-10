@@ -12,6 +12,7 @@ import pandas as pd
 import ppodd
 
 from .backends import PandasInMemoryBackend
+from .globals import GlobalsCollection
 from .flags import DecadesClassicFlag
 
 
@@ -127,7 +128,7 @@ class DecadesDataset(object):
         self.constants = {}
         self._variable_mods = {}
         self._mod_exclusions = []
-        self._globals = {}
+        self.globals = GlobalsCollection(dataset=self)
         self.inputs = []
         self.outputs = []
         self._dataframes = {}
@@ -163,6 +164,12 @@ class DecadesDataset(object):
         except KeyError:
             pass
 
+        if item == 'TIME_MIN_CALL':
+            return lambda: self.time_bounds()[0].strftime('%Y-%m-%dT%H:%M:%SZ')
+
+        if item == 'TIME_MAX_CALL':
+            return lambda: self.time_bounds()[1].strftime('%Y-%m-%dT%H:%M:%SZ')
+
         raise KeyError('Unknown variable: {}'.format(item))
 
     def time_bounds(self):
@@ -191,7 +198,6 @@ class DecadesDataset(object):
 
         return (start_time, end_time)
 
-
     def garbage_collect(self, collect):
         """
         Turn garbage collection on or off. If on, variables which are not
@@ -217,7 +223,7 @@ class DecadesDataset(object):
 
         try:
             return datetime.datetime.combine(
-                self._globals['date'], datetime.datetime.min.time()
+                self.globals['date'], datetime.datetime.min.time()
             )
         except KeyError:
             pass
@@ -229,9 +235,9 @@ class DecadesDataset(object):
         Interpolate across global attributes, allowing placeholders to be used
         in globals in the flight constants file.
         """
-        for key, value in self._globals.items():
+        for key, value in self.globals.static_items():
             if isinstance(value, str):
-                self._globals[key] = self._globals[key].format(**self._globals)
+                self.globals[key] = self.globals[key].format(**self.globals())
 
     def _default_globals(self):
         """
@@ -239,62 +245,51 @@ class DecadesDataset(object):
         versions etc. These can be overridden in the flight constants file, but
         probably shouldn't be.
         """
-        self.add_global('processing_software_version', ppodd.__version__)
-        self.add_global('processing_software_commit', ppodd.githash())
-        self.add_global('revision_date', datetime.date.today())
+        self.globals['processing_software_version'] = ppodd.version
+        self.globals['processing_software_commit'] = ppodd.githash
+        self.globals['processing_software_url'] = ppodd.URL
+        self.globals['revision_date'] = datetime.date.today
+        self.globals['geospatial_vertical_positive'] = 'up'
 
-    @property
-    def _dynamic_globals(self):
-        """
-        Define globals which are dependent on the data e.g. times, bounding
-        boxes and suchlike.
-        """
-        _globals = {}
-        try:
-            _globals['geospatial_lat_min'] = self['LAT_GIN'].data.min
-            _globals['geospatial_lat_max'] = self['LAT_GIN'].data.max
-        except KeyError:
-            pass
+        self.globals.add_data_global(
+            'geospatial_lat_max',
+            ('LAT_GIN', ('data', 'max'))
+        )
 
-        try:
-            _globals['geospatial_lon_min'] = self['LON_GIN'].data.min
-            _globals['geospatial_lon_max'] = self['LON_GIN'].data.max
-        except KeyError:
-            pass
+        self.globals.add_data_global(
+            'geospatial_lat_min',
+            ('LAT_GIN', ('data', 'min'))
+        )
 
-        try:
-            _globals['geospatial_vertical_min'] = self['ALT_GIN'].data.min
-            _globals['geospatial_vertical_max'] = self['ALT_GIN'].data.max
-            _globals['geospatial_vertical_positive'] = 'up'
-        except KeyError:
-            pass
+        self.globals.add_data_global(
+            'geospatial_lon_max',
+            ('LON_GIN', ('data', 'max'))
+        )
 
-        _time_bnds = self.time_bounds()
-        _strf_pattern = '%Y-%m-%dT%H:%M:%SZ'
+        self.globals.add_data_global(
+            'geospatial_lon_min',
+            ('LON_GIN', ('data', 'min'))
+        )
 
-        _globals['time_coverage_start'] = lambda: _time_bnds[0].strftime(_strf_pattern)
-        _globals['time_coverage_end'] = lambda: _time_bnds[-1].strftime(_strf_pattern)
+        self.globals.add_data_global(
+            'geospatial_vertical_min',
+            ('ALT_GIN', ('data', 'min'))
+        )
 
-        return _globals
+        self.globals.add_data_global(
+            'geospatial_vertical_max',
+            ('ALT_GIN', ('data', 'min'))
+        )
 
-    @property
-    def globals(self):
-        """
-        Returns:
-            An OrderedDict containing dataset globals. This is a combination of
-            the self._globals dict and globals generated on the fly from the
-            contents of the dateset, via self._dynamic_globals
-        """
+        self.globals.add_data_global(
+            'time_coverage_start',
+            ('TIME_MIN_CALL', [])
+        )
 
-        _globals = {}
-        _globals.update(self._globals)
-        _globals.update(self._dynamic_globals)
-
-        sorted_globals = collections.OrderedDict()
-        for key in sorted(_globals.keys()):
-            sorted_globals[key] = _globals[key]
-
-        return sorted_globals
+        self.globals.add_data_global(
+            'time_coverage_end',
+            ('TIME_MAX_CALL', [])
+        )
 
     def add_global(self, key, value):
         """
@@ -304,7 +299,7 @@ class DecadesDataset(object):
             key: the name of the global attribute to add
             value: the value of the global attribute <key>
         """
-        self._globals[key] = value
+        self.globals[key] = value
 
     @property
     def qa_dir(self):
