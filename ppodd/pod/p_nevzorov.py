@@ -201,7 +201,8 @@ class Nevzorov(PPBase):
             units='gram m-3',
             frequency=64,
             long_name=('Corrected total condensed water content from the '
-                       'Nevzorov probe')
+                       'Nevzorov probe'),
+            comment='Automatically baselined. May require further processing.'
         )
 
         self.declare(
@@ -231,7 +232,6 @@ class Nevzorov(PPBase):
             frequency=64,
             long_name=('Uncorrected liquid water content from the Nevzorov '
                        'probe'),
-            standard_name='mass_concentration_of_liquid_water_in_air'
         )
 
         self.declare(
@@ -239,7 +239,8 @@ class Nevzorov(PPBase):
             units='gram m-3',
             frequency=64,
             long_name='Corrected liquid water content from the Nevzorov probe',
-            standard_name='mass_concentration_of_liquid_water_in_air'
+            standard_name='mass_concentration_of_liquid_water_in_air',
+            comment='Automatically baselined. May require further processing.'
         )
 
         self.declare(
@@ -274,7 +275,6 @@ class Nevzorov(PPBase):
             frequency=64,
             long_name=('Uncorrected liquid water content from the Nevzorov '
                        'probe (1st collector)'),
-            standard_name='mass_concentration_of_liquid_water_in_air'
         )
 
         self.declare(
@@ -283,7 +283,8 @@ class Nevzorov(PPBase):
             frequency=64,
             long_name=('Corrected liquid water content from the Nevzorov probe'
                        ' (1st collector)'),
-            standard_name='mass_concentration_of_liquid_water_in_air'
+            standard_name='mass_concentration_of_liquid_water_in_air',
+            comment='Automatically baselined. May require further processing.'
         )
 
         self.declare(
@@ -292,7 +293,6 @@ class Nevzorov(PPBase):
             frequency=64,
             long_name=('Uncorrected liquid water content from the Nevzorov '
                        'probe (2nd collector)'),
-            standard_name='mass_concentration_of_liquid_water_in_air'
         )
 
         self.declare(
@@ -301,7 +301,8 @@ class Nevzorov(PPBase):
             frequency=64,
             long_name=('Corrected liquid water content from the Nevzorov probe'
                        ' (2nd collector)'),
-            standard_name='mass_concentration_of_liquid_water_in_air'
+            standard_name='mass_concentration_of_liquid_water_in_air',
+            comment='Automatically baselined. May require further processing.'
         )
 
         self.declare(
