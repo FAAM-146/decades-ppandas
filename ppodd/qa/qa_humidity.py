@@ -79,29 +79,36 @@ class HumidityQA(QAMod):
             return result + 273.15
 
         # Calculate a dew point from VMR for the WVSS2
-        _wvss2_p = self.dataset['WVSS2R_PRESS'].data
-        _wvss2_vmr = self.dataset['WVSS2R_VMR'].data / 1.6077
+        for wvss2 in ('F' ,'R'):
+            try:
+                _wvss2_p = self.dataset[f'WVSS2{wvss2}_PRESS'].data
+                _wvss2_vmr = self.dataset[f'WVSS2{wvss2}_VMR'].data / 1.6077
+                wvss2_available = True
+            except KeyError:
+                wvss2_available = False
+
         _temp = self.dataset['TAT_DI_R'].data.reindex(_wvss2_vmr.index)
         wow = self.dataset['WOW_IND'].data
 
-        _vp = _wvss2_vmr * _wvss2_p/ (622 * 10**3+ _wvss2_vmr)
+        if wvss2_available:
+            _vp = _wvss2_vmr * _wvss2_p/ (622 * 10**3+ _wvss2_vmr)
 
-        # Dew point and frost point
-        _dp = vp2dp(_vp, _wvss2_p, _temp)
-        _fp = vp2fp(_vp, _wvss2_p, _temp)
+            # Dew point and frost point
+            _dp = vp2dp(_vp, _wvss2_p, _temp)
+            _fp = vp2fp(_vp, _wvss2_p, _temp)
 
-        # Use frost point when below freezing
-        _dp[_temp < 273.15] = _fp[_temp < 273.15]
+            # Use frost point when below freezing
+            _dp[_temp < 273.15] = _fp[_temp < 273.15]
 
         _axis = fig.timeseries_axes([.1, .58, .8, .25], labelx=False)
 
         cr2 = self.dataset['TDEWCR2C'].data
         ge = self.dataset['TDEW_GE'].data
-        wvss = _dp
 
         _axis.plot(cr2, label='CR2')
         _axis.plot(ge, label='GE')
-        _axis.plot(wvss, label='WVSS2-F')
+        if wvss2_available:
+            _axis.plot(_dp, label=f'WVSS2-{wvss2}')
 
         _axis.set_ylabel('Dew point (K)')
         _axis.legend(fontsize=6)
@@ -176,7 +183,14 @@ class HumidityQA(QAMod):
         _axis = fig.timeseries_axes([.1, .33, .8, .25])
 
         cr2 = self.dataset['VMR_CR2'].data
-        wvss = self.dataset['WVSS2F_VMR'].data
+
+        for wvss2 in ('F', 'R'):
+            try:
+                wvss = self.dataset[f'WVSS2{wvss2}_VMR'].data
+                wvss2_available = True
+                break
+            except KeyError:
+                wvss2_available = False
 
         # Create a common index, so we can filter by WOW
         index = (cr2.index.intersection(ge.index)
@@ -186,14 +200,20 @@ class HumidityQA(QAMod):
         # Get the max in-flight vmr, to fix y limits
         max_cr2 = cr2.loc[index].loc[_wow == 0].max()
         max_ge = ge.loc[index].loc[_wow == 0].max()
-        max_wvss = wvss.loc[index].loc[_wow == 0].max()
+
+        if wvss2_available:
+            max_wvss = wvss.loc[index].loc[_wow == 0].max()
+        else:
+            max_wvss = 0
 
         y_max = np.max([max_cr2, max_ge, max_wvss]) + 2000
 
         # Plot data
         _axis.plot(cr2, label='CR2')
         _axis.plot(ge, label='GE')
-        _axis.plot(wvss, label='WVSS2-F')
+
+        if wvss2_available:
+            _axis.plot(wvss, label=f'WVSS2-{wvss2}')
 
         _axis.set_ylabel('VMR')
         _axis.set_ylim([0, y_max])
