@@ -135,6 +135,7 @@ class DecadesDataset(object):
         self._garbage_collect = False
         self._qa_dir = None
         self._takeoff_time = None
+        self._landing_time = None
         self._decache = False
         self._backend = backend()
 
@@ -477,6 +478,32 @@ class DecadesDataset(object):
         ).dropna().tail(1).index[0]
 
         return self._takeoff_time
+
+    @property
+    def landing_time(self):
+        """
+        Return the latest landing time of the dataset, as determined by the
+        last time at which PRTAFT_wow_flag changes from 0 -> 1
+        """
+
+        if self._landing_time is not None:
+            return self._landing_time
+
+        try:
+            wow = self['PRTAFT_wow_flag']
+        except KeyError:
+            return None
+
+        try:
+            series = wow.data.astype(np.int8)
+        except ValueError:
+            return None
+
+        self._landing_time = series.diff().where(
+            series.diff() == 1
+        ).dropna().tail(1).index[0]
+
+        return self._landing_time
 
     def _get_required_data(self):
         _required_inputs = []
