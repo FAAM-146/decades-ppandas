@@ -236,7 +236,9 @@ class NetCDFWriter(DecadesWriter):
         self.time.long_name = 'Time of measurement'
         self.time.standard_name = 'time'
         self.time.calendar = 'gregorian'
-        self.time.units = 'seconds since 1970-01-01'
+        self.time.units = 'seconds since {}'.format(
+            self.dataset.date.strftime('%Y-%m-%d')
+        )
 
         # If not forcing to a frequency, create a dimension for each frequency
         # that we're going to output.
@@ -312,7 +314,12 @@ class NetCDFWriter(DecadesWriter):
 
             # Time will natively be nanoseconds from 1970-01-01, so just
             # convert this to seconds.
-            self.time[:] = dates.values.astype(np.int64) / 1e9
+            _delta_secs = (
+                self.dataset.date - datetime.datetime(1970, 1 ,1)
+            ).total_seconds()
+
+            self.time[:] = [i / 1e9 * _delta_secs for i in
+                            dates.values.astype(np.int64)]
 
             # Write flight constants as global attributes
             for _gkey, _gval in self.dataset.globals().items():
