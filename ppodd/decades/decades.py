@@ -10,6 +10,8 @@ import numpy as np
 import pandas as pd
 
 import ppodd
+import ppodd.pod
+import ppodd.qa
 
 from .backends import PandasInMemoryBackend
 from .globals import GlobalsCollection
@@ -138,14 +140,6 @@ class DecadesDataset(object):
         self._landing_time = None
         self._decache = False
         self._backend = backend()
-
-        import ppodd.pod
-        import ppodd.qa
-
-        self.qa_modules = [qa(self) for qa in ppodd.qa.qa_modules]
-        self.pp_modules = collections.deque(
-            [pp(self) for pp in ppodd.pod.pp_modules]
-        )
 
         self._default_globals()
 
@@ -451,6 +445,12 @@ class DecadesDataset(object):
 
         self.readers = None
         gc.collect()
+
+        self.qa_modules = [qa(self) for qa in ppodd.qa.qa_modules]
+        self.pp_modules = collections.deque(
+            [pp(self) for pp in ppodd.pod.pp_modules]
+        )
+
         self._interpolate_globals()
 
     @property
