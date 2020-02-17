@@ -10,8 +10,6 @@ import numpy as np
 import pandas as pd
 
 import ppodd
-import ppodd.pod
-import ppodd.qa
 
 from .backends import PandasInMemoryBackend
 from .globals import GlobalsCollection
@@ -32,7 +30,8 @@ class DecadesVariable(object):
 
     NC_ATTRS = [
         'long_name', 'frequency', 'standard_name', 'units',
-        '_FillValue', 'valid_min', 'valid_max', 'comment'
+        '_FillValue', 'valid_min', 'valid_max', 'comment', 'sensor_type',
+        'sensor_serial', 'instrument_serial'
     ]
 
     def __init__(self, *args, **kwargs):
@@ -438,6 +437,8 @@ class DecadesDataset(object):
         Load all of the data from files associated with readers in this
         dataset.
         """
+        import ppodd.pod
+        import ppodd.qa
 
         for reader in self.readers:
             reader.read()
