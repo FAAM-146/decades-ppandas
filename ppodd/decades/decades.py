@@ -439,6 +439,7 @@ class DecadesDataset(object):
         """
         import ppodd.pod
         import ppodd.qa
+        import ppodd.flags
 
         for reader in self.readers:
             reader.read()
@@ -451,6 +452,7 @@ class DecadesDataset(object):
         self.pp_modules = collections.deque(
             [pp(self) for pp in ppodd.pod.pp_modules]
         )
+        self.flag_modules = [flag(self) for flag in ppodd.flags.flag_modules]
 
         self._interpolate_globals()
 
@@ -537,6 +539,16 @@ class DecadesDataset(object):
             except Exception as e:
                 print(' ** Error in {}: {}'.format(_mod, e))
 
+    def run_flagging(self):
+
+        while self.flag_modules:
+            _flag = self.flag_modules.pop()
+            try:
+                print('running {}'.format(_flag))
+                _flag.flag()
+            except Exception as e:
+                print(' ** Error in {}: {}'.format(_flag, e))
+
     def _trim_data(self):
         if self.takeoff_time is not None:
             CUTOFF = self.takeoff_time - datetime.timedelta(hours=4)
@@ -554,6 +566,7 @@ class DecadesDataset(object):
         """
         import ppodd.pod
         import ppodd.qa
+        import ppodd.flags
 
         self._trim_data()
 
@@ -575,6 +588,7 @@ class DecadesDataset(object):
             return
 
         self.qa_modules = [qa(self) for qa in ppodd.qa.qa_modules]
+        self.flag_modules = [flag(self) for flag in ppodd.flags.flag_modules]
 
         self.outputs = []
 
@@ -623,6 +637,8 @@ class DecadesDataset(object):
 
             self._collect_garbage()
             self._backend.decache()
+
+        self.run_flagging()
 
         # Modify any attributes on inputs, canonically specified in flight
         # constants file.
