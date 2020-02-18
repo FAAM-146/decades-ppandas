@@ -22,8 +22,10 @@ def sp_mach(psp, sp, flag=False):
 
     mach = np.sqrt(5 * ((1 + psp / sp)**(2 / 7) - 1))
 
+    _flag[mach > .9] = 3
+    _flag[mach <= 0] = 3
+
     if flag:
-        mach[_flag == 3] = 0
         return mach, _flag
 
     return mach

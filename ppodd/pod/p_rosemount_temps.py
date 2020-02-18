@@ -101,6 +101,8 @@ class RosemountTemperatures(PPBase):
             d['Q_RVSM'], d['PS_RVSM'], flag=True
         )
 
+        d.loc[d['MACHNO'] < 0.05, 'MACHNO_FLAG'] = 1
+        d.loc[~np.isfinite(d['MACHNO']), 'MACHNO_FLAG'] = 1
         d.loc[d['MACHNO'] < 0.05, 'MACHNO'] = 0.05
 
     def calc_heating_correction(self):
