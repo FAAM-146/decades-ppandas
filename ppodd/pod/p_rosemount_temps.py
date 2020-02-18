@@ -14,7 +14,7 @@ class RosemountTemperatures(PPBase):
     """
 
     inputs = [
-        'TRFCTR',                   #  Recovery factors (Const)
+        'RM_RECFAC',                #  Recovery factors (Const)
         'CALDIT',                   #  Deiced calibrations (Const)
         'CALNDT',                   #  Non deiced calibrations (Const)
         'NDTSENS',                  #  Non deiced sensor type (Const)
@@ -29,7 +29,7 @@ class RosemountTemperatures(PPBase):
     @staticmethod
     def test():
         return {
-            'TRFCTR': ('const', [1., 1.]),
+            'RM_RECFAC': ('const', {'DI': 1., 'ND': 1.}),
             'CALDIT': ('const', [0, 0, 0]),
             'CALNDT': ('const', [0, 0, 0]),
             'NDTSENS': ('const', 'ndi_serial'),
@@ -47,41 +47,52 @@ class RosemountTemperatures(PPBase):
         Declare the outputs that are going to be written by this module.
         """
 
-        self.declare(
-            'TAT_DI_R',
-            units='degK',
-            frequency=32,
-            long_name=('True air temperature from the Rosemount deiced '
-                       'temperature sensor'),
-            standard_name='air_temperature'
-        )
+        if self.dataset['DITSENS'][1].lower() != 'thermistor':
+            self.declare(
+                'TAT_DI_R',
+                units='degK',
+                frequency=32,
+                long_name=('True air temperature from the Rosemount deiced '
+                           'temperature sensor'),
+                standard_name='air_temperature',
+                sensor_type=self.dataset['DITSENS'][1],
+                sensor_serial=self.dataset['DITSENS'][0]
 
-        self.declare(
-            'TAT_ND_R',
-            units='degK',
-            frequency=32,
-            long_name=('True air temperature from the Rosemount non-deiced '
-                       'temperature sensor'),
-            standard_name='air_temperature'
-        )
+            )
 
-        self.declare(
-            'IAT_DI_R',
-            units='K',
-            frequency=32,
-            long_name=('Indicated air temperature from the Rosemount deiced '
-                       'temperature sensor'),
-            write=False
-        )
+            self.declare(
+                'IAT_DI_R',
+                units='K',
+                frequency=32,
+                long_name=('Indicated air temperature from the Rosemount deiced '
+                           'temperature sensor'),
+                sensor_type=self.dataset['DITSENS'][1],
+                sensor_serial=self.dataset['DITSENS'][0],
+                write=False
+            )
 
-        self.declare(
-            'IAT_ND_R',
-            units='K',
-            frequency=32,
-            long_name=('Indicated air temperature from the Rosemount '
-                       'non-deiced temperature sensor'),
-            write=False
-        )
+        if self.dataset['NDTSENS'][1].lower() != 'thermistor':
+            self.declare(
+                'TAT_ND_R',
+                units='degK',
+                frequency=32,
+                long_name=('True air temperature from the Rosemount non-deiced '
+                           'temperature sensor'),
+                standard_name='air_temperature',
+                sensor_type=self.dataset['NDTSENS'][1],
+                sensor_serial=self.dataset['NDTSENS'][0]
+            )
+
+            self.declare(
+                'IAT_ND_R',
+                units='K',
+                frequency=32,
+                long_name=('Indicated air temperature from the Rosemount '
+                           'non-deiced temperature sensor'),
+                sensor_type=self.dataset['NDTSENS'][1],
+                sensor_serial=self.dataset['NDTSENS'][0],
+                write=False
+            )
 
     def calc_mach(self):
         d = self.d
@@ -171,7 +182,7 @@ class RosemountTemperatures(PPBase):
         """
         d = self.d
         d['TAT_ND_R'] = true_air_temp(
-            d['IAT_ND_R'], d['MACHNO'], self.dataset['TRFCTR'][1]
+            d['IAT_ND_R'], d['MACHNO'], self.dataset['RM_RECFAC']['ND']
         )
 
     def calc_di_tat(self):
@@ -183,51 +194,48 @@ class RosemountTemperatures(PPBase):
         """
         d = self.d
         d['TAT_DI_R'] = true_air_temp(
-            d['IAT_DI_R'], d['MACHNO'], self.dataset['TRFCTR'][0]
+            d['IAT_DI_R'], d['MACHNO'], self.dataset['RM_RECFAC']['DI']
         )
 
-    def flag_delta_t(self, threshold=1):
-        """
-        Create a flag which highlights areas where |TAT_ND_R-TAT_DI_R| exceeds
-        a specified threshold.
-
-        Kwargs:
-            threshold [1]: the threshold above which to flag TAT data.
-
-        Sets:
-            DT_FLAG
-        """
-        d = self.d
-        d['DT_FLAG'] = 0
-        d.loc[np.abs(d['TAT_DI_R'] - d['TAT_ND_R']) > threshold, 'DT_FLAG'] = 1
 
     def process(self):
         """
         Entry point for postprocessing.
         """
+
+        self.proc_ndt = self.dataset['NDTSENS'][1] != 'thermistor'
+        self.proc_dit = self.dataset['DITSENS'][1] != 'thermistor'
+
         self.get_dataframe()
         self.calc_mach()
-        self.calc_heating_correction()
-        self.calc_ndi_iat()
-        self.calc_ndi_tat()
-        self.calc_di_iat()
-        self.calc_di_tat()
-        self.flag_delta_t()
 
-        tat_nd = DecadesVariable(self.d['TAT_ND_R'], flag=DecadesBitmaskFlag)
-        tat_di = DecadesVariable(self.d['TAT_DI_R'], flag=DecadesBitmaskFlag)
+        if self.proc_dit:
+            self.calc_heating_correction()
+            self.calc_di_iat()
+            self.calc_di_tat()
 
-        iat_nd = DecadesVariable(self.d['IAT_ND_R'], flag=DecadesBitmaskFlag)
-        iat_di = DecadesVariable(self.d['IAT_DI_R'], flag=DecadesBitmaskFlag)
+        if self.proc_ndt:
+            self.calc_ndi_iat()
+            self.calc_ndi_tat()
 
-        for tat in (tat_nd, tat_di):
-            tat.flag.add_mask(self.d['MACHNO_FLAG'], 'mach_out_of_range')
-            tat.flag.add_mask(
-                self.d['DT_FLAG'],
-                'discrepancy_between_temperatures'
-            )
-            self.add_output(tat)
+        if self.proc_dit and self.proc_ndt:
+            self.flag_delta_t()
 
-        for iat in (iat_nd, iat_di):
-            iat.flag.add_mask(self.d['MACHNO_FLAG'], 'mach_out_of_range')
-            self.add_output(iat)
+        tats = []
+        iats = []
+
+        if self.proc_ndt:
+            tat_nd = DecadesVariable(self.d['TAT_ND_R'], flag=DecadesBitmaskFlag)
+            iat_nd = DecadesVariable(self.d['IAT_ND_R'], flag=DecadesBitmaskFlag)
+            tats.append(tat_nd)
+            iats.append(iat_nd)
+
+        if self.proc_dit:
+            tat_di = DecadesVariable(self.d['TAT_DI_R'], flag=DecadesBitmaskFlag)
+            iat_di = DecadesVariable(self.d['IAT_DI_R'], flag=DecadesBitmaskFlag)
+            tats.append(tat_di)
+            iats.append(iat_di)
+
+        for at in tats + iats:
+            at.flag.add_mask(self.d['MACHNO_FLAG'], 'mach_out_of_range')
+            self.add_output(at)
