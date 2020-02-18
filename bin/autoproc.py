@@ -8,27 +8,36 @@ import logging
 import tempfile
 import sys
 import pathlib
+import yaml
 
-_defaults = {
-    'tcp_def_dir': '/home/eards/drive/core_processing/2019/dlu_definitions',
-    'fltcst_dir': '/home/daspr/temp/qa_test',
-    'output_base': '/home/eards/blah33/',
-    'flight_folder_glob': '/home/eards/google/shared/FAAM/data/flight_folders/*/*'
-}
+def read_config():
+    config_dir  = os.path.join(
+        os.path.expanduser('~'), '.decades-ppandas'
+    )
+
+    settings_file = os.path.join(config_dir, 'settings.yaml')
+
+    with open(settings_file, 'r') as f:
+        settings = yaml.load(f, Loader=yaml.Loader)
+
+    return settings
+
 
 logger = logging.getLogger('autoproc')
 logger.setLevel(logging.DEBUG)
-fh = logging.StreamHandler()
+fh = logging.FileHandler(read_config()['logging']['autoproc'])
 fh_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 fh.setFormatter(fh_formatter)
 logger.addHandler(fh)
 
+
 class DecadesPPandasProcessor(object):
-    def __init__(self, fltnum, fltdate, files, tempdir=None):
+    def __init__(self, fltnum, fltdate, files, tempdir=None, flight_folder=None):
         self.fltnum = fltnum
         self.fltdate = fltdate
         self.files = files
         self.tempdir = tempdir
+        self.flight_folder = flight_folder
 
     def process(self):
         sys.path.append(
@@ -36,6 +45,7 @@ class DecadesPPandasProcessor(object):
         )
         from ppodd.decades import DecadesDataset
         from ppodd.writers import NetCDFWriter
+        from ppodd.report import ReportCompiler
 
         if self.tempdir and os.path.exists(self.tempdir):
             os.chdir(self.tempdir)
@@ -77,23 +87,46 @@ class DecadesPPandasProcessor(object):
 
         d.run_qa()
 
+        report = ReportCompiler(
+            d, flight_number=self.fltnum,
+            token='dbc98605-be9c-4197-a953-ef37418c80ef',
+            flight_folder=self.flight_folder
+        )
 
-    def publish(self, output_dir):
+        report.make()
+
+
+    def publish(self, output_dir, secondary_nc_dir=None):
         def _logmv(f, t):
             logger.debug(f'moving {f} -> {t}')
             shutil.move(f, os.path.join(t, os.path.basename(f)))
+        def _logcp(f, t):
+            logger.debug(f'copying {f} -> {t}')
+            shutil.copy2(f, os.path.join(t, os.path.basename(f)))
 
         qa_dir = os.path.join(output_dir, 'qa_figures')
         _dirs = [output_dir, qa_dir]
+
+        if secondary_nc_dir is not None:
+            _dirs.append(secondary_nc_dir)
+
         for _dir in _dirs:
             os.makedirs(_dir, exist_ok=True)
 
         for _file in glob.glob(os.path.join(self.tempdir, '*.pdf')):
+            if _file.startswith('flight-report'):
+                continue
             _logmv(_file, qa_dir)
 
         for _file in glob.glob(os.path.join(self.tempdir, '*')):
-            _logmv(_file, output_dir)
 
+            if _file.endswith('csv'):
+                continue
+
+            if _file.endswith('nc'):
+                _logcp(_file, secondary_nc_dir)
+
+            _logmv(_file, output_dir)
 
     def cleanup(self):
         shutil.rmtree(self.tempdir)
@@ -105,11 +138,12 @@ class AutoProcessor(object):
     FLTCST_PATTERN = 'flight-cst_faam_{date}_r*_{fltnum}.yaml'
 
     def __init__(self, tcp_def_dir=None, fltcst_dir=None, output_base=None,
-                 flight_folder_glob=None):
+                 flight_folder_glob=None, secondary_output_base=None):
 
         self.tcp_def_dir = tcp_def_dir
         self.fltcst_dir = fltcst_dir
         self.output_base = output_base
+        self.secondary_output_base = secondary_output_base
         self.flight_folder_glob = flight_folder_glob
         self.tempdir = None
 
@@ -289,6 +323,7 @@ class AutoProcessor(object):
         )
 
         all_files = glob.glob('*')
+
         logger.info(f'creating raw file {rawdlu_file}')
         with zipfile.ZipFile(rawdlu_file, 'w') as _zip:
             for _file in all_files:
@@ -307,6 +342,27 @@ class AutoProcessor(object):
             )
 
     def run(self):
+        lockfile = os.path.join(
+            os.path.expanduser('~'),
+            '.decades-ppandas',
+            '.lock'
+        )
+
+        if os.path.exists(lockfile):
+            logger.info('Autoproc is locked')
+            return
+
+        with open(lockfile, 'w'):
+            pass
+
+        try:
+            self._run()
+        except:
+            raise
+        finally:
+            os.remove(lockfile)
+
+    def _run(self):
         if not self.flights_to_process:
             logger.info('Nothing to do')
             return
@@ -345,10 +401,17 @@ class AutoProcessor(object):
                     )
                 )
 
+                try:
+                    flight_folder = glob.glob(
+                        self.flight_folder_glob.format(flight=fltnum.upper())
+                    )[0]
+                except IndexError:
+                    flight_folder = None
+
                 processor = DecadesPPandasProcessor(
                     fltnum, fltdate,
                     [os.path.join(self.tempdir, i) for i in os.listdir(_temp)],
-                    _temp
+                    _temp, flight_folder=flight_folder
                 )
 
                 processor.process()
@@ -361,11 +424,15 @@ class AutoProcessor(object):
                     self.output_base, fltdate.strftime('%Y'), flight_dir
                 )
 
-                processor.publish(output_dir)
+                secondary_nc_dir = os.path.join(
+                    self.secondary_output_base, fltdate.strftime('%Y'),
+                    flight_dir
+                )
+
+                processor.publish(output_dir, secondary_nc_dir=secondary_nc_dir)
 
                 os.remove(constants_file)
 
 
-
 if __name__ == '__main__':
-    AutoProcessor(**_defaults).run()
+    AutoProcessor(**read_config()['autoproc']).run()
