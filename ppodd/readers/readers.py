@@ -21,6 +21,7 @@ from ppodd.decades import DecadesVariable
 from ppodd.readers import register
 from ..utils import pd_freq
 
+C_BAD_TIME_DEV = 43200
 
 class FileReader(abc.ABC):
     """
@@ -277,6 +278,23 @@ class TcpFileReader(FileReader):
                 del _data
                 _data = self.scan(_file, definition)
 
+            _time = _data[self.time_variable]
+
+            # If there isn't any time info, then get out of here before we
+            # raise an exception.
+            if not len(_time):
+                continue
+
+            # Small amount of error tolerence. If there's a single dodgy
+            # timestamp in between two otherwise OK timestamps, assume that
+            # it's OK to interpolate across it
+            _time = pd.Series(_time)
+            _time.loc[(_time - _time.median()).abs() > C_BAD_TIME_DEV] = np.nan
+            _time = _time.interpolate(limit=1).values
+
+            _good_times = np.where(~np.isnan(_time))
+            _time = _time[_good_times]
+
             for _name, _dtype in _data.dtype.fields.items():
 
                 if _name[0] == '$':
@@ -290,17 +308,6 @@ class TcpFileReader(FileReader):
                     _var = _data[_name].byteswap().newbyteorder()
                 else:
                     _var = _data[_name]
-
-                _time = _data[self.time_variable]
-
-                # If there isn't any time info, then get out of here before we
-                # raise an exception.
-                if not len(_time):
-                    continue
-
-                _good_times = np.where(np.abs(_time - np.median(_time)) < 12 * 3600)
-
-                _time = _time[_good_times]
 
                 if len(_var.shape) == 1:
                     _var = _var[_good_times]
