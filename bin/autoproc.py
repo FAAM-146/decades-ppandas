@@ -6,9 +6,18 @@ import shutil
 import re
 import logging
 import tempfile
+import time
 import sys
 import pathlib
+import pickle
 import yaml
+import requests
+
+from netCDF4 import Dataset
+from googleapiclient.discovery import build
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
+
 
 def read_config():
     config_dir  = os.path.join(
@@ -22,6 +31,19 @@ def read_config():
 
     return settings
 
+# If modifying these scopes, delete the access token
+SCOPES = ['https://www.googleapis.com/auth/drive']
+
+prelim_permission = {
+    'type': 'anyone',
+    'role': 'reader'
+}
+
+CONFIG_DIR = os.path.join(
+    os.path.expanduser('~'),
+    '.decades-ppandas'
+)
+
 
 logger = logging.getLogger('autoproc')
 logger.setLevel(logging.DEBUG)
@@ -29,6 +51,116 @@ fh = logging.FileHandler(read_config()['logging']['autoproc'])
 fh_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 fh.setFormatter(fh_formatter)
 logger.addHandler(fh)
+
+def drive_publish(date, flight_num):
+    """
+    Find preliminary core files on the FAAM google drive and make them
+    downloadable to anyone who has the file ID.
+
+    Args:
+        date: the date of the flight
+        flight_num: the flight number.
+    """
+
+    creds = None
+    # The file token.pickle stores the user's access and refresh tokens, and is
+    # created automatically when the authorization flow completes for the first
+    # time.
+    token_file = os.path.join(CONFIG_DIR, 'drive_token.pkl')
+    if os.path.exists(token_file):
+        with open(token_file, 'rb') as token:
+            creds = pickle.load(token)
+
+    # If there are no (valid) credentials available, let the user log in.
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file(
+                os.path.join(CONFIG_DIR, 'drive_credentials.json'),
+                SCOPES
+            )
+            creds = flow.run_local_server(port=0)
+
+        # Save the credentials for the next run
+        with open(token_file, 'wb') as token:
+            pickle.dump(creds, token)
+
+    drive_service = build('drive', 'v3', cache_discovery=False, credentials=creds)
+
+    page_token = None
+    _files = []
+    while True:
+        response = drive_service.files().list(
+            q="name contains 'core_faam_{}'".format(date.strftime('%Y%m%d')),
+            driveId='0AEJkdlOCN4UEUk9PVA',
+            corpora='drive',
+            supportsAllDrives=True,
+            includeItemsFromAllDrives=True,
+            fields='nextPageToken, files(id, name)',
+            pageToken=page_token
+        ).execute()
+
+        for _file in response.get('files', []):
+            if 'prelim' in _file['name'] and flight_num in _file['name']:
+                _files.append(_file)
+
+        page_token = response.get('nextPageToken', None)
+        if page_token is None:
+            break
+
+    for _file in _files:
+        drive_service.permissions().create(
+            supportsAllDrives=True,
+            fileId=_file['id'],
+            body=prelim_permission,
+        ).execute()
+
+    return _files
+
+
+def init_prelimqa(fltnum, core_file, google_ids):
+    _token = read_config()['gluxe_tokens']['prelimqa']
+
+    _url = 'https://www.faam.ac.uk/gluxe/qa/job/add'
+
+    data = {
+        'token': _token,
+        'fltnum': fltnum,
+        'revision': 0,
+    }
+
+    data.update(google_ids)
+
+    logger.info('Creating QA job')
+    response = requests.post(_url, data=data)
+
+    job_pk = response.json()['job']
+
+    vars_to_send = []
+    with Dataset(core_file, 'r') as nc:
+        _vars = [i for i in nc.variables if i != 'Time' and 'FLAG' not in i]
+        for _var in _vars:
+            try:
+                comment = nc[_var].comment
+            except Exception:
+                comment = None
+
+            vars_to_send.append({
+                'name': _var,
+                'long_name': nc[_var].long_name,
+                'comment': comment
+            })
+
+    _url = 'https://www.faam.ac.uk/gluxe/qa/var/add'
+    for _var in vars_to_send:
+        logger.debug('Creating variable: {}'.format(_var['name']))
+        data = _var
+        data.update({
+            'job': job_pk,
+            'token': _token
+        })
+        response = requests.post(_url, data=data)
 
 
 class DecadesPPandasProcessor(object):
@@ -85,15 +217,20 @@ class DecadesPPandasProcessor(object):
         logger.info(f'writing {onehz_file}')
         writer.write(onehz_file, freq=1)
 
-        d.run_qa()
+        if read_config()['autoproc']['do_plots']:
+            d.run_qa()
 
-        report = ReportCompiler(
-            d, flight_number=self.fltnum,
-            token='dbc98605-be9c-4197-a953-ef37418c80ef',
-            flight_folder=self.flight_folder
-        )
+        if read_config()['autoproc']['do_report']:
+            try:
+                report = ReportCompiler(
+                    d, flight_number=self.fltnum,
+                    token='dbc98605-be9c-4197-a953-ef37418c80ef',
+                    flight_folder=self.flight_folder
+                )
 
-        report.make()
+                report.make()
+            except Exception as e:
+                logger.error('Failed to produce report: {}'.format(str(e)))
 
 
     def publish(self, output_dir, secondary_nc_dir=None):
@@ -430,6 +567,22 @@ class AutoProcessor(object):
                 )
 
                 processor.publish(output_dir, secondary_nc_dir=secondary_nc_dir)
+
+                logger.info('Waiting 30s for sync')
+                time.sleep(30)
+
+                _files = drive_publish(fltdate, fltnum)
+
+                _ids = {}
+                for _file in _files:
+                    if '1hz' in _file['name']:
+                        _ids['prelim_1hz'] = _file['id']
+                        _ncfile = os.path.join(output_dir, _file['name'])
+                    else:
+                        _ids['prelim_full'] = _file['id']
+
+                if read_config()['autoproc']['do_qa']:
+                    init_prelimqa(fltnum, _ncfile, _ids)
 
                 os.remove(constants_file)
 
