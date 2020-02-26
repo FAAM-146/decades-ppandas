@@ -244,6 +244,7 @@ class DecadesDataset(object):
         self.globals['processing_software_url'] = ppodd.URL
         self.globals['revision_date'] = datetime.date.today
         self.globals['geospatial_vertical_positive'] = 'up'
+        self.globals['geospatial_vertical_units'] = 'm'
 
         self.globals.add_data_global(
             'geospatial_lat_max',
@@ -272,7 +273,7 @@ class DecadesDataset(object):
 
         self.globals.add_data_global(
             'geospatial_vertical_max',
-            ('ALT_GIN', ('data', 'min'))
+            ('ALT_GIN', ('data', 'max'))
         )
 
         self.globals.add_data_global(
