@@ -220,9 +220,6 @@ class RosemountTemperatures(PPBase):
             self.calc_ndi_iat()
             self.calc_ndi_tat()
 
-        if self.proc_dit and self.proc_ndt:
-            self.flag_delta_t()
-
         tats = []
         iats = []
 
