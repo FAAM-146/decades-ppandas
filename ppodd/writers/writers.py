@@ -163,7 +163,7 @@ class NetCDFWriter(DecadesWriter):
         # otherwise, it also requires an spsNN dimension.
         if _freq == 1:
             ncvar = nc.createVariable(
-                var.name, float, ('Time',),
+                var.name, 'f4', ('Time',),
                 fill_value=var.attrs['_FillValue']
             )
 
@@ -173,7 +173,7 @@ class NetCDFWriter(DecadesWriter):
             )
         else:
             ncvar = nc.createVariable(
-                var.name, float, ('Time', 'sps{0:02d}'.format(_freq)),
+                var.name, 'f4', ('Time', 'sps{0:02d}'.format(_freq)),
                 fill_value=var.attrs['_FillValue']
             )
 
@@ -189,6 +189,12 @@ class NetCDFWriter(DecadesWriter):
             if attr_key is '_FillValue' or attr_val is None:
                 continue
             setattr(ncvar, attr_key, attr_val)
+
+        # Set coordinates attribute on variables, if they've been specified
+        if self.dataset.lat and self.dataset.lon:
+            setattr(ncvar, 'coordinates', '{} {}'.format(
+                self.dataset.lat, self.dataset.lon
+            ))
 
         # Add a few required attributes to the flag variable.
         # ncflag.standard_name = 'status_flag'
@@ -248,7 +254,7 @@ class NetCDFWriter(DecadesWriter):
 
         # Create time dimension, variable, and set attributes
         nc.createDimension('Time', None)
-        self.time = nc.createVariable('Time', float, ('Time',))
+        self.time = nc.createVariable('Time', 'i4', ('Time',))
         self.time.long_name = 'Time of measurement'
         self.time.standard_name = 'time'
         self.time.calendar = 'gregorian'
