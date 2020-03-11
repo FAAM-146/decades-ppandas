@@ -272,7 +272,7 @@ class DecadesDataset(object):
 
         self.globals.add_data_global(
             'geospatial_vertical_max',
-            ('ALT_GIN', ('data', 'min'))
+            ('ALT_GIN', ('data', 'max'))
         )
 
         self.globals.add_data_global(
