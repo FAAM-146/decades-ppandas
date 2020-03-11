@@ -409,6 +409,10 @@ class Nevzorov(PPBase):
         self.get_dataframe(index=self.dataset['CORCON_nv_twc_vcol'].index,
                            method='onto', limit=63)
 
+        # Chuck out Nevz data on the ground: it's no use to anyone
+        self.d = self.d.loc[self.d.index > self.dataset.takeoff_time]
+        self.d = self.d.loc[self.d.index < self.dataset.landing_time]
+
         # Create Nevz flag, currently only based on weight on wheels
         self.d['flag'] = 0
         self.d.loc[self.d['WOW_IND'] == 1, 'flag'] = 3
