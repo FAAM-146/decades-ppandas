@@ -34,6 +34,21 @@ class DecadesWriter(abc.ABC):
         """Get the earliest and latest times of all output variables"""
 
         self.start_time, self.end_time = self.dataset.time_bounds()
+        try:
+            self.start_time = max(
+                self.start_time,
+                self.dataset.takeoff_time - datetime.timedelta(hours=3)
+            )
+        except Exception:
+            pass
+
+        try:
+            self.end_time = min(
+                self.end_time,
+                self.dataset.landing_time + datetime.timedelta(minutes=30)
+            )
+        except Exception:
+            pass
 
     def _get_output_freqs(self):
         """Get all of the required output frequencies"""
@@ -128,6 +143,7 @@ class NetCDFWriter(DecadesWriter):
 
     def __init__(self, *args, **kwargs):
         self.nc = None
+        self._format = kwargs.pop('nc_format', 'NETCDF4_CLASSIC')
         self.sps_vars = {}
 
         super().__init__(*args, **kwargs)
@@ -232,7 +248,7 @@ class NetCDFWriter(DecadesWriter):
 
         # Create time dimension, variable, and set attributes
         nc.createDimension('Time', None)
-        self.time = nc.createVariable('Time', int, ('Time',), fill_value=-1)
+        self.time = nc.createVariable('Time', float, ('Time',))
         self.time.long_name = 'Time of measurement'
         self.time.standard_name = 'time'
         self.time.calendar = 'gregorian'
@@ -295,7 +311,7 @@ class NetCDFWriter(DecadesWriter):
         # The frequency to force the output to, if any
         self.write_freq = freq
 
-        with Dataset(filename, 'w') as nc:
+        with Dataset(filename, 'w', format=self._format) as nc:
 
             # Init the netCDF file
             self._init_netcdf(nc)
@@ -309,8 +325,9 @@ class NetCDFWriter(DecadesWriter):
                     continue
 
             # Create an index for the Time variable
-            dates = pd.date_range(self.start_time, self.end_time,
-                                  freq='S')
+            dates = pd.date_range(
+                self.start_time, self.end_time, freq='S'
+            )
 
             # Time will natively be nanoseconds from 1970-01-01, so just
             # convert this to seconds.
@@ -318,7 +335,7 @@ class NetCDFWriter(DecadesWriter):
                 self.dataset.date - datetime.datetime(1970, 1 ,1)
             ).total_seconds()
 
-            self.time[:] = [i / 1e9 * _delta_secs for i in
+            self.time[:] = [i / 1e9 - _delta_secs for i in
                             dates.values.astype(np.int64)]
 
             # Write flight constants as global attributes
