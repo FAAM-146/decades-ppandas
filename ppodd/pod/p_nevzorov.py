@@ -209,7 +209,8 @@ class Nevzorov(PPBase):
             'NV_TWC_COL_P',
             units='W',
             frequency=64,
-            long_name='TWC collector power'
+            long_name='TWC collector power',
+            write=False
         )
 
         self.declare(
@@ -247,21 +248,24 @@ class Nevzorov(PPBase):
             'NV_TWC_REF_P',
             units='W',
             frequency=64,
-            long_name='TWC reference power'
+            long_name='TWC reference power',
+            write=False
         )
 
         self.declare(
             'NV_LWC_COL_P',
             units='W',
             frequency=64,
-            long_name='LWC collector power'
+            long_name='LWC collector power',
+            write=False
         )
 
         self.declare(
             'NV_LWC_REF_P',
             units='W',
             frequency=64,
-            long_name='LWC reference power'
+            long_name='LWC reference power',
+            write=False
         )
 
     def _declare_outputs_1t2l1r(self):
@@ -309,21 +313,24 @@ class Nevzorov(PPBase):
             'NV_REF_P',
             units='W',
             frequency=64,
-            long_name='Reference power'
+            long_name='Reference power',
+            write=False
         )
 
         self.declare(
             'NV_LWC1_COL_P',
             units='W',
             frequency=64,
-            long_name='LWC1 collector power'
+            long_name='LWC1 collector power',
+            write=False
         )
 
         self.declare(
             'NV_LWC2_COL_P',
             units='W',
             frequency=64,
-            long_name='LWC2 collector power'
+            long_name='LWC2 collector power',
+            write=False
         )
 
     def declare_outputs(self):
@@ -462,9 +469,11 @@ class Nevzorov(PPBase):
                 )
 
                 fit_success = True
-            except (RuntimeError, ValueError):
+            except (RuntimeError, ValueError) as e:
                 # If the fit has failed, we only want to write
                 # uncorrected variables
+                print('*** Failed to baseline correct Nevzorov ***')
+                print(str(e))
                 fitted_K = 0
                 fit_success = False
 
