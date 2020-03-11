@@ -476,9 +476,12 @@ class DecadesDataset(object):
         except ValueError:
             return None
 
-        self._takeoff_time = series.diff().where(
-            series.diff() == -1
-        ).dropna().tail(1).index[0]
+        try:
+            self._takeoff_time = series.diff().where(
+                series.diff() == -1
+            ).dropna().tail(1).index[0]
+        except IndexError:
+            return None
 
         return self._takeoff_time
 
@@ -502,9 +505,12 @@ class DecadesDataset(object):
         except ValueError:
             return None
 
-        self._landing_time = series.diff().where(
-            series.diff() == 1
-        ).dropna().tail(1).index[0]
+        try:
+            self._landing_time = series.diff().where(
+                series.diff() == 1
+            ).dropna().tail(1).index[0]
+        except IndexError:
+            return None
 
         return self._landing_time
 
