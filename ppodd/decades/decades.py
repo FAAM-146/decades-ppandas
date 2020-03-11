@@ -133,6 +133,8 @@ class DecadesDataset(object):
         self.inputs = []
         self.outputs = []
         self._dataframes = {}
+        self.lon = None
+        self.lat = None
         self._garbage_collect = False
         self._qa_dir = None
         self._takeoff_time = None

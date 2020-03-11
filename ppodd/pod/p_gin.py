@@ -220,3 +220,6 @@ class Gin(PPBase):
             dv.flag.add_mask(self.d.ZERO_FLAG, 'latlon identically zero')
 
             self.add_output(dv)
+
+        self.dataset.lon = 'LON_GIN'
+        self.dataset.lat = 'LAT_GIN'
