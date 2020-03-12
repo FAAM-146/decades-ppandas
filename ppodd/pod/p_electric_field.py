@@ -31,7 +31,6 @@ class ElectricFieldJci140(PPBase):
 
         output = DecadesVariable(df['PRTAFT_jci140_signal'], name='EXX_JCI')
 
-        output.flag.add_meaning(0, 'not flagged')
         output.flag.add_meaning(1, 'uncalibrated counts')
         output.flag.add_flag(np.ones((len(output),)))
 
