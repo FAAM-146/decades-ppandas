@@ -140,6 +140,7 @@ class DecadesDataset(object):
         self._takeoff_time = None
         self._landing_time = None
         self._decache = False
+        self._trim = False
         self._backend = backend()
 
         self._default_globals()
@@ -209,6 +210,14 @@ class DecadesDataset(object):
             self._decache = True
             return
         self._decache = False
+
+    @property
+    def trim(self):
+        return self._trim
+
+    @trim.setter
+    def trim(self, trm):
+        self._trim = trm
 
     @property
     def date(self):
@@ -559,15 +568,11 @@ class DecadesDataset(object):
                 print(' ** Error in {}: {}'.format(_flag, e))
 
     def _trim_data(self):
-        if self.takeoff_time is not None:
-            CUTOFF = self.takeoff_time - datetime.timedelta(hours=4)
-            for key, value in self._dataframes.items():
-                dlu = self._dataframes[key]
-                for key, value in dlu.items():
-                    df = dlu[key]
+        if self.takeoff_time and self.landing_time:
+            start_cutoff = self.takeoff_time - datetime.timedelta(hours=4)
+            end_cutoff = self.landing_time + datetime.timedelta(minutes=30)
+            self._backend.trim(start_cutoff, end_cutoff)
 
-                    print('dropping')
-                    df.drop(df.index[df.index < CUTOFF], inplace=True)
 
     def process(self, modname=None):
         """
@@ -577,7 +582,8 @@ class DecadesDataset(object):
         import ppodd.qa
         import ppodd.flags
 
-        self._trim_data()
+        if self.trim:
+            self._trim_data()
 
         if modname is not None:
             mods = ppodd.pod.pp_modules

@@ -34,21 +34,6 @@ class DecadesWriter(abc.ABC):
         """Get the earliest and latest times of all output variables"""
 
         self.start_time, self.end_time = self.dataset.time_bounds()
-        try:
-            self.start_time = max(
-                self.start_time,
-                self.dataset.takeoff_time - datetime.timedelta(hours=3)
-            )
-        except Exception:
-            pass
-
-        try:
-            self.end_time = min(
-                self.end_time,
-                self.dataset.landing_time + datetime.timedelta(minutes=30)
-            )
-        except Exception:
-            pass
 
     def _get_output_freqs(self):
         """Get all of the required output frequencies"""

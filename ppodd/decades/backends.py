@@ -27,6 +27,9 @@ class DecadesBackend(object):
     def cleanup(self):
         pass
 
+    def trim(self, start, end):
+        pass
+
     @property
     def variables(self):
         return [i.name for i in self.inputs + self.outputs]
@@ -198,6 +201,15 @@ class PandasInMemoryBackend(DecadesBackend):
                 return _var
 
         raise KeyError('No input: {}'.format(item))
+
+    def trim(self, start, end):
+        for key, value in self._dataframes.items():
+            dlu = self._dataframes[key]
+            for key, value in dlu.items():
+                df = dlu[key]
+
+                df.drop(df.index[df.index < start], inplace=True)
+                df.drop(df.index[df.index > end], inplace=True)
 
     def add_input(self, variable):
         _var = None
