@@ -53,8 +53,8 @@ class DecadesClassicFlag(DecadesFlagABC):
         """
         super(DecadesClassicFlag, self).__init__(var)
 
-        # Initialize the flag to zero, with no defined meaning
-        self._df['FLAG'] = 0
+        # Initialize the flag to -128, a fill_value
+        self._df['FLAG'] = -128
 
         # The meanings of each flag value. If no meanings are defined, no
         # flagging is assumed to have taken place.
@@ -75,10 +75,16 @@ class DecadesClassicFlag(DecadesFlagABC):
         _cfattrs = {}
 
         if self.meanings:
-            _meanings = self.meanings
+            if 0 in self.meanings:
+                _meanings = self.meanings
+            else:
+                _meanings = {0: 'data_good'}
+                _meanings.update(self.meanings)
         else:
-            _meanings = {0: 'data_not_flagged'}
+            _meanings = {-128: 'data_not_flagged'}
 
+        # If the variable we're flagging has a standard name, then we use that
+        # along with status_flag. Otherwise just use status_flag
         if getattr(self._var, 'standard_name', None):
             _cfattrs['standard_name'] = '{} status_flag'.format(
                 self._var.standard_name
@@ -105,6 +111,10 @@ class DecadesClassicFlag(DecadesFlagABC):
             value: the value of a flag to assign a meaning
             meaning: a string describing the cause of flag value value
         """
+
+        if value == 0 and meaning.replace(' ', '_').lower() != 'data_good':
+            raise ValueError('Flag of zero must mean data_good')
+
         self.meanings[value] = meaning.replace(' ', '_').lower()
 
     def add_flag(self, flag, method=MAXIMUM):
@@ -136,6 +146,7 @@ class DecadesClassicFlag(DecadesFlagABC):
         else:
             self._df.FLAG = np.atleast_1d(flag)
 
+        self._df.FLAG.loc[self._df.FLAG < 0] = 0
 
 class DecadesBitmaskFlag(DecadesFlagABC):
     """
