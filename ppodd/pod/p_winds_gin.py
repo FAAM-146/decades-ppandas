@@ -78,7 +78,10 @@ class GINWinds(PPBase):
 
         tas_scale_factor = 0.9984
 
-        self.correct_tas_rvsm(tas_scale_factor=tas_scale_factor)
+        # Note: Not running a TAS correction here. Work by KDdL suggests that
+        # TAS from the ADC is currently better than the TurbProbe TAS.
+        # self.correct_tas_rvsm(tas_scale_factor=tas_scale_factor)
+        d['TAS'] = d.TAS_RVSM
 
         air_spd_east = np.cos(np.deg2rad(d.HDG_GIN - 90.)) * d.TAS
         air_spd_north = np.sin(np.deg2rad(d.HDG_GIN - 90.)) * d.TAS
