@@ -214,22 +214,20 @@ class NetCDFWriter(DecadesWriter):
 
         if _freq == var.frequency:
             # variable is alreay at the correct frequency, all we require is a
-            # reindex, filling any missing data with _FillValue, and flagging
-            # as a 3
+            # reindex, filling any missing data with _FillValue
             _data = var.data.reindex(_index).fillna(var.attrs['_FillValue'])
-            _flag = var.flag().reindex(_index)
-            #_flag.loc[~np.isfinite(_flag)] = 3
+            _flag = var.flag().reindex(_index).fillna(var.flag.cfattrs['_FillValue'])
         else:
             # Variable and flag must be resampled to bring onto the correct
             # frequency and then reindexed. Apply a mean to the data and a pad
             # to the flag.
             _data = var.data.resample(
                 pd_freq[_freq], limit=var.frequency-1
-            ).apply('mean').reindex(_index)
+            ).apply('mean').reindex(_index).fillna(var.attrs['_FillValue'])
 
             _flag = var.flag().resample(
                 pd_freq[_freq], limit=var.frequency-1
-            ).pad().reindex(_index)
+            ).pad().reindex(_index).fillna(var.flag.cfattrs['_FillValue'])
 
         # Reshape the data if it is not at 1 Hz
         if _freq != 1:
