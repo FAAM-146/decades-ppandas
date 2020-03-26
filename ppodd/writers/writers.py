@@ -9,7 +9,7 @@ import pandas as pd
 from netCDF4 import Dataset
 import sqlite3
 
-from ..utils import pd_freq, try_to_call
+from ..utils import pd_freq, try_to_call, unwrap_array
 
 __all__ = ['SQLiteWriter', 'NetCDFWriter']
 
@@ -221,9 +221,17 @@ class NetCDFWriter(DecadesWriter):
             # Variable and flag must be resampled to bring onto the correct
             # frequency and then reindexed. Apply a mean to the data and a pad
             # to the flag.
-            _data = var.data.resample(
+            if getattr(var, 'circular', False):
+                _data = unwrap_array(var.data)
+            else:
+                _data = var.data
+
+            _data = _data.resample(
                 pd_freq[_freq], limit=var.frequency-1
             ).apply('mean').reindex(_index).fillna(var.attrs['_FillValue'])
+
+            if getattr(var, 'circular', False):
+                _data %= 360
 
             _flag = var.flag().resample(
                 pd_freq[_freq], limit=var.frequency-1
