@@ -452,9 +452,16 @@ class DecadesDataset(object):
         gc.collect()
 
         self.qa_modules = [qa(self) for qa in ppodd.qa.qa_modules]
-        self.pp_modules = collections.deque(
-            [pp(self) for pp in ppodd.pod.pp_modules]
-        )
+
+        # Initialise postprocessing modules
+        _pp_modules = []
+        for pp in ppodd.pod.pp_modules:
+            try:
+                _pp_modules.append(pp(self))
+            except Exception as e:
+                print('Couldn\'t init {}: {}'.format(pp, str(e)))
+        self.pp_modules = collections.deque(_pp_modules)
+
         self.flag_modules = [flag(self) for flag in ppodd.flags.flag_modules]
 
         self._interpolate_globals()
@@ -597,13 +604,20 @@ class DecadesDataset(object):
             return
 
         self.qa_modules = [qa(self) for qa in ppodd.qa.qa_modules]
+
+        # Initialise postprocessing modules
+        _pp_modules = []
+        for pp in ppodd.pod.pp_modules:
+            try:
+                _pp_modules.append(pp(self))
+            except Exception as e:
+                print('Couldn\'t init {}: {}'.format(pp, str(e)))
+        self.pp_modules = collections.deque(_pp_modules)
+
         self.flag_modules = [flag(self) for flag in ppodd.flags.flag_modules]
 
         self.outputs = []
 
-        self.pp_modules = collections.deque(
-            [pp(self) for pp in ppodd.pod.pp_modules]
-        )
         self.completed_modules = []
         self.failed_modules = []
 
