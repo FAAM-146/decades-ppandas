@@ -13,6 +13,7 @@ DATA_MISSING = 'data_missing'
 OUT_RANGE = 'data_out_of_range'
 WOW = 'aircraft_on_ground'
 
+
 class DecadesFlagABC(object):
     """
     Almost Abstract Base Class for Decades Flagging.
@@ -30,6 +31,21 @@ class DecadesFlagABC(object):
         self._df = pd.DataFrame(index=_index)
         self._var = var
         self._long_name = f'Flag for {var.name}'
+        self.descriptions = {}
+
+    def description(self, flag_name_or_val):
+        """
+        Add a more verbose, human readable description to each flag name or
+        value.
+
+        Args:
+            flag_name_or_val: the flag name for e.g. Bitmask type flags, or
+                              value for classic type flags.
+        """
+        try:
+            return self.descriptions[flag_or_val]
+        except KeyError:
+            return None
 
     def cfattrs(self):
         """
@@ -103,7 +119,7 @@ class DecadesClassicFlag(DecadesFlagABC):
 
         return _cfattrs
 
-    def add_meaning(self, value, meaning):
+    def add_meaning(self, value, meaning, description=None):
         """
         Add a flag meaning.
 
@@ -116,6 +132,7 @@ class DecadesClassicFlag(DecadesFlagABC):
             raise ValueError('Flag of zero must mean data_good')
 
         self.meanings[value] = meaning.replace(' ', '_').lower()
+        self.descriptions[value] = description
 
     def add_flag(self, flag, method=MAXIMUM):
         """
@@ -147,6 +164,7 @@ class DecadesClassicFlag(DecadesFlagABC):
             self._df.FLAG = np.atleast_1d(flag)
 
         self._df.FLAG.loc[self._df.FLAG < 0] = 0
+
 
 class DecadesBitmaskFlag(DecadesFlagABC):
     """
@@ -193,7 +211,7 @@ class DecadesBitmaskFlag(DecadesFlagABC):
             'flag_meanings': ' '.join(self._df.columns)
         }
 
-    def add_mask(self, data, meaning):
+    def add_mask(self, data, meaning, description=None):
         """
         Add a mask array to the flag.
 
@@ -209,3 +227,4 @@ class DecadesBitmaskFlag(DecadesFlagABC):
         col_name = meaning.replace(' ', '_').lower()
 
         self._df[col_name] = np.atleast_1d(data).astype(bool)
+        self.descriptions[col_name] = description
