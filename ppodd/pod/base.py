@@ -185,8 +185,6 @@ class PPBase(abc.ABC):
         else:
             d = dataset
 
-        mod = cls(d, test_mode=True)
-
         if callable(cls.test):
             _test = cls.test()
         else:
@@ -212,4 +210,4 @@ class PPBase(abc.ABC):
 
                 d.add_input(var)
 
-        return mod
+        return cls(d, test_mode=True)
