@@ -410,8 +410,17 @@ class Nevzorov(PPBase):
                            method='onto', limit=63)
 
         # Chuck out Nevz data on the ground: it's no use to anyone
-        self.d = self.d.loc[self.d.index > self.dataset.takeoff_time]
-        self.d = self.d.loc[self.d.index < self.dataset.landing_time]
+        try:
+            self.d = self.d.loc[self.d.index > self.dataset.takeoff_time]
+        except TypeError:
+            # Dataset has no takeoff_time - probably no PRTAFT data
+            pass
+
+        try:
+            self.d = self.d.loc[self.d.index < self.dataset.landing_time]
+        except TypeError:
+            # Dataset has no landing_time - probably no PRTAFT data
+            pass
 
         # Create Nevz flag, currently only based on weight on wheels
         self.d['flag'] = 0
