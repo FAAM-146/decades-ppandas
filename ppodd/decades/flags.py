@@ -71,6 +71,8 @@ class DecadesClassicFlag(DecadesFlagABC):
 
         # Initialize the flag to -128, a fill_value
         self._df['FLAG'] = -128
+        self.descriptions[-128] = ('A fill value. No flagging information '
+                                   'has been provided')
 
         # The meanings of each flag value. If no meanings are defined, no
         # flagging is assumed to have taken place.
