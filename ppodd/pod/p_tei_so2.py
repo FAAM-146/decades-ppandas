@@ -13,6 +13,22 @@ CAL_FLUSH_END = 5
 
 
 class TecoSO2(PPBase):
+    r"""
+    Calculate SO$_2$ concentration from the TECO 43 instrument. The instrument
+    reports a nominal concentration and sensitivity, valve states V6
+    (indicating cylinder air) and V8 (indicating cabin air), and a status flag.
+
+    Zeros are taken whenever the instrument in sampling cylinder or cabin air,
+    and interploated back to 1 Hz, assuming a linear drift of the offsets
+    between zeros. SO$_2$ concentration is then given by
+    \[
+    \left[\text{SO}_2\right] = \frac{\left[\text{SO}_{2|\text{INS}}\right]}{S},
+    \]
+    where $\left[\text{SO}_{2|\text{INS}}\right]$ is the concentration reported
+    by the instrument, and $S$ is the sensitivity reported by the instrument.
+
+    Flagging is based on valve states and the instrument status flag.
+    """
 
     inputs = [
         'CHTSOO_conc',
@@ -119,9 +135,27 @@ class TecoSO2(PPBase):
         self.flag()
 
         SO2 = DecadesVariable(self.d['SO2_TECO'], flag=DecadesBitmaskFlag)
-        SO2.flag.add_mask(self.d.WOW_FLAG, flags.WOW)
-        SO2.flag.add_mask(self.d.ZERO_FLAG, 'before first zero')
-        SO2.flag.add_mask(self.d.CALIB_FLAG, flags.CALIBRATION)
-        SO2.flag.add_mask(self.d.ALARM_FLAG, 'in alarm')
+
+        SO2.flag.add_mask(
+            self.d.WOW_FLAG, flags.WOW, 'Aircraft is on the ground'
+        )
+
+        SO2.flag.add_mask(
+            self.d.ZERO_FLAG, 'before first zero',
+            'The instrument has not yet sampled cylinder or cabin air, '
+            'the zero is invalid'
+        )
+
+        SO2.flag.add_mask(
+            self.d.CALIB_FLAG, 'in zero',
+            'The instrument is currently sampling cylinder or cabin air for '
+            'a zero reading'
+        )
+
+        SO2.flag.add_mask(
+            self.d.ALARM_FLAG, 'in alarm',
+            'The instrument status flag is currently indicating an alarm '
+            'state'
+        )
 
         self.add_output(SO2)

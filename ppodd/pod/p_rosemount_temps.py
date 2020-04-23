@@ -12,8 +12,8 @@ MACH_VALID_MIN = 0.05
 
 class RosemountTemperatures(PPBase):
     r"""
-    Calculate indicated and true air temperatures from the deiced and
-    non-deiced Rosemount sensors, when fitted with platinum resistance
+    Calculate indicated and true (static)  air temperatures from the deiced and
+    non-deiced Rosemount housings, when fitted with platinum resistance
     thermometer sensors. Indicated temperatures are calculated with a
     polynomial transformation of the DLU signal, using calibration factors in
     constants variables \texttt{CALDIT} and \texttt{CALNDT}, which incorporates
