@@ -110,7 +110,8 @@ class Gin(PPBase):
             units='degree',
             frequency=32,
             long_name='Heading from POS AV 510 GPS-aided Inertial Navigation unit',
-            standard_name='platform_yaw_angle'
+            standard_name='platform_yaw_angle',
+            circular=True
         )
 
         self.declare(
@@ -118,7 +119,8 @@ class Gin(PPBase):
             units='degree s-1',
             frequency=32,
             long_name='GIN wander angle',
-            standard_name=None
+            standard_name=None,
+            circular=True
         )
 
         self.declare(
@@ -126,7 +128,8 @@ class Gin(PPBase):
             units='degree',
             frequency=32,
             long_name='Aircraft track angle from POS AV 510 GPS-aided Inertial Navigation unit',
-            standard_name='platform_course'
+            standard_name='platform_course',
+            circular=True
         )
 
         self.declare(
@@ -193,7 +196,7 @@ class Gin(PPBase):
 
         self.get_dataframe(
             method='onto', index=index,
-            circular=['GINDAT_hdg', 'GINDAT_trck']
+            circular=['GINDAT_hdg', 'GINDAT_trck', 'GINDAT_wand']
         )
 
         try:

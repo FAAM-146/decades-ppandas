@@ -4,7 +4,7 @@ import datetime
 import numpy as np
 import pandas as pd
 
-from ..utils import pd_freq
+from ..utils import pd_freq, unwrap_array
 from ..decades import DecadesDataset, DecadesVariable
 
 class PPBase(abc.ABC):
@@ -96,7 +96,6 @@ class PPBase(abc.ABC):
                 df = df.join(self.dataset[_input].data.dropna(), how='outer')
 
         elif method == 'onto':
-            import matplotlib.pyplot as plt
 
             if index is None:
                 df = self.dataset[_inputs[0]].data
@@ -111,14 +110,7 @@ class PPBase(abc.ABC):
 
                 if _input in circular:
 
-                    _mask = ~np.isnan(
-                        np.deg2rad(self.dataset[_input_name].data)
-                    )
-
                     _data = self.dataset[_input_name].data.values.copy()
-                    _data[_mask] = np.rad2deg(
-                        np.unwrap(np.deg2rad(_data[_mask]))
-                    ) % 360
 
                     _input = pd.DataFrame(
                         [],
@@ -126,6 +118,7 @@ class PPBase(abc.ABC):
                     )
 
                     _input[_input_name] = _data
+                    _input[_input_name] = unwrap_array(_input[_input_name])
 
                 else:
                     _input = self.dataset[_input_name].data
@@ -137,6 +130,9 @@ class PPBase(abc.ABC):
                 ).interpolate(
                     'linear', limit=limit
                 ).loc[index]
+
+                if _input_name in circular:
+                    df[_input_name] %= 360
 
         self.d = df
 
@@ -189,8 +185,6 @@ class PPBase(abc.ABC):
         else:
             d = dataset
 
-        mod = cls(d, test_mode=True)
-
         if callable(cls.test):
             _test = cls.test()
         else:
@@ -216,4 +210,4 @@ class PPBase(abc.ABC):
 
                 d.add_input(var)
 
-        return mod
+        return cls(d, test_mode=True)

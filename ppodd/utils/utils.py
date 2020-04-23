@@ -42,6 +42,28 @@ def get_range_flag(var, limits, flag_val=2):
     return flag
 
 
+def unwrap_array(ang):
+    """
+    Removes dicontinuities in directional (angular) data, similar to np.unwrap,
+    but less good.
+
+    Args:
+        ang: the angular array to unwrap, expects a pd.Series.
+    """
+    temp = ang.diff().abs() > 180
+    temp = ang[temp].dropna()
+    indicies = temp.index
+
+    diffed = ang.diff()
+    for i in indicies:
+        if diffed.loc[i] > 0:
+            ang.loc[ang.index >= i] -= 360
+        else:
+            ang.loc[ang.index >= i] += 360
+
+    return ang
+
+
 def flagged_avg(df, flag_col, data_col, fill_nan=None, flag_value=1,
                 skip_start=0, skip_end=0, out_name=None, interp=False):
     """
