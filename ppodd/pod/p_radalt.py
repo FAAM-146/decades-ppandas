@@ -11,18 +11,15 @@ RADALT_MAX = 8100
 
 
 class RadAlt(PPBase):
-    """
-    Calculate the radar altitude, in metres.
-
-    The radar altitude, from radalt2, is read from the aircraft ARINC-429 data
-    bus at the rear core console, at a frequency of 2 Hz.
-
-    The signal is received as a 16 bit signed int, with a least significant bit
-    resolution of 0.25 ft, giving a max valid value of
+    r"""
+    Calculate the radar altitude, in metres. The radar altitude, from radalt2,
+    is read from the aircraft ARINC-429 data bus at the rear core console, at
+    a frequency of 2 Hz. The signal is received as a 16 bit signed int, with a
+    least significant bit resolution of 0.25 ft, giving a max valid value of
     $(((2^{16} / 2) - 1) / 4)$.
 
-    Data are considered valid in the range (10, 8100) ft and are flagged
-    outside this range.
+    Data are flagged when outside a slightly narrower range than.range of the
+    16 bit signal.
     """
 
     inputs = [
@@ -60,5 +57,8 @@ class RadAlt(PPBase):
         self.flag()
 
         dv = DecadesVariable(d['HGT_RADR'], flag=DecadesBitmaskFlag)
-        dv.flag.add_mask(d['RANGE_FLAG'], flags.OUT_RANGE)
+        dv.flag.add_mask(
+            d['RANGE_FLAG'], flags.OUT_RANGE,
+            f'RadAlt reading outside valid range ({RADALT_MIN}, {RADALT_MAX})'
+        )
         self.add_output(dv)

@@ -4,6 +4,11 @@ from ..decades import DecadesVariable
 
 
 class BBRSols(PPBase):
+    r"""
+    Converts the raw voltages on the BBR channels to physical values via a
+    linear calibration, using coefficients defined in the flight constants.
+    Each radiometer provides a signal, a zero and a thermopile temperature.
+    """
 
     inputs = [
         'CALUP1S', 'CALUP2S', 'CALUIRS', 'CALLP1S', 'CALLP2S', 'CALLIRS',

@@ -51,9 +51,36 @@ def crg4(ampage, temperature):
 
 
 class KippZonenPyrgeometer(PPBase):
-    """
-    Calculating of the upward and downward long wave fluxes from the
-    Kipp & Zonen CR4 Pyrgeometers.
+    r"""
+    Calculation of longwave fluxes from the upward and downward facing
+    Kipp \& Zonen CR4 Pyrgeometers.
+
+    The 0 - 32 mV output of the CR4 thermopile is mapped to a 4~-~20~mA signal
+    in the amp box, which carries sensor specific calibrations, corresponding
+    to a flux range of $-600$~-~200~Wm$^{-2}$. This is then converted to a
+    voltage using a 350 $\Omega$ resistor, with is recorded in the DLU, with 16
+    bits covering a $-10$ - $10$ V range. Similarly, the thermistor is placed
+    in parallel with a 100~k$\Omega$ linearising resistor, and 100~$\mu$A is
+    passed through the combination, with the resulting voltage measured at the
+    DLU.
+
+    This module first applies the inverse transformations to recover the amp
+    box current and the thermistor resistance. The thermistor temperature is
+    given by
+    \[
+    T = \left(\alpha + \left(\beta\log\left(R\right) +
+    \gamma\log\left(R\right)^3\right)\right)^{-1},
+    \]
+    where $R$ is the thermistor resistance and $\alpha$, $\beta$, and $\gamma$
+    are calibration coefficients supplied by the manufacturer. The longwave
+    flux, $L_D$, is then given by
+    \[
+    L_D = \beta(A - \alpha) - \gamma + \sigma T^4,
+    \]
+    where $\alpha = 4$, $\beta=50$, and $\gamma=600$ map the current from the
+    amp box, $A$, onto the specified range of flux values, $T$ is the
+    temperature recorded by the thermistor, and $\sigma$ is the
+    Stefan-Boltzmann constant.
     """
 
     inputs = [
@@ -138,12 +165,15 @@ class KippZonenPyrgeometer(PPBase):
         ir_up = DecadesVariable(
             upp_l_d, name='IR_UP_C', flag=DecadesBitmaskFlag
         )
-        ir_up.flag.add_mask(d['WOW_FLAG'], flags.WOW)
 
         ir_dn = DecadesVariable(
             low_l_d, name='IR_DN_C', flag=DecadesBitmaskFlag
         )
-        ir_dn.flag.add_mask(d['WOW_FLAG'], flags.WOW)
+
+        for var in (ir_up, ir_dn):
+            var.flag.add_mask(
+                d['WOW_FLAG'], flags.WOW, 'Aircraft is on the ground'
+            )
 
         self.add_output(ir_up)
         self.add_output(ir_dn)

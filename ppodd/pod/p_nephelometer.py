@@ -4,7 +4,11 @@ from ..decades import DecadesVariable
 from .base import PPBase
 from .shortcuts import _z
 
+
 class Nephelometer(PPBase):
+    r"""
+    The Nephelometer is u/s
+    """
 
     inputs = [
         'AERACK_neph_total_blue',
@@ -37,7 +41,6 @@ class Nephelometer(PPBase):
             'AERACK_neph_status': ('data', _z(100)),
             'AERACK_neph_mode': ('data', _z(100))
         }
-
 
     def declare_outputs(self):
 

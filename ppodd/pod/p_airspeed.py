@@ -7,6 +7,29 @@ from .base import PPBase
 from .shortcuts import _l, _o
 
 class AirSpeed(PPBase):
+    r"""
+    Calculates aircraft indicated and true air speeds. Mach number, $M$, is
+    calculated from static and dynamic pressures (here $p$ and $q$, derived
+    as \texttt{PS\_RVSM} and \texttt{Q\_RVSM}, in processing module p\_rvsm.py)
+    using the standard calculation sp\_mach defined in ppodd.utils.calcs:
+    $$
+    M = \sqrt{5\left(1 + \frac{q}{p}\right)^{2/7} - 1}
+    $$
+    Indicated airspeed is then given as
+    $$
+    \text{IAS} = V_s M \sqrt{\frac{p}{P_\text{std}}},
+    $$
+    where $V_s$ is the speed of sound at standard temperature and pressure, and
+    $P_{std}$ is the surface pressure in the ICAO standard atmosphere.
+
+    True airspeed is given as
+    $$
+    \text{TAS} = T_c V_s M \sqrt{\frac{T_\text{di}}{T_\text{std}}},
+    $$
+    where $T_c$ is a TAS correction term, defined in the flight constants,
+    $T_\text{di}$ is the temperature from the de-iced temperature sensor, and
+    $T_\text{std}$ is the surface temperature in the ICAO standard atmosphere.
+    """
 
     inputs = [
         'TASCORR',          #  Airspeed correction factor (const)
@@ -81,5 +104,10 @@ class AirSpeed(PPBase):
         tas = DecadesVariable(self.d['TAS_RVSM'], flag=DecadesBitmaskFlag)
 
         for _var in (ias, tas):
-            _var.flag.add_mask(self.d['MACHNO_FLAG'], 'mach out of range')
+            _var.flag.add_mask(
+                self.d['MACHNO_FLAG'],
+                'mach out of range',
+                ('Either static or dynamic pressure out of acceptable limits '
+                 'during calculation of mach number.')
+            )
             self.add_output(_var)

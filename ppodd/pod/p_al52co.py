@@ -14,14 +14,19 @@ CO_VALID_MIN = -10      # Flag if CO below this value
 
 
 class AL52CO(PPBase):
-    """
-    Process CO concentration from the AL52002 instrument.
-
-    The instrument provides counts, concentration, sensitivity, and zero.
-    However, the sensitivity and zero step change after calibrations. Here we
-    assume that the sensitivity and zero drift linearly between calibrations,
-    and interpolate across the step changes to produce smoother sensitivity and
-    zero-offset curves.
+    r"""
+    Process CO concentration from the AL5002 instrument. The instrument provides
+    counts, concentration, sensitivity, and zero. However, the sensitivity and
+    zero step change after calibrations, which propogate through to the CO
+    concentration provided by the instrument. To avoid post-calibration step
+    changes, we assume that the sensitivity and zero drift linearly between
+    calibrations, and interpolate across the step changes to produce smoother
+    sensitivity and zero-offset curves. The CO concentration is then given by
+    $$
+    \text{CO} = \frac{c - z_i}{S_i},
+    $$
+    where $c$ is the count reported by ther instrument, $z_i$ is the linearly
+    interpolated zero and $S_i$ is the linearly interpolated sensitivity.
     """
 
     inputs = [
@@ -70,11 +75,33 @@ class AL52CO(PPBase):
                  of a mask flag.
         """
 
-        WOW_FLAG = 'aircraft on ground'
-        CO_RANGE_FLAG = 'co out of range'
-        IN_CAL_FLAG = 'in calibration'
-        NO_CAL_FLAG = 'no calibration'
-        ZERO_COUNTS_FLAG = 'counts zero'
+        WOW_FLAG = (
+            'aircraft on ground',
+            'The aircraft is on the ground, as indicated by WOW\_IND.'
+        )
+
+        CO_RANGE_FLAG = (
+            'co out of range',
+            'The derived CO concentration is considered out of valid range.'
+        )
+
+        IN_CAL_FLAG = (
+            'in calibration',
+            ('The instrument is currently, or has recently been, in '
+             'calibration. Data should be disregarded.')
+        )
+
+        NO_CAL_FLAG = (
+            'no calibration',
+            ('No calibration has yet been performed. Data should be '
+             'disregarded.')
+        )
+
+        ZERO_COUNTS_FLAG = (
+            'counts zero',
+            ('The instrument is reporting zero counts. This is most likely '
+             'erroneous.')
+        )
 
         d = self.d
         fdf = pd.DataFrame(index=self.d.index)
@@ -148,7 +175,6 @@ class AL52CO(PPBase):
         d['AL52CO_sens'].fillna(method='bfill', inplace=True)
         d['AL52CO_sens'].fillna(method='ffill', inplace=True)
 
-
         # Mask erroneous values in the zero
         d.loc[d['AL52CO_zero'] == 0, 'AL52CO_zero'] = np.nan
         d['AL52CO_zero'].fillna(method='bfill', inplace=True)
@@ -181,7 +207,7 @@ class AL52CO(PPBase):
 
         # Add flagging to the output
         for mask in flag_df.columns:
-            co_out.flag.add_mask(flag_df[mask].values, mask)
+            co_out.flag.add_mask(flag_df[mask].values, *mask)
 
         # Write output
         self.add_output(co_out)

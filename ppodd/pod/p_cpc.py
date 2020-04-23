@@ -2,7 +2,24 @@ from ..decades import DecadesVariable, DecadesBitmaskFlag
 from .base import PPBase
 from .shortcuts import _c, _l, _o, _z
 
+SATURATOR_TEMP_VALID_MAX = 6
+GROWTH_TUBE_TEMP_VALID_MIN = 40.5
+GROWTH_TUBE_TEMP_VALID_MAX = 49.5
+OPTICS_TEMP_VALID_MIN = 40.5
+OPTICS_TEMP_VALID_MAX = 49.5
+SAMPLE_FLOW_VALID_MIN = 270
+SAMPLE_FLOW_VALID_MAX = 330
+SHEATH_FLOW_VALID_MIN = 270
+SHEATH_FLOW_VALID_MAX = 330
+COUNTER_SATURATION = 1e6
+
+
 class CPC(PPBase):
+    r"""
+    Reports particle counts from the TSI 3786 condensation particle counter.
+    Counts are reported as-is from the instrument; this module only provides
+    flagging information. 
+    """
 
     inputs = [
         'CPC378_counts',
@@ -44,22 +61,34 @@ class CPC(PPBase):
         d['SHEATH_FLOW_FLAG'] = 0
         d['SATURATED_FLAG'] = 0
 
-        d.loc[d['CPC378_saturator_temp'] > 6, 'SATURATOR_TEMP_FLAG'] = 1
+        d.loc[d['CPC378_saturator_temp'] > SATURATOR_TEMP_VALID_MAX,
+              'SATURATOR_TEMP_FLAG'] = 1
 
-        d.loc[d['CPC378_growth_tube_temp'] < 40.5, 'GROWTH_TUBE_FLAG'] = 1
-        d.loc[d['CPC378_growth_tube_temp'] > 49.5, 'GROWTH_TUBE_FLAG'] = 1
+        d.loc[d['CPC378_growth_tube_temp'] < GROWTH_TUBE_TEMP_VALID_MIN,
+            'GROWTH_TUBE_FLAG'] = 1
 
-        d.loc[d['CPC378_optics_temp'] < 40.5, 'OPTICS_TEMP_FLAG'] = 1
-        d.loc[d['CPC378_optics_temp'] > 49.5, 'OPTICS_TEMP_FLAG'] = 1
+        d.loc[d['CPC378_growth_tube_temp'] > GROWTH_TUBE_TEMP_VALID_MAX,
+              'GROWTH_TUBE_FLAG'] = 1
 
-        d.loc[d['CPC378_sample_flow'] < 270, 'SAMPLE_FLOW_FLAG'] = 1
-        d.loc[d['CPC378_sample_flow'] > 330, 'SAMPLE_FLOW_FLAG'] = 1
+        d.loc[d['CPC378_optics_temp'] < OPTICS_TEMP_VALID_MIN,
+              'OPTICS_TEMP_FLAG'] = 1
 
-        d.loc[d['CPC378_sheath_flow'] < 270, 'SHEATH_FLOW_FLAG'] = 1
-        d.loc[d['CPC378_sheath_flow'] > 330, 'SHEATH_FLOW_FLAG'] = 1
+        d.loc[d['CPC378_optics_temp'] > OPTICS_TEMP_VALID_MAX,
+              'OPTICS_TEMP_FLAG'] = 1
 
-        d.loc[d['CPC378_counts'] >= 1e6, 'SATURATED_FLAG'] = 1
+        d.loc[d['CPC378_sample_flow'] < SAMPLE_FLOW_VALID_MIN,
+              'SAMPLE_FLOW_FLAG'] = 1
 
+        d.loc[d['CPC378_sample_flow'] > SAMPLE_FLOW_VALID_MAX,
+              'SAMPLE_FLOW_FLAG'] = 1
+
+        d.loc[d['CPC378_sheath_flow'] < SHEATH_FLOW_VALID_MIN,
+              'SHEATH_FLOW_FLAG'] = 1
+
+        d.loc[d['CPC378_sheath_flow'] > SHEATH_FLOW_VALID_MAX,
+              'SHEATH_FLOW_FLAG'] = 1
+
+        d.loc[d['CPC378_counts'] >= COUNTER_SATURATION, 'SATURATED_FLAG'] = 1
 
     def process(self):
         self.get_dataframe()
@@ -70,11 +99,34 @@ class CPC(PPBase):
         dv = DecadesVariable(d['CPC378_counts'], name='CPC_CNTS',
                              flag=DecadesBitmaskFlag)
 
-        dv.flag.add_mask(d['SATURATOR_TEMP_FLAG'], 'saturator over temp')
-        dv.flag.add_mask(d['GROWTH_TUBE_FLAG'], 'growth tube temp out of range')
-        dv.flag.add_mask(d['OPTICS_TEMP_FLAG'], 'optics temp out of range')
-        dv.flag.add_mask(d['SAMPLE_FLOW_FLAG'], 'sample flow out of range')
-        dv.flag.add_mask(d['SHEATH_FLOW_FLAG'], 'sheath flow out of range')
-        dv.flag.add_mask(d['SATURATED_FLAG'], 'counter saturated')
+        dv.flag.add_mask(
+            d['SATURATOR_TEMP_FLAG'], 'saturator over temp',
+            f'The saturator temperature is above {SATURATOR_TEMP_VALID_MAX} C'
+        )
+        dv.flag.add_mask(
+            d['GROWTH_TUBE_FLAG'], 'growth tube temp out of range',
+            ('Growth tube temperature is outside the valid range '
+             f'[{GROWTH_TUBE_TEMP_VALID_MIN}, {GROWTH_TUBE_TEMP_VALID_MAX}] C')
+        )
+        dv.flag.add_mask(
+            d['OPTICS_TEMP_FLAG'], 'optics temp out of range',
+            ('Optics temperature is outside the valid range '
+             f'[{OPTICS_TEMP_VALID_MIN}, {OPTICS_TEMP_VALID_MAX}] C')
+        )
+        dv.flag.add_mask(
+            d['SAMPLE_FLOW_FLAG'], 'sample flow out of range',
+            ('Sample flow is outside the valid range '
+             f'[{SAMPLE_FLOW_VALID_MIN}, {SAMPLE_FLOW_VALID_MAX}]')
+        )
+        dv.flag.add_mask(
+            d['SHEATH_FLOW_FLAG'], 'sheath flow out of range',
+            ('Sheath flow is outside the valid range '
+             f'[{SHEATH_FLOW_VALID_MIN}, {SHEATH_FLOW_VALID_MAX}]')
+        )
+        dv.flag.add_mask(
+            d['SATURATED_FLAG'], 'counter saturated',
+            ('Counter has exceeded its saturation value, '
+             f'{COUNTER_SATURATION:0.0f}')
+        )
 
         self.add_output(dv)

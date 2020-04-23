@@ -114,10 +114,38 @@ def get_fitted_k(col_p, ref_p, ias, ps, no_cloud_mask, k):
 
 
 class Nevzorov(PPBase):
-    """
+    r"""
     Post processing for liquid and total water from the Nevzorov Vane. Works
-    with both 1T1L2R and 1T2L1R vanes, which should be specified in the
-    flight constants as VANETYPE.
+    with both \texttt{1T1L2R} and \texttt{1T2L1R} vanes, which should be
+    specified in the flight constants as \texttt{VANETYPE}.
+
+    The Nevzorov hot-wire probe measures total and liquid water content by
+    recording the powers required to hold exposed and sheltered wires at a
+    constant temperature.
+
+    The water content, $W$, measured by a collector is given by
+    \[
+    W = \frac{P_c - K P_r}{V_t A L},
+    \]
+    where $P_c$ is the collector power, $P_r$ is the reference power, $K$ is
+    the baseline, the ratio of $P_c$ and $P_r$ in clear air, $V_t$ is the true
+    air speed, $A$ is the forward-facing area of the collector, and $L$ is the
+    energy required to melt and then evaporate the water impacted on the
+    sensor, specified in the flight constants as \texttt{CALNVL}.
+
+    The baseline, $K$, is not a true constant, but varies with the ambient
+    conditions. Abel et al. (2014) parameterise $K$ as a function of indicated
+    air speed, $V_\text{IAS}$ and ambient pressure, $P$,
+    \[
+    K = \alpha_\text{IAS}\frac{1}{V_\text{IAS}} + \alpha_P\log_{10}(P).
+    \]
+    If, for any reason, the fitting above fails, then only the uncorrected
+    outputs, using a constant $K$ specified in the flight constants, are
+    written to file.
+
+    The outputs listed here are for the new \texttt{1T2L1R} vane type. If an
+    old \texttt{1T1L2R} vane is flown, the outputs \texttt{\_LWC1\_} and
+    \texttt{\_LWC2\_} will be replaced by \texttt{\_LWC\_}.
     """
 
     TEST_SETUP = {'VANETYPE': 'all'}
@@ -215,6 +243,7 @@ class Nevzorov(PPBase):
 
         self.declare(
             'NV_CLEAR_AIR_MASK',
+            units=None,
             frequency=1,
             long_name=('Clear air mask based on Nevzorov Total Water power '
                        'variance'),
@@ -517,19 +546,28 @@ class Nevzorov(PPBase):
             )
 
             for _var in (w_c, w_u, col_power):
-                _var.flag.add_mask(self.d['flag'], flags.WOW)
+                _var.flag.add_mask(
+                    self.d['flag'], flags.WOW, 'The aircraft is on the ground'
+                )
                 self.add_output(_var)
 
             if _vanetype == '1t1l2r':
                 _var = ref_power
-                _var.flag.add_mask(self.d['flag'], flags.WOW)
+                _var.flag.add_mask(
+                    self.d['flag'], flags.WOW, 'The aircraft is on the ground'
+                )
                 self.add_output(_var)
 
             elif ins is 'twc':
                 _var = DecadesVariable(
                    ref_p, name='NV_REF_P', flag=DecadesBitmaskFlag
                 )
-                _var.flag.add_mask(self.d['flag'], flags.WOW)
+                _var.flag.add_mask(
+                    self.d['flag'], flags.WOW, 'The aircraft is on the ground'
+                )
                 self.add_output(_var)
 
-        self.add_output(DecadesVariable(clear_air, name='NV_CLEAR_AIR_MASK'))
+        self.add_output(
+            DecadesVariable(clear_air, name='NV_CLEAR_AIR_MASK',
+            flag=DecadesBitmaskFlag),
+        )

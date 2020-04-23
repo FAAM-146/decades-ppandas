@@ -7,10 +7,40 @@ from ..utils.conversions import celsius_to_kelvin
 from .base import PPBase
 from .shortcuts import *
 
+MACH_VALID_MIN = 0.05
+
+
 class RosemountTemperatures(PPBase):
-    """
-    Calculate true air temperatures from the Rosemount temperature
-    probes.
+    r"""
+    Calculate indicated and true air temperatures from the deiced and
+    non-deiced Rosemount sensors, when fitted with platinum resistance
+    thermometer sensors. Indicated temperatures are calculated with a
+    polynomial transformation of the DLU signal, using calibration factors in
+    constants variables \texttt{CALDIT} and \texttt{CALNDT}, which incorporates
+    the DLU and sensor calibrations.
+
+    The deiced indicated temperature is subject to a heating correction term
+    when the heater is active, given by
+    \[
+    \Delta T_{\text{IAT}} = \frac{1}{10}\exp{\left(\exp{\left(a +
+    \left(\log\left(M\right)+b\right)\left(c\left(q+P\right)+d\right)\right)
+    }\right),}
+    \]
+    where $M$ is the Mach number, $q$ is the dynamic pressure and $P$ the
+    static pressure. The parameters $a$, $b$, $c$, and $d$ are
+    $\left[1.171, 2.738, -0.000568, -0.452\right]$.
+
+    True air temperatures are a function of indicated temperatures, Mach number
+    and housing recovery factor, and are given by
+    \[
+    T_\text{TAT} = \frac{T_\text{IAT}}{1 + \left(0.2 R_f M^2\right)},
+    \]
+    where $M$ is the Mach number and $R_f$ the recovery factor. Recovery
+    factors are currently considered constant, and are specified in the flight
+    constants parameters \texttt{RM\_RECFAC/DI} and \texttt{RM\_RECFAC/ND}.
+
+    A flag is applied to the data when the Mach number is out of range. Further
+    flags may be added by standalone flagging modules.
     """
 
     inputs = [
@@ -38,8 +68,7 @@ class RosemountTemperatures(PPBase):
             'Q_RVSM': ('data', 250*(_o(700))),
             'CORCON_di_temp': ('data', _a(225, 245, .0286)*1000),
             'CORCON_ndi_temp': ('data', _a(225, 245, .0286)*1000),
-            'PRTAFT_deiced_temp_flag': ('data', _c([_z(200), _o(300), _z(200)])
-            ),
+            'PRTAFT_deiced_temp_flag': ('data', _c([_z(200), _o(300), _z(200)]))
         }
 
     def declare_outputs(self):
@@ -101,9 +130,9 @@ class RosemountTemperatures(PPBase):
             d['Q_RVSM'], d['PS_RVSM'], flag=True
         )
 
-        d.loc[d['MACHNO'] < 0.05, 'MACHNO_FLAG'] = 1
+        d.loc[d['MACHNO'] < MACH_VALID_MIN, 'MACHNO_FLAG'] = 1
         d.loc[~np.isfinite(d['MACHNO']), 'MACHNO_FLAG'] = 1
-        d.loc[d['MACHNO'] < 0.05, 'MACHNO'] = 0.05
+        d.loc[d['MACHNO'] < MACH_VALID_MIN, 'MACHNO'] = MACH_VALID_MIN
 
     def calc_heating_correction(self):
         """
@@ -236,5 +265,8 @@ class RosemountTemperatures(PPBase):
             iats.append(iat_di)
 
         for at in tats + iats:
-            at.flag.add_mask(self.d['MACHNO_FLAG'], 'mach_out_of_range')
+            at.flag.add_mask(
+                self.d['MACHNO_FLAG'], 'mach_out_of_range',
+                f'Mach number is below acceptable minimum of {MACH_VALID_MIN}'
+            )
             self.add_output(at)
