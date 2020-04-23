@@ -3,6 +3,7 @@ import numpy as np
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..decades import flags
 from .base import PPBase
+from ppodd.utils.calcs import sp_mach
 from .shortcuts import _o
 
 class S9Pressure(PPBase):
@@ -12,7 +13,10 @@ class S9Pressure(PPBase):
 
     inputs = [
         'CALS9SP',
-        'CORCON_s9_press'
+        'S9_PE_C',
+        'CORCON_s9_press',
+        'PS_RVSM',
+        'Q_RVSM',
     ]
 
     @staticmethod
@@ -35,6 +39,15 @@ class S9Pressure(PPBase):
             standard_name='air_pressure'
         )
 
+        self.declare(
+            'P9_STAT_U',
+            units='hPa',
+            frequency=32,
+            long_name='Static pressure from S9 fuselage ports, uncorrected',
+            standard_name='air_pressure',
+            write=False
+        )
+
     def bounds_flag(self):
         """
         Create a flag based on simple bounds checking. Flag as 2 wherever the
@@ -53,12 +66,28 @@ class S9Pressure(PPBase):
         Processing entry point.
         """
         _cals = self.dataset['CALS9SP'][::-1]
-        self.get_dataframe()
+        _cors = self.dataset['S9_PE_C']
+
+        self.get_dataframe(
+            method='onto',
+            index=self.dataset['CORCON_s9_press'].index
+        )
 
         self.d['P9_STAT'] = np.polyval(_cals, self.d['CORCON_s9_press'])
+        self.d['P9_STAT_U'] = np.polyval(_cals, self.d['CORCON_s9_press'])
+        self.d['MACH'] = sp_mach(self.d.Q_RVSM, self.d.PS_RVSM)
+
+        # A position error correction, based on minimising the difference
+        # between s9 and RVSM pressures in mach#.
+        self.d['PE_CORR'] = (
+            _cors[0] * self.d.MACH ** _cors[1]
+        )
+
+        self.d.P9_STAT -= self.d.PE_CORR
 
         self.bounds_flag()
 
-        s9 = DecadesVariable(self.d['P9_STAT'], flag=DecadesBitmaskFlag)
-        s9.flag.add_mask(self.d['BOUNDS_FLAG'], flags.OUT_RANGE)
-        self.add_output(s9)
+        for name in ('P9_STAT', 'P9_STAT_U'):
+            var = DecadesVariable(self.d[name], flag=DecadesBitmaskFlag)
+            var.flag.add_mask(self.d['BOUNDS_FLAG'], flags.OUT_RANGE)
+            self.add_output(var)
