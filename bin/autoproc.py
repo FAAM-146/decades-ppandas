@@ -189,6 +189,7 @@ class DecadesPPandasProcessor(object):
         logger.info('processing in {}'.format(self.tempdir))
 
         d = DecadesDataset(self.fltdate)
+        d.trim = True
         for _file in self.files:
             d.add_file(_file)
         d.load()
@@ -274,14 +275,10 @@ class AutoProcessor(object):
     RAWDLU_TEMPLATE = 'core_faam_{date}_r0_{fltnum}_rawdlu.zip'
     FLTCST_PATTERN = 'flight-cst_faam_{date}_r*_{fltnum}.yaml'
 
-    def __init__(self, tcp_def_dir=None, fltcst_dir=None, output_base=None,
-                 flight_folder_glob=None, secondary_output_base=None):
+    def __init__(self, **kwargs):
 
-        self.tcp_def_dir = tcp_def_dir
-        self.fltcst_dir = fltcst_dir
-        self.output_base = output_base
-        self.secondary_output_base = secondary_output_base
-        self.flight_folder_glob = flight_folder_glob
+        for key, value in kwargs.items():
+            setattr(self, key, value)
         self.tempdir = None
 
     @property
@@ -513,7 +510,28 @@ class AutoProcessor(object):
             with tempfile.TemporaryDirectory() as _temp:
                 self.tempdir = _temp
 
-                self.make_rawdlu(fltnum)
+                rawdlu_dir = os.path.join(
+                    self.rawdlu_dir, fltdate.strftime('%Y'),
+                    '{}-{}'.format(
+                        fltnum.lower(), fltdate.strftime('%b-%d')
+                    ).lower()
+                )
+
+                glob_pattern = os.path.join(rawdlu_dir, '*rawdlu*zip')
+                rawdlu_files = glob.glob(glob_pattern)
+
+                if rawdlu_files:
+                    rawdlu_file = sorted(rawdlu_files)[-1]
+                    logger.info('Using rawdlu: {}'.format(rawdlu_file))
+                    shutil.copy(
+                        rawdlu_file,
+                        os.path.join(
+                            self.tempdir, os.path.basename(rawdlu_file)
+                        )
+                    )
+                else:
+                    self.make_rawdlu(fltnum)
+
                 os.chdir(self.tempdir)
 
                 try:
