@@ -10,6 +10,7 @@ from .parser import parser_f
 class WcmFileReader(FileReader):
     def read(self):
         for _file in self.files:
+            print(f'Reading {_file}')
             dfs, metadata = to_dataframe(_file.filepath)
 
 
@@ -37,4 +38,4 @@ class WcmFileReader(FileReader):
                     _file.dataset.add_input(_var)
 
         for key, value in metadata.items():
-            _file.dataset.constants['SEAPROBE_{}'.format(key)] = value
+            _file.dataset.constants['SEA_{}'.format(key)] = value
