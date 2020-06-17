@@ -32,7 +32,8 @@ class WcmFileReader(FileReader):
                         index=df.index,
                         long_name=parser_f[k]['long_names'][i],
                         frequency=_freq,
-                        units=parser_f[k]['units'][i]
+                        units=parser_f[k]['units'][i],
+                        write=False
                     )
 
                     _file.dataset.add_input(_var)
