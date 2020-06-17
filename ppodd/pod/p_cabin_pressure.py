@@ -4,9 +4,15 @@ from ..decades import DecadesVariable
 from .base import PPBase
 from .shortcuts import _c, _l
 
+VALID_MIN = 650
+VALID_MAX = 1050
+
 class CabinPressure(PPBase):
-    """
-    Calculate cabin pressure..
+    r"""
+    Derives cabin pressure from a pressure transducer located in the core
+    console. A polynomial fit, with coefficients provided in the constants
+    variable \texttt{CALCABP}, converts DLU counts $\rightarrow$ transducer
+    voltage $\rightarrow$ pressure.
     """
 
     inputs = [
@@ -41,12 +47,9 @@ class CabinPressure(PPBase):
         data is outside a specified min/max.
         """
 
-        valid_min = 650
-        valid_max = 1050
-
         self.d['BOUNDS_FLAG'] = 0
-        self.d.loc[self.d['CAB_PRES'] < valid_min, 'BOUNDS_FLAG'] = 1
-        self.d.loc[self.d['CAB_PRES'] > valid_max, 'BOUNDS_FLAG'] = 1
+        self.d.loc[self.d['CAB_PRES'] < VALID_MAX, 'BOUNDS_FLAG'] = 1
+        self.d.loc[self.d['CAB_PRES'] > VALID_MIN, 'BOUNDS_FLAG'] = 1
 
     def process(self):
         """
@@ -61,8 +64,11 @@ class CabinPressure(PPBase):
 
         cab_press = DecadesVariable(self.d['CAB_PRES'])
 
-        cab_press.flag.add_meaning(0, 'data good')
-        cab_press.flag.add_meaning(1, 'pressure out of range')
+        cab_press.flag.add_meaning(0, 'data good', 'Data are considered valid')
+        cab_press.flag.add_meaning(
+            1, 'pressure out of range', ('Data are outside the valid range '
+                                         f'[{VALID_MIN}, {VALID_MAX}] hPa')
+        )
 
         cab_press.flag.add_flag(self.d['BOUNDS_FLAG'])
 

@@ -5,7 +5,17 @@ from ..decades import flags
 from .base import PPBase
 from .shortcuts import _c, _o, _z
 
+FLOW_THRESHOLD = 0.5
+CONC_THRESHOLD = -10
+FLAG_AFTER_TO = 20
+
+
 class TeiOzone(PPBase):
+    r"""
+    Provides ozone concentration from the TE49C O$_3$ analyser. Ozone data are
+    taken as-is from the instrument; this module provides flagging information
+    based on threshold values and instrument status flags.
+    """
 
     inputs = [
         'TEIOZO_conc',
@@ -37,10 +47,6 @@ class TeiOzone(PPBase):
         )
 
     def flag(self):
-        FLOW_THRESHOLD = 0.5
-        CONC_THRESHOLD = -10
-        FLAG_AFTER_TO = 20
-
         d = self.d
 
         d['STATUS_FLAG'] = 0
@@ -65,7 +71,7 @@ class TeiOzone(PPBase):
 
         d.loc[d['TEIOZO_conc'] < CONC_THRESHOLD, 'CONC_FLAG'] = 1
         d.loc[d['TEIOZO_FlowA'] < FLOW_THRESHOLD, 'FLOW_FLAG'] = 1
-        d.loc[d['TEIOZO_FlowB'] < FLOW_THRESHOLD] = 1
+        d.loc[d['TEIOZO_FlowB'] < FLOW_THRESHOLD, 'FLOW_FLAG'] = 1
         d.loc[d['WOW_IND'] != 0, 'WOW_FLAG'] = 1
 
     def process(self):
@@ -76,9 +82,27 @@ class TeiOzone(PPBase):
         dv = DecadesVariable(self.d['TEIOZO_conc'], name='O3_TECO',
                              flag=DecadesBitmaskFlag)
 
-        dv.flag.add_mask(self.d['STATUS_FLAG'], 'instrument_alarm')
-        dv.flag.add_mask(self.d['CONC_FLAG'], 'conc_out_of_range')
-        dv.flag.add_mask(self.d['FLOW_FLAG'], 'flow_out_of_range')
-        dv.flag.add_mask(self.d['WOW_FLAG'], flags.WOW)
+        dv.flag.add_mask(
+            self.d['STATUS_FLAG'], 'instrument_alarm',
+            'The status flag provided by the instrument is indicating an '
+            'alarm state'
+        )
+
+        dv.flag.add_mask(
+            self.d['CONC_FLAG'], 'conc_out_of_range',
+            'Reported ozone concentration is below the valid minimum of '
+            f'{CONC_THRESHOLD}'
+        )
+
+        dv.flag.add_mask(
+            self.d['FLOW_FLAG'], 'flow_out_of_range',
+            'At least one of the recorded flow rates is below the valid '
+            f'minimum of {FLOW_THRESHOLD}'
+        )
+
+        dv.flag.add_mask(
+            self.d['WOW_FLAG'], flags.WOW,
+            'The aircraft is on the ground'
+        )
 
         self.add_output(dv)

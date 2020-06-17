@@ -6,11 +6,21 @@ from ..utils.conversions import celsius_to_kelvin
 from .base import PPBase
 from .shortcuts import _c, _o, _z
 
+VALID_MIN = celsius_to_kelvin(-20)
+VALID_MAX = celsius_to_kelvin(40)
+
 
 class Heimann(PPBase):
-
-    VALID_MIN = celsius_to_kelvin(-20)
-    VALID_MAX = celsius_to_kelvin(40)
+    r"""
+    Processing for the Heimann Radiometer. The Heimann outputs a voltage with a
+    range of 0 - 10 V corresponding to an inferred brightness temperature of
+    $-50$ - $50$ $^\circ$C. This module simply applies a linear transformation
+    to the counts recorded on the DLU to convert counts $\rightarrow$ volts
+    $\rightarrow$ temperature. During a calibration, temperature from the black
+    body are reported. Parameters for the linear transformations are taken from
+    the flight constant parameters \texttt{HEIMCAL} for the Heimann and
+    \texttt{PRTCCAL} for the PRT on the black body.
+    """
 
     inputs = [
         'PRTCCAL',
@@ -72,8 +82,8 @@ class Heimann(PPBase):
         self.d['CAL_FLAG'] = 0
         self.d['MISSING_FLAG'] = 0
 
-        self.d.loc[self.d.BTHEIM_U < self.VALID_MIN, 'RANGE_FLAG'] = 1
-        self.d.loc[self.d.BTHEIM_U > self.VALID_MAX, 'RANGE_FLAG'] = 1
+        self.d.loc[self.d.BTHEIM_U < VALID_MIN, 'RANGE_FLAG'] = 1
+        self.d.loc[self.d.BTHEIM_U > VALID_MAX, 'RANGE_FLAG'] = 1
         self.d.loc[self.d.WOW_IND == 1, 'WOW_FLAG'] = 1
         self.d.loc[self.d.INCAL == 1, 'CAL_FLAG'] = 1
         self.d.loc[~np.isfinite(self.d.BTHEIM_U), 'MISSING FLAG'] = 1
@@ -122,9 +132,22 @@ class Heimann(PPBase):
 
         heimann = DecadesVariable(combined, flag=DecadesBitmaskFlag)
 
-        heimann.flag.add_mask(self.d.WOW_FLAG, flags.WOW)
-        heimann.flag.add_mask(self.d.RANGE_FLAG, flags.OUT_RANGE)
-        heimann.flag.add_mask(self.d.CAL_FLAG, flags.CALIBRATION)
-        heimann.flag.add_mask(self.d.MISSING_FLAG, flags.DATA_MISSING)
+        heimann.flag.add_mask(
+            self.d.WOW_FLAG, flags.WOW, 'The aircraft is on the ground'
+        )
+        heimann.flag.add_mask(
+            self.d.RANGE_FLAG, flags.OUT_RANGE,
+            (f'Brightness temperature is outside the range {VALID_MIN:0.2f} - '
+             f'{VALID_MAX:0.2f} K')
+        )
+        heimann.flag.add_mask(
+            self.d.CAL_FLAG, flags.CALIBRATION,
+            ('The Heimann is in a calibration cycle. Black body temperature '
+             'is being reported')
+        )
+        heimann.flag.add_mask(
+            self.d.MISSING_FLAG, flags.DATA_MISSING,
+            'Data are expected but not present'
+        )
 
         self.add_output(heimann)

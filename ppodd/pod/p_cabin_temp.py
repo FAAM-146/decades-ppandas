@@ -7,6 +7,13 @@ from ..decades import flags
 
 
 class CabinTemp(PPBase):
+    r"""
+    Derives cabin temperature from a sensor located on the right of the core
+    console. A polynomial fit, with coefficients provided in the constants
+    variable \texttt{CALCABT}, converts DLU counts $\rightarrow$ raw 
+    $\rightarrow$ temperature.
+    """
+
 
     inputs = [
         'CALCABT',
@@ -45,9 +52,15 @@ class CabinTemp(PPBase):
 
         temp = DecadesVariable(d['CAB_TEMP'], name='CAB_TEMP')
 
-        temp.flag.add_meaning(0, flags.DATA_GOOD)
-        temp.flag.add_meaning(1, 'sensor uncalibrated')
-        temp.flag.add_meaning(2, flags.DATA_MISSING)
+        temp.flag.add_meaning(0, flags.DATA_GOOD, 'Data are considered valid')
+        temp.flag.add_meaning(
+            1, 'sensor uncalibrated', ('Indicates that the sensor is considered '
+                                      'to be poorly calibrated. Temperatures are '
+                                      'to be considered indicative')
+        )
+        temp.flag.add_meaning(
+            2, flags.DATA_MISSING, 'Data are expected, but are missing'
+        )
 
         temp.flag.add_flag(d['CAB_TEMP_FLAG'])
 

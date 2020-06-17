@@ -7,6 +7,13 @@ from .shortcuts import _l, _o, _z
 
 
 class Gin(PPBase):
+    r"""
+    This module provides variables from the Applanix POS AV 410 GPS-aided
+    inertial navigation system (GIN). The GIN provides parameters at a
+    frequency of 50 Hz; this module simply downsamples these parameters to 32
+    Hz. Optionally, an offset can be applied to the GIN heading, throught the
+    flight constants parameter \texttt{GIN\_HDG\_OFFSET}.
+    """
 
     inputs = [
         'GINDAT_lat', 'GINDAT_lon', 'GINDAT_alt', 'GINDAT_veln',
@@ -219,8 +226,17 @@ class Gin(PPBase):
 
             dv = DecadesVariable(self.d[declaration], flag=DecadesBitmaskFlag)
 
-            dv.flag.add_mask(self.d.STATUS_FLAG, 'gin status nonzero')
-            dv.flag.add_mask(self.d.ZERO_FLAG, 'latlon identically zero')
+            dv.flag.add_mask(
+                self.d.STATUS_FLAG, 'gin status nonzero',
+                ('The GIN status indicator is non-zero, indicating a potential '
+                 'issue.')
+            )
+
+            dv.flag.add_mask(
+                self.d.ZERO_FLAG, 'latlon identically zero',
+                ('Either the latitude or longitude is exactly zero. This most '
+                 'probably indicates erroneous data')
+            )
 
             self.add_output(dv)
 

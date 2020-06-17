@@ -4,7 +4,34 @@ from ..decades import DecadesVariable, DecadesBitmaskFlag
 from .base import PPBase
 from .shortcuts import _o
 
+TRANS_VALID_MIN = 0.5
+TRANS_VALID_MAX = 1.05
+FLOW_VALID_MIN = 1
+
 class PSAP(PPBase):
+    r"""
+    Reports data from the Radiance Research Particle Soot Absorbtion
+    Photometer.
+    The following transformations are applied to the data from the aerosol rack
+    DLU:
+    \[
+    F = \frac{F_\text{DLU}}{2},
+    \]
+    \[
+    P_\text{lin} = \frac{P_{\text{lin}_\text{DLU}}}{2\times10^{5}},
+    \]
+    \[
+    P_\text{log} = 10^{(P_{\text{log}_\text{DLU}} / 2) - 7},
+    \]
+    \[
+    T = \frac{T_\text{DLU}}{8},
+    \]
+    where $P_\text{lin}$, $P_\text{log}$, $F$, and $T$ correspond to the
+    outputs \texttt{PSAP\_LIN}, \texttt{PSAP\_LOG}, \texttt{PSAP\_FLO}, and
+    \texttt{PSAP\_TRA} respectively.
+
+    Flagging is based on the flow rate and transmittance ratio limits.
+    """
 
     inputs = [
         'AERACK_psap_flow',         #  PSAP flow (dlu)
@@ -85,7 +112,15 @@ class PSAP(PPBase):
         psap_tra = DecadesVariable(d['PSAP_TRA'], flag=DecadesBitmaskFlag)
 
         for dv in (psap_flo, psap_lin, psap_log, psap_tra):
-            dv.flag.add_mask(d['TRA_FLAG'], 'Transmittance out of range')
-            dv.flag.add_mask(d['FLO_FLAG'], 'Flow out of range')
+            dv.flag.add_mask(
+                d['TRA_FLAG'], 'Transmittance out of range',
+                ('Transmittance ratio is outside the valid range '
+                 f'[{TRANS_VALID_MIN}, {TRANS_VALID_MAX}')
+            )
+            dv.flag.add_mask(
+                d['FLO_FLAG'], 'Flow out of range',
+                ('PSAP flow is out of range. This most likely indicates that '
+                 'the PSAP interrupt is active, to prevent water ingress')
+            )
             self.add_output(dv)
 
