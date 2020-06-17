@@ -187,7 +187,7 @@ class PandasPickleBackend(DecadesBackend):
                 self.inputs.remove(var)
                 try:
                     os.remove(f'{var.name}.pkl')
-                except:
+                except (FileNotFoundError, OSError):
                     pass
 
         gc.collect()
