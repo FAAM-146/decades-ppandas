@@ -321,6 +321,8 @@ class NetCDFWriter(DecadesWriter):
                 else:
                     continue
 
+                self.dataset._backend.decache()
+
             # Create an index for the Time variable
             dates = pd.date_range(
                 self.start_time, self.end_time, freq='S'
@@ -332,7 +334,7 @@ class NetCDFWriter(DecadesWriter):
                 self.dataset.date - datetime.datetime(1970, 1 ,1)
             ).total_seconds()
 
-            self.time[:] = [i / 1e9 - _delta_secs for i in
+            nc['Time'][:] = [i / 1e9 - _delta_secs for i in
                             dates.values.astype(np.int64)]
 
             # Write flight constants as global attributes

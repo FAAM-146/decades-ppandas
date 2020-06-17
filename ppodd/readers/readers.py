@@ -344,7 +344,6 @@ class TcpFileReader(FileReader):
                     print('Non-unique index: {}'.format(variable.name))
 
                 _file.dataset.add_input(variable)
-                _file.dataset._collect_garbage()
 
 
 class CrioFileReader(TcpFileReader):

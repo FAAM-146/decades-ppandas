@@ -179,6 +179,19 @@ class PandasPickleBackend(DecadesBackend):
         variable._df = None
         self.inputs.append(variable)
 
+    def collect_garbage(self, required_inputs):
+        _copied_inputs = self.inputs.copy()
+
+        for var in _copied_inputs:
+            if var.name not in required_inputs:
+                self.inputs.remove(var)
+                try:
+                    os.remove(f'{var.name}.pkl')
+                except:
+                    pass
+
+        gc.collect()
+
     def cleanup(self):
         for _file in glob.glob('*.pkl'):
             os.remove(_file)

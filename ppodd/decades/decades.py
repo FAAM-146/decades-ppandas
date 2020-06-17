@@ -129,6 +129,8 @@ class DecadesDataset(object):
         self.constants = {}
         self._variable_mods = {}
         self._mod_exclusions = []
+        self.pp_modules = []
+        self.qa_modules = []
         self.globals = GlobalsCollection(dataset=self)
         self.inputs = []
         self.outputs = []
@@ -190,6 +192,8 @@ class DecadesDataset(object):
 
             if var.data.index[-1] > end_time:
                 end_time = var.data.index[-1]
+
+            self._backend.decache()
 
         start_time = start_time.replace(microsecond=0)
 
@@ -455,7 +459,6 @@ class DecadesDataset(object):
 
         for reader in self.readers:
             reader.read()
-            self._collect_garbage()
 
         self.readers = None
         gc.collect()
@@ -474,6 +477,8 @@ class DecadesDataset(object):
         self.flag_modules = [flag(self) for flag in ppodd.flags.flag_modules]
 
         self._interpolate_globals()
+
+        self._collect_garbage()
 
     @property
     def takeoff_time(self):
@@ -677,5 +682,5 @@ class DecadesDataset(object):
                 for key, value in self._variable_mods[name].items():
                     setattr(var, key, value)
 
-        # cleanup any rubbish that the backend may have left behind.
+    def cleanup(self):
         self._backend.cleanup()
