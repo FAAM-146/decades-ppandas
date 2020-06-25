@@ -4,10 +4,9 @@ import pandas as pd
 from scipy.optimize import curve_fit
 
 from ..decades import DecadesVariable, DecadesBitmaskFlag
-from ..utils import get_range_flag, slrs
-from ..utils.conversions import celsius_to_kelvin
+from ..decades import flags
+from ..utils import slrs
 from .base import PPBase
-from .shortcuts import _o
 
 import matplotlib.pyplot as plt
 
@@ -612,7 +611,8 @@ class SeaProbe(PPBase):
         'SEA_EFF_021',
         'SEA_EFF_083',
         'SEA_TEMP_LIMS',
-        'SEA_SETPOINT_TEMP'
+        'SEA_SETPOINT_TEMP',
+        'SEA_SN'
     ]
 
     def declare_outputs(self):
@@ -620,16 +620,18 @@ class SeaProbe(PPBase):
             'SEA_TWC_021',
             units='g m-3',
             frequency=20,
-            long_name=('Total water content from the SEA WCM2000 probe, '
-                       'element 021')
+            long_name=('Total water content from the SEA WCM-2000 probe, '
+                       'element 021'),
+            instrument_serial=self.dataset['SEA_SN']
         )
 
         self.declare(
             'SEA_TWC_083',
             units='g m-3',
             frequency=20,
-            long_name=('Total water content from the SEA WCM2000 probe, '
-                       'element 083')
+            long_name=('Total water content from the SEA WCM-2000 probe, '
+                       'element 083'),
+            instrument_serial=self.dataset['SEA_SN']
         )
 
 
@@ -637,18 +639,20 @@ class SeaProbe(PPBase):
             'SEA_LWC_021',
             units='g m-3',
             frequency=20,
-            long_name=('Liquid water content from the SEA WCM2000 probe, '
+            long_name=('Liquid water content from the SEA WCM-2000 probe, '
                        'element 021'),
-            standard_name='mass_concentration_of_liquid_water_in_air'
+            standard_name='mass_concentration_of_liquid_water_in_air',
+            instrument_serial=self.dataset['SEA_SN']
         )
 
         self.declare(
             'SEA_LWC_083',
             units='g m-3',
             frequency=20,
-            long_name=('Liquid water content from the SEA WCM2000 probe, '
+            long_name=('Liquid water content from the SEA WCM-2000 probe, '
                        'element 083'),
-            standard_name='mass_concentration_of_liquid_water_in_air'
+            standard_name='mass_concentration_of_liquid_water_in_air',
+            instrument_serial=self.dataset['SEA_SN']
         )
 
     def process(self):
@@ -774,10 +778,30 @@ class SeaProbe(PPBase):
             k, *eff_TWC021
         )
 
+        # Total water is sum of liquid and ice
         df['TWC_083'] = df['LWC_083'] + df['IWC_083']
         df['TWC_021'] = df['LWC_021'] + df['IWC_021']
 
-        self.add_output(DecadesVariable(df['TWC_021'], name='SEA_TWC_021'))
-        self.add_output(DecadesVariable(df['TWC_083'], name='SEA_TWC_083'))
-        self.add_output(DecadesVariable(df['LWC_021'], name='SEA_LWC_021'))
-        self.add_output(DecadesVariable(df['LWC_083'], name='SEA_LWC_083'))
+        # Define output variables
+        outputs = {
+            'twc_021': DecadesVariable(
+                df['TWC_021'], name='SEA_TWC_021', flag=DecadesBitmaskFlag
+            ),
+            'twc_083': DecadesVariable(
+                df['TWC_083'], name='SEA_TWC_083', flag=DecadesBitmaskFlag
+            ),
+            'lwc_201': DecadesVariable(
+                df['LWC_021'], name='SEA_LWC_021', flag=DecadesBitmaskFlag
+            ),
+            'lwc_083': DecadesVariable(
+                df['LWC_083'], name='SEA_LWC_083', flag=DecadesBitmaskFlag
+            )
+        }
+
+        # Set flagging info and add output to dataset
+        for var in outputs.values():
+            var.flag.add_mask(
+                df.instr_mask, 'element temperature out of range'
+            )
+            var.flag.add_mask(df.WOW_IND, flags.WOW)
+            self.add_output(var)
