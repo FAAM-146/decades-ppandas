@@ -212,14 +212,14 @@ class NetCDFWriter(DecadesWriter):
                 _data = var.data
 
             _data = _data.resample(
-                pd_freq[_freq], limit=var.frequency-1
+                pd_freq[_freq]
             ).apply('mean').reindex(_index).fillna(var.attrs['_FillValue'])
 
             if getattr(var, 'circular', False):
                 _data %= 360
 
             _flag = var.flag().resample(
-                pd_freq[_freq], limit=var.frequency-1
+                pd_freq[_freq]
             ).pad().reindex(_index).fillna(var.flag.cfattrs['_FillValue'])
 
         # Reshape the data if it is not at 1 Hz
