@@ -579,7 +579,7 @@ class DecadesDataset(object):
 
     def _trim_data(self):
         if self.takeoff_time and self.landing_time:
-            start_cutoff = self.takeoff_time - datetime.timedelta(hours=4)
+            start_cutoff = self.takeoff_time - datetime.timedelta(hours=1)
             end_cutoff = self.landing_time + datetime.timedelta(minutes=30)
             self._backend.trim(start_cutoff, end_cutoff)
 
