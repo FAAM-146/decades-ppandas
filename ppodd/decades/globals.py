@@ -1,7 +1,7 @@
 import collections
 
 STR_DERIVED_FROM_FILE = '<derived from file>'
-GLOBAL_NOT_SET = '_GNS'
+GLOBAL_NOT_SET = 'GLOBAL_NOT_SET'
 
 
 class GlobalNotSetError(Exception):
@@ -18,7 +18,7 @@ class GlobalsCollection(object):
         'time_coverage_start', 'time_coverage_end', 'geospatial_lat_min',
         'geospatial_lat_max', 'geospatial_lon_min', 'geospatial_lon_max',
         'geospatial_vertical_min', 'geospatial_vertical_max',
-        'geospatial_vertical_up', 'geospatial_vertical_units', 'date_created'
+        'geospatial_vertical_units', 'date_created'
     ]
 
     def __init__(self, dataset=None):
