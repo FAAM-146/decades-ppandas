@@ -342,6 +342,12 @@ class TcpFileReader(FileReader):
 
                 if variable.index.size != variable.index.unique().size:
                     print('Non-unique index: {}'.format(variable.name))
+                    print(f'{variable.name}: using last of non-unique entries')
+
+                    variable._df = variable._df.groupby(variable._df.index).last()
+                    variable.flag._df = variable.flag._df.groupby(
+                        variable.flag._df.index
+                    ).last()
 
                 _file.dataset.add_input(variable)
 
