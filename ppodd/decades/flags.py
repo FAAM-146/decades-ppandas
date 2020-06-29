@@ -47,6 +47,18 @@ class DecadesFlagABC(object):
         except KeyError:
             return None
 
+    def trim(self, start, end):
+        """
+        Drop any flagging data outside specified time bounds.
+
+        Args:
+            start: the minumum valid time
+            end: the maximum valid time
+        """
+
+        self._df.drop(self._df.index[self._df.index < start], inplace=True)
+        self._df.drop(self._df.index[self._df.index > end], inplace=True)
+
     def cfattrs(self):
         """
         Return a dict of flag attributes for cf compliant netCDF files.
