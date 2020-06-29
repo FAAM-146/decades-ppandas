@@ -13,7 +13,12 @@ class GlobalsCollection(object):
         'Conventions', 'flight_number', 'date', 'project', 'title', 'keywords',
         'institution', 'source', 'platform', 'featureType', 'references',
         'summary', 'creator_type', 'creator_institution', 'creator_email',
-        'creator_url', 'revision_number', 'revision_date', 'processing_software_url'
+        'creator_url', 'revision_number', 'revision_date',
+        'processing_software_url', 'processing_software_version',
+        'time_coverage_start', 'time_coverage_end', 'geospatial_lat_min',
+        'geospatial_lat_max', 'geospatial_lon_min', 'geospatial_lon_max',
+        'geospatial_vertical_min', 'geospatial_vertical_max',
+        'geospatial_vertical_up', 'geospatial_vertical_units', 'date_created'
     ]
 
     def __init__(self, dataset=None):
@@ -69,6 +74,15 @@ class GlobalsCollection(object):
 
         self._globals.append(glo)
 
+    @property
+    def is_compliant(self):
+        print(self.REQUIRED_GLOBALS)
+        for required in self.REQUIRED_GLOBALS:
+            if self[required] == GLOBAL_NOT_SET:
+                print(f'No {required}')
+                return False
+        return True
+
     def add_data_global(self, param, attrs):
         self._data_globals[param] = attrs
 
@@ -98,6 +112,14 @@ class GlobalsCollection(object):
             _dict[name] = self._compliancify(Global(name, var))
 
         return _dict
+
+    @property
+    def keys(self):
+        return self.dict.keys()
+
+    @property
+    def values(self):
+        return self.dict.values()
 
     @property
     def dict(self):
