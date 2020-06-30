@@ -134,8 +134,6 @@ class DecadesDataset(object):
         self.pp_modules = []
         self.qa_modules = []
         self.globals = GlobalsCollection(dataset=self)
-        self.inputs = []
-        self.outputs = []
         self._dataframes = {}
         self.lon = None
         self.lat = None
@@ -153,10 +151,6 @@ class DecadesDataset(object):
             return self._backend[item]
         except KeyError:
             pass
-
-        for _var in self.outputs:
-            if _var.name == item:
-                return _var
 
         try:
             return self.constants[item]
@@ -215,6 +209,10 @@ class DecadesDataset(object):
             self._decache = True
             return
         self._decache = False
+
+    @property
+    def outputs(self):
+        return self._backend.outputs
 
     @property
     def trim(self):
@@ -352,9 +350,12 @@ class DecadesDataset(object):
             self[variable.name].index
         ).fillna(method='ffill').fillna(method='bfill')
 
+    def add_output(self, variable):
+        self._backend.add_output(variable)
+
     @property
     def variables(self):
-        return self._backend.variables + [i.name for i in self.outputs]
+        return self._backend.variables
 
     @property
     def files(self):
@@ -625,7 +626,7 @@ class DecadesDataset(object):
 
         self.flag_modules = [flag(self) for flag in ppodd.flags.flag_modules]
 
-        self.outputs = []
+        self._backend.clear_outputs()
 
         self.completed_modules = []
         self.failed_modules = []

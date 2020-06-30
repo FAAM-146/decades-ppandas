@@ -39,7 +39,8 @@ class DecadesWriter(abc.ABC):
         """Get all of the required output frequencies"""
         output_freqs = []
 
-        for var in self.dataset.outputs:
+        for _var in self.dataset.variables:
+            var = self.dataset[_var]
 
             if not var.write:
                 continue

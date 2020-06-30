@@ -28,6 +28,15 @@ class DecadesBackend(object):
     def trim(self, start, end):
         pass
 
+    def add_input(self, variable):
+        raise NotImplementedError
+
+    def add_output(self, variable):
+        self.outputs.append(variable)
+
+    def clear_outputs(self):
+        self.outputs = []
+
     @property
     def variables(self):
         return [i.name for i in self.inputs + self.outputs]
@@ -145,6 +154,10 @@ class Sqlite3Backend(DecadesBackend):
                 _var._df = pd.DataFrame({item: _data}, index=_time)
                 return _var
 
+        for _var in self.outputs:
+            if _var.name == item:
+                return _var
+
         raise KeyError('No input: {}'.format(item))
 
 
@@ -164,6 +177,10 @@ class PandasPickleBackend(DecadesBackend):
                     break
 
                 _var._df = _df
+                return _var
+
+        for _var in self.outputs:
+            if _var.name == item:
                 return _var
 
         raise KeyError('No input: {}'.format(item))
@@ -253,7 +270,7 @@ class PandasPickleBackend(DecadesBackend):
 
 class PandasInMemoryBackend(DecadesBackend):
     def __getitem__(self, item):
-        for _var in self.inputs:
+        for _var in self.inputs + self.outputs:
             if _var.name == item:
                 return _var
 
@@ -321,6 +338,10 @@ class PandasConsolidatedInMemoryBackend(DecadesBackend):
                          self._dlu_from_variable(_var)
                      ][_var.frequency][[_var.name]].copy()
 
+                return _var
+
+        for _var in self.outputs:
+            if _var.name == item:
                 return _var
 
         raise KeyError('No input: {}'.format(item))

@@ -72,7 +72,7 @@ class PPBase(abc.ABC):
                     setattr(output, key, value)
 
             # And append the output to the dataset
-            self.dataset.outputs.append(output)
+            self.dataset.add_output(output)
 
     def onto(self, dataframe, index, limit=1, period=None):
         return dataframe.reindex(
