@@ -11,7 +11,7 @@ class GlobalNotSetError(Exception):
 class GlobalsCollection(object):
     REQUIRED_GLOBALS = [
         'Conventions', 'flight_number', 'date', 'project', 'title', 'keywords',
-        'institution', 'source', 'platform', 'featureType', 'references',
+        'institution', 'source', 'platform', 'references', 
         'summary', 'creator_type', 'creator_institution', 'creator_email',
         'creator_url', 'revision_number', 'revision_date',
         'processing_software_url', 'processing_software_version',
