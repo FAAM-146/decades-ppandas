@@ -110,7 +110,7 @@ class GINWinds(PPBase):
 
         for var in (u, v):
             var.flag.add_mask(
-                self.d.ROLL_GIN > ROLL_THRESH,
+                self.d.ROLL_GIN.abs() > ROLL_THRESH,
                 'roll exceeds threshold'
             )
 
