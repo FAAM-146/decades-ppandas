@@ -182,7 +182,7 @@ class DecadesClassicFlag(DecadesFlagABC):
         else:
             self._df.FLAG = np.atleast_1d(flag)
 
-        self._df.FLAG.loc[self._df.FLAG < 0] = 0
+        self._df.FLAG.loc[self._df.FLAG < 0] = -128
 
     @classmethod
     def from_nc_variable(cls, var, decadesvar):
