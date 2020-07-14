@@ -190,7 +190,10 @@ class NetCDFWriter(DecadesWriter):
             setattr(ncflag, attr_key, attr_val)
 
         # Create a new DatetimeIndex to interpolate to, given frequency
-        _end = self.end_time - datetime.timedelta(seconds=1/_freq)
+        if(self.end_time.microsecond == 0):
+            _end = self.end_time - datetime.timedelta(seconds=1/_freq)
+        else:
+            _end = self.end_time
 
         _index = pd.date_range(
             self.start_time,
