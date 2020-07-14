@@ -48,6 +48,10 @@ class PPBase(abc.ABC):
         Declare the output variables that the processing module is going to
         create.
         """
+        if name in self.dataset.variables:
+            raise ValueError(
+                f'Cannot declare {name}, as it already exists in Dataset'
+            )
         self.declarations[name] = kwargs
 
     def finalize(self):
