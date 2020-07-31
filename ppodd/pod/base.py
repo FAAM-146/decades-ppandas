@@ -49,9 +49,13 @@ class PPBase(abc.ABC):
         create.
         """
         if name in self.dataset.variables:
-            raise ValueError(
-                f'Cannot declare {name}, as it already exists in Dataset'
-            )
+            if not self.dataset.allow_overwrite:
+                raise ValueError(
+                    f'Cannot declare {name}, as it already exists in Dataset'
+                )
+            else:
+                self.dataset.remove(name)
+
         self.declarations[name] = kwargs
 
     def finalize(self):

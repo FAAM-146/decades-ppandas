@@ -143,6 +143,7 @@ class DecadesDataset(object):
         self._landing_time = None
         self._decache = False
         self._trim = False
+        self.allow_overwrite = False
         self._backend = backend()
 
     def __getitem__(self, item):
@@ -194,6 +195,9 @@ class DecadesDataset(object):
 
         return (start_time, end_time)
 
+    def remove(self, name):
+        self._backend.remove(name)
+
     def garbage_collect(self, collect):
         """
         Turn garbage collection on or off. If on, variables which are not
@@ -213,6 +217,9 @@ class DecadesDataset(object):
     @property
     def outputs(self):
         return self._backend.outputs
+
+    def clear_outputs(self):
+        self._backend.outputs = []
 
     @property
     def trim(self):

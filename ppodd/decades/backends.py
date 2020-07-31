@@ -34,6 +34,9 @@ class DecadesBackend(object):
     def add_output(self, variable):
         self.outputs.append(variable)
 
+    def remove(self, name):
+        raise NotImplementedError
+
     def clear_outputs(self):
         self.outputs = []
 
@@ -281,6 +284,16 @@ class PandasInMemoryBackend(DecadesBackend):
             _var._df.drop(_var._df.index[_var._df.index < start], inplace=True)
             _var._df.drop(_var._df.index[_var._df.index > end], inplace=True)
             _var.flag.trim(start, end)
+
+    def remove(self, name):
+        for var in self.inputs:
+            if var.name == name:
+                self.inputs.remove(var)
+                return
+        for var in self.outputs:
+            if var.name == name:
+                self.outputs.remove(var)
+                return
 
     def add_input(self, var):
         if var.name not in [i.name for i in self.inputs]:
