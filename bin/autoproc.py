@@ -93,7 +93,7 @@ def drive_publish(date, flight_num):
     while True:
         response = drive_service.files().list(
             q="name contains 'core_faam_{}'".format(date.strftime('%Y%m%d')),
-            driveId='0AEJkdlOCN4UEUk9PVA',
+            driveId='0AJqu9EB0d8fLUk9PVA',
             corpora='drive',
             supportsAllDrives=True,
             includeItemsFromAllDrives=True,
@@ -188,7 +188,7 @@ class DecadesPPandasProcessor(object):
 
         logger.info('processing in {}'.format(self.tempdir))
 
-        d = DecadesDataset(self.fltdate)
+        d = DecadesDataset()
         d.trim = True
         for _file in self.files:
             d.add_file(_file)
@@ -571,24 +571,34 @@ class AutoProcessor(object):
 
                 processor.process()
 
+                # Build the name of the flight directory, typically something
+                # like xNNN-mmm-dd/
                 flight_dir = fltdate.strftime(
                     '{fltnum}-%b-%d'.format(fltnum=fltnum)
                 ).lower()
 
+                # Get the primary output directory for data publication
                 output_dir = os.path.join(
                     self.output_base, fltdate.strftime('%Y'), flight_dir
                 )
 
+                # Get there secondary output directory, where only netCDF data
+                # is pushed to
                 secondary_nc_dir = os.path.join(
                     self.secondary_output_base, fltdate.strftime('%Y'),
                     flight_dir
                 )
 
+                # Publish the data
                 processor.publish(output_dir, secondary_nc_dir=secondary_nc_dir)
 
+                # Chill out for a few seconds, to give everything a bit of time
+                # to sync
                 logger.info('Waiting 30s for sync')
                 time.sleep(30)
 
+                # Publish the new data files on The Google. That is, make them
+                # available to anyone with the link
                 _files = drive_publish(fltdate, fltnum)
 
                 _ids = {}
