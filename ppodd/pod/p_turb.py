@@ -26,7 +26,6 @@ class TurbProbe(PPBase):
         'BET1',      # (const) Coeff 1 of linear correction to calculated AoSS
         'IAS_RVSM',  # (derived) Indicated Air speed
         'TAT_DI_R',  # (derived) Deiced True air temperature
-        'TAT_ND_R',  # (derived) Nondeiced True air temperature
         'PS_RVSM',   # (derived) RVSM static pressure
         'Q_RVSM',    # (derived) RVSM pitot-static pressure
         'PALT_RVS',  # (derived) RVSM pressure altitude
@@ -52,7 +51,6 @@ class TurbProbe(PPBase):
             'BET1': ('const', 0.95),
             'IAS_RVSM': ('data', 120 * _o(100)),
             'TAT_DI_R': ('data', 250 * _o(100)),
-            'TAT_ND_R': ('data', 250 * _o(100)),
             'PS_RVSM': ('data', 500 * _o(100)),
             'Q_RVSM': ('data', 80 * _o(100)),
             'PALT_RVS': ('data', 1e5 * _o(100)),
