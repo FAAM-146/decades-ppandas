@@ -56,8 +56,8 @@ class DecadesFlagABC(object):
             end: the maximum valid time
         """
 
-        self._df.drop(self._df.index[self._df.index < start], inplace=True)
-        self._df.drop(self._df.index[self._df.index > end], inplace=True)
+        loc = (self._df.index >= start) & (self._df.index <= end)
+        self._df = self._df.loc[loc]
 
     def cfattrs(self):
         """

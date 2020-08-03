@@ -281,8 +281,8 @@ class PandasInMemoryBackend(DecadesBackend):
 
     def trim(self, start, end):
         for _var in self.inputs:
-            _var._df.drop(_var._df.index[_var._df.index < start], inplace=True)
-            _var._df.drop(_var._df.index[_var._df.index > end], inplace=True)
+            loc = (_var._df.index >= start) & (_var._df.index <= end)
+            _var._df = _var._df.loc[loc]
             _var.flag.trim(start, end)
 
     def remove(self, name):
