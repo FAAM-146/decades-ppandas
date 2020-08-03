@@ -268,11 +268,11 @@ class BBRFlux(PPBase):
                 # directly from the old FORTRAN code, but it does the job.
                 index = np.round(d.SOL_ZEN / 10)
 
-                d['_ceff'] = np.array([ceff[int(i)] if np.isfinite(i) else np.nan
-                                      for i in index])
+                d['_ceff'] = np.array([ceff[min(int(i), 10)] if np.isfinite(i)
+                                       else np.nan for i in index])
 
-                d['_fdir'] = np.array([fdir[int(i)] if np.isfinite(i) else np.nan
-                                      for i in index])
+                d['_fdir'] = np.array([fdir[min(int(i), 10)] if np.isfinite(i)
+                                       else np.nan for i in index])
 
                 # For the upper BBRs, apply the pitch and roll corrections when
                 # in direct sunlight (flux >= fcrit)
