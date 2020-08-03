@@ -20,13 +20,10 @@ class TurbProbe(PPBase):
         'TOLER',     # (const) Tolerance to AOA/AOSS iteration
         'TASCOR1',   # (const) True airspeed correction factor (fudge factor to remove
                      #         residual along-heading wind errors).
-        'ALPH0',     # (const) Coeff 0 of linear correction to calculated AoA
-        'ALPH1',     # (const) Coeff 1 of linear correction to calculated AoA
-        'BET0',      # (const) Coeff 0 of linear correction to calculated AoSS
-        'BET1',      # (const) Coeff 1 of linear correction to calculated AoSS
+        'ALPHA_COR', # (const) Linear correction to calculated AoA
+        'BETA_COR',  # (const) Linear correction to calculated AoSS
         'IAS_RVSM',  # (derived) Indicated Air speed
         'TAT_DI_R',  # (derived) Deiced True air temperature
-        'TAT_ND_R',  # (derived) Nondeiced True air temperature
         'PS_RVSM',   # (derived) RVSM static pressure
         'Q_RVSM',    # (derived) RVSM pitot-static pressure
         'PALT_RVS',  # (derived) RVSM pressure altitude
@@ -46,13 +43,10 @@ class TurbProbe(PPBase):
             'AOSS_B1': ('const', [5.8e-2, -1.7e-2, 0.0]),
             'TOLER': ('const', .02),
             'TASCOR1': ('const', 1),
-            'ALPH0': ('const', -.41),
-            'ALPH1': ('const', 1.1),
-            'BET0': ('const', -0.7),
-            'BET1': ('const', 0.95),
+            'ALPHA_COR': ('const', [0, 1]),
+            'BETA_COR': ('const', [0, 1]),
             'IAS_RVSM': ('data', 120 * _o(100)),
             'TAT_DI_R': ('data', 250 * _o(100)),
-            'TAT_ND_R': ('data', 250 * _o(100)),
             'PS_RVSM': ('data', 500 * _o(100)),
             'Q_RVSM': ('data', 80 * _o(100)),
             'PALT_RVS': ('data', 1e5 * _o(100)),
@@ -197,8 +191,8 @@ class TurbProbe(PPBase):
         # Apply linear corrections to calculated AoA and AoSS, derived from Al
         # Rodi analysis - minimization of residual vertical wind during yawing
         # orbits.
-        aoa = aoa * self.dataset['ALPH1'] + self.dataset['ALPH0']
-        aoss = aoss * self.dataset['BET1'] + self.dataset['BET0']
+        aoa = aoa * self.dataset['ALPHA_COR'][1] + self.dataset['ALPHA_COR'][0]
+        aoss = aoss * self.dataset['BETA_COR'][1] + self.dataset['BETA_COR'][0]
 
         aoa_out = DecadesVariable(
             pd.Series(aoa, index=d.index), name='AOA',

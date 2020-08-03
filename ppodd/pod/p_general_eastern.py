@@ -10,9 +10,15 @@ TDEW_VALID_RANGE = (195, 394)
 
 
 class GeneralEastern(PPBase):
-    """
+    r"""
     Processing module to calculate Dew Point temperature from the General
-    Eastern 1011 chilled mirror hygrometer.
+    Eastern 1011B chilled mirror hygrometer. Counts from the core console are
+    converted to dew point with a polynomial fit, using coefficients provided
+    in the flight constants paramater \texttt{CALGE}. The General Eastern
+    provides a control signal voltage to indicate whether the instrument is
+    controlling on a due point, and the data are flagged when outside this
+    range. The valid range is provided through the flight constants parameter
+    \texttt{GELIMS}.
     """
 
     inputs = [
@@ -89,9 +95,27 @@ class GeneralEastern(PPBase):
 
         # Create the output variable and add the flags
         tdew = DecadesVariable(d['TDEW_GE'], flag=DecadesBitmaskFlag)
-        tdew.flag.add_mask(d['CONTROL_MISSING_FLAG'], 'control data missing')
-        tdew.flag.add_mask(d['CONTROL_RANGE_FLAG'], 'control out of range')
-        tdew.flag.add_mask(range_flag, 'dewpoint out of range')
+
+        tdew.flag.add_mask(
+            d['CONTROL_MISSING_FLAG'], 'control data missing',
+            ('No control data is available. The instrument may or may not be '
+             'controlling on a dew point')
+        )
+
+        tdew.flag.add_mask(
+            d['CONTROL_RANGE_FLAG'], 'control out of range',
+            ('The control signal is outside of the specified valid range '
+             '[{}, {}]'.format(
+                 self.dataset['GELIMS'][0], self.dataset['GELIMS'][1]
+             ))
+        )
+
+        tdew.flag.add_mask(
+            range_flag, 'dewpoint out of range',
+            'Dew point outside valid range [{}, {}] K'.format(
+                *TDEW_VALID_RANGE
+            )
+        )
 
         # Add the output to the parent Dataset
         self.add_output(tdew)

@@ -39,6 +39,5 @@ def compile_cython():
     )
 
 
-compile_cython()
 load_plugins()
 pp_modules = PPBase.__subclasses__()

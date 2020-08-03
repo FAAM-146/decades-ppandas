@@ -10,10 +10,61 @@ from ..utils.conversions import celsius_to_kelvin
 from .base import PPBase
 from .shortcuts import *
 
+MACH_VALID_MIN = 0.5
+
+
 class ThermistorV1Temperatures(PPBase):
-    """
-    Calculate true air temperatures from the Rosemount temperature
-    probes.
+    r"""
+    Calculate indicated and true (static) air temperatures from the Rosemount
+    temperature probes, for the V1 (prototype) thermistor circuit. Note that
+    when using this circuit, only one of the housings may host a thermistor
+    type sensor.
+
+    \begin{itemize}
+    \item{Processes the NPL calibrations to produce a resistance to probe
+          temperature relationship. The NPL calibration is performed with two
+          different applied voltages so that self-heating can be calculated.
+          This allows the probe temperature to be inferred by adding the
+          calibration chamber temperature to the self-heating in order to
+          produce a useable probe temperature to resistance calibration.}
+    \item{Processes the NPL calibrations for a temperature to dissipation
+          constant relationship. The dissipation constant measured in the
+          calibration chamber for a given temperature is used later in the
+          removal of self-heating in flight.}
+    \item{Calculates the indicated temperature of the thermistor sensor by
+          applying the NPL calibration and the DECADES counts to voltage
+          calibration.}
+    \item{Calculates the dissipation constant at that indicated temperature
+          based on the calibration dissipation constant and the flight
+          dissipation multiplier (as described in FAAM013004A).}
+    \item{Calculates the in-flight self-heating for each measurement, based
+          on the voltage measurements and in-flight dissipation constants.}
+    \item{Produces an indicated temperature corrected for self-heating by
+          subtracting the self-heating from the temperature of the sensor.}
+    \end{itemize}
+
+    The deiced indicated temperature is subject to a heating correction term
+    when the heater is active, given by
+    \[
+    \Delta T_{\text{IAT}} = \frac{1}{10}\exp{\left(\exp{\left(a +
+    \left(\log\left(M\right)+b\right)\left(c\left(q+P\right)+d\right)\right)
+    }\right),}
+    \]
+    where $M$ is the Mach number, $q$ is the dynamic pressure and $P$ the
+    static pressure. The parameters $a$, $b$, $c$, and $d$ are
+    $\left[1.171, 2.738, -0.000568, -0.452\right]$.
+
+    True air temperatures are a function of indicated temperatures, Mach number
+    and housing recovery factor, and are given by
+    \[
+    T_\text{TAT} = \frac{T_\text{IAT}}{1 + \left(0.2 R_f M^2\right)},
+    \]
+    where $M$ is the Mach number and $R_f$ the recovery factor. Recovery
+    factors are currently considered constant, and are specified in the flight
+    constants parameters \texttt{RM\_RECFAC/DI} and \texttt{RM\_RECFAC/ND}.
+
+    A flag is applied to the data when the Mach number is out of range. Further
+    flags may be added by standalone flagging modules.
     """
 
     inputs = [
@@ -41,9 +92,9 @@ class ThermistorV1Temperatures(PPBase):
     def test():
         return {
             'RM_RECFAC': ('const', {'DI': 1., 'ND': 1.}),
-            'NDTSENS': ('const', 'ndi_serial'),
-            'DITSENS': ('const', 'dit_serial'),
-            'TH_DISS_MUL': ('const', 1.8),
+            'NDTSENS': ('const', ['ndi_serial', 'Thermistor']),
+            'DITSENS': ('const', ['dit_serial', 'Thermistor']),
+            'TH_DISS_MUL': ('const', {'ND': 1.8, 'DI': 1.8}),
             'TH_CIRCUIT_TYPE': ('const', 'V1'),
             'TH_RESISTANCE': ('const', {
                 'ND': {'RF': 1E5, 'RF1': 1E5, 'RF2': 3E5, 'RB1': 1E5, 'RB2': 3E5},
@@ -62,10 +113,22 @@ class ThermistorV1Temperatures(PPBase):
             'TH_CAL_TEMPS_LO': ('const', {
                 'ND': _a(-60, 60, 10), 'DI': _a(-60, 60, 10)
             }),
-            'TH_HIGH_VIN': ('const', {'ND': [5] * 12, 'DI': [5] * 12}),
-            'TH_LOW_VIN': ('const', {'ND': [3.5] * 12, 'DI': [3.5] * 12}),
-            'TH_HI_VOUT': ('const', {'ND': _l(5, .1, 12), 'DI': _l(5, .1, 12)}),
-            'TH_LOW_VOUT': ('const', {'ND': _l(3.2, .1, 12), 'DI': _l(3.2, .1, 12)}),
+            'TH_HIGH_VIN': ('const', {
+                'ND': [5.1 + i / 10 for i in range(12)],
+                'DI': [5.1 + i / 10 for i in range(12)],
+            }),
+            'TH_LOW_VIN': ('const', {
+                'ND': [3.5 + i / 10 for i in range(12)],
+                'DI': [3.5 + i / 10 for i in range(12)]
+            }),
+            'TH_HIGH_VOUT': ('const', {
+                'ND': _l(5, .1, 12),
+                'DI': _l(5, .1, 12)
+            }),
+            'TH_LOW_VOUT': ('const', {
+                'ND': _l(3.2, .1, 12),
+                'DI': _l(3.2, .1, 12)}
+            ),
             'PS_RVSM': ('data', _a(1000, 300, -1)),
             'Q_RVSM': ('data', 250*(_o(700))),
             'CORCON_fast_temp': ('data', _a(225, 245, .0286)*1000),
@@ -296,14 +359,14 @@ class ThermistorV1Temperatures(PPBase):
         vout_ndi = (padding_1_m * corcon_padding1) + padding_1_c
         vout_di = (corcon_fast_temp_m * corcon_fast_temp) + corcon_fast_temp_c
 
-        if NDDI == 'ND':
+        if NDDI is 'ND':
             vin = (vout_di * rf2 + rb2 * vout_di) / rb2
             r_therm = rf1 * rb1 / (
                 rb1 * (vout_di / vout_ndi) * ((rf2 + rb2) / rb2) - (rb1 + rf1)
             )
             v2out_r = vout_ndi**2.0 / r_therm
 
-        elif NDDI == 'DI':
+        elif NDDI is 'DI':
             vin = (vout_ndi * rf1 + rb1 * vout_ndi) / rb1
             r_therm = rf2 * rb2 / (
                 rb2 * (vout_ndi / vout_di) * ((rf1 + rb1) / rb1) - (rb2 + rf2)
@@ -335,13 +398,25 @@ class ThermistorV1Temperatures(PPBase):
             recovery_factor
         )
 
-        iat = DecadesVariable(it_therm_ash_odr, name='IAT_{}_R'.format(NDDI),
-                              flag=DecadesBitmaskFlag)
-        tat = DecadesVariable(tt_therm_ash_odr, name='TAT_{}_R'.format(NDDI),
-                              flag=DecadesBitmaskFlag)
+        NDDI = [NDDI]
+        if self.test_mode:
+            NDDI = ['ND', 'DI']
 
-        for at in (iat, tat):
-            at.flag.add_mask(self.d['MACHNO_FLAG'], 'mach_out_of_range')
+        for housing in NDDI:
+            iat = DecadesVariable(
+                it_therm_ash_odr, name='IAT_{}_R'.format(housing),
+                flag=DecadesBitmaskFlag
+            )
 
-        self.add_output(iat)
-        self.add_output(tat)
+            tat = DecadesVariable(
+                tt_therm_ash_odr, name='TAT_{}_R'.format(housing),
+                flag=DecadesBitmaskFlag
+            )
+
+            for at in (iat, tat):
+                at.flag.add_mask(
+                    self.d['MACHNO_FLAG'], 'mach_out_of_range'
+                )
+
+            self.add_output(iat)
+            self.add_output(tat)

@@ -6,6 +6,10 @@ from .shortcuts import _o
 
 
 class ElectricFieldJci140(PPBase):
+    r"""
+    This module reports the raw counts from the JCI static monitor on the
+    forward core console.
+    """
 
     inputs = ['PRTAFT_jci140_signal']
 
@@ -31,7 +35,12 @@ class ElectricFieldJci140(PPBase):
 
         output = DecadesVariable(df['PRTAFT_jci140_signal'], name='EXX_JCI')
 
-        output.flag.add_meaning(1, 'uncalibrated counts')
+        output.flag.add_meaning(
+            1, 'uncalibrated counts',
+            ('Indicates this data is raw, uncalibrated counts from the DLU. '
+             'Use with caution.')
+        )
+
         output.flag.add_flag(np.ones((len(output),)))
 
         self.add_output(output)

@@ -12,7 +12,41 @@ PALT_MAX = 50000
 IAS_MIN = -50
 IAS_MAX = 500
 
-class RioRvsm(PPBase):
+
+class Rvsm(PPBase):
+    r"""
+    Calculate derived parameters from the aircraft's RVSM system. Pressure
+    altitude and indicated air speed are obtained from the aircraft's ARINC-429
+    data bus, with a least significant bit resolution of 4 ft and $1/32$ kts
+    respectively.
+
+    Static pressure, $P$, is obtained from the pressure altitude, $Z_p$, using
+    the ICAO standard atmosphere,
+    \[
+    P = P_0\left(\frac{T_0}{T_0 + L_0 \left(Z_p - h_0\right)}\right)^{\frac{g_0
+    M}{R L_0}},
+    \]
+    where $T_0=288.15$, $L_0=-0.0065$, $h_0=0$, $g_0=9.80655$, $M=0.0289644$,
+    $R=8.31432$, $P_0=1013.25$ below 11000 m, or
+    \[
+    P = P_1\exp\left(\frac{-g_0 M \left(Z_p - h_1\right)}{R T_1}\right),
+    \]
+    where $T_1=216.65$, $P_1=226.321$, $h_1=11000$, above 11000 m.
+
+    Pitot static pressure, $q$, is given as
+    \[
+    q = P \left(\frac{M^2}{5} + 1\right)^{\frac{7}{2}} - 1,
+    \]
+    with the Mach number, $M$, given by
+    \[
+    M = \frac{V_{IAS}}{V_0 \sqrt{\frac{P}{P_0}}},
+    \]
+    where $V_0 = 340.294$ and $P_0=1013.25$, and $V_{IAS}$ is the indicated air
+    speed.
+
+    Data are flagged where either the pressure altitude or indicated air speed
+    are considered out of range.
+    """
 
     inputs = ['PRTAFT_pressure_alt', 'PRTAFT_ind_air_speed']
 
@@ -111,7 +145,11 @@ class RioRvsm(PPBase):
         ps_rvsm = DecadesVariable(ps_rvsm, name='PS_RVSM',
                                   flag=DecadesBitmaskFlag)
 
-        ps_rvsm.flag.add_mask(d.FLAG_ALT, 'altitude out of range')
+        ps_rvsm.flag.add_mask(
+            d.FLAG_ALT, 'altitude out of range',
+            f'Pressure altitude outside acceptable range '
+            f'[{PALT_MIN}, {PALT_MAX}]'
+        )
 
         return ps_rvsm
 
@@ -123,7 +161,11 @@ class RioRvsm(PPBase):
         palt_rvs = DecadesVariable(palt_rvs, name='PALT_RVS',
                                    flag=DecadesBitmaskFlag)
 
-        palt_rvs.flag.add_mask(d.FLAG_ALT, 'altitude out of range')
+        palt_rvs.flag.add_mask(
+            d.FLAG_ALT, 'altitude out of range',
+            f'Pressure altitude outside acceptable range '
+            f'[{PALT_MIN}, {PALT_MAX}]'
+        )
 
         return palt_rvs
 
@@ -134,8 +176,16 @@ class RioRvsm(PPBase):
         q_rvsm = DecadesVariable(q_rvsm, name='Q_RVSM',
                                  flag=DecadesBitmaskFlag)
 
-        q_rvsm.flag.add_mask(d.FLAG_ALT, 'altitude out of range')
-        q_rvsm.flag.add_mask(d.IAS_FLAG, 'ias out of range')
+        q_rvsm.flag.add_mask(
+            d.FLAG_ALT, 'altitude out of range',
+             f'Pressure altitude outside acceptable range '
+             f'[{PALT_MIN}, {PALT_MAX}]'
+        )
+        q_rvsm.flag.add_mask(
+            d.IAS_FLAG, 'ias out of range',
+            f'Indicated air speed outside acceptable range '
+            f'[{IAS_MIN}, {IAS_MAX}]'
+        )
 
         return q_rvsm
 

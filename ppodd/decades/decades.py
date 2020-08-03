@@ -6,6 +6,8 @@ import sys
 import re
 import os
 
+from pydoc import locate
+
 import numpy as np
 import pandas as pd
 
@@ -129,9 +131,9 @@ class DecadesDataset(object):
         self.constants = {}
         self._variable_mods = {}
         self._mod_exclusions = []
+        self.pp_modules = []
+        self.qa_modules = []
         self.globals = GlobalsCollection(dataset=self)
-        self.inputs = []
-        self.outputs = []
         self._dataframes = {}
         self.lon = None
         self.lat = None
@@ -141,9 +143,8 @@ class DecadesDataset(object):
         self._landing_time = None
         self._decache = False
         self._trim = False
+        self.allow_overwrite = False
         self._backend = backend()
-
-        self._default_globals()
 
     def __getitem__(self, item):
 
@@ -151,10 +152,6 @@ class DecadesDataset(object):
             return self._backend[item]
         except KeyError:
             pass
-
-        for _var in self.outputs:
-            if _var.name == item:
-                return _var
 
         try:
             return self.constants[item]
@@ -180,7 +177,8 @@ class DecadesDataset(object):
         start_time = datetime.datetime.max
         end_time = datetime.datetime.min
 
-        for var in self.outputs:
+        for _var in self.variables:
+            var = self[_var]
 
             if not var.write:
                 continue
@@ -191,9 +189,14 @@ class DecadesDataset(object):
             if var.data.index[-1] > end_time:
                 end_time = var.data.index[-1]
 
+            self._backend.decache()
+
         start_time = start_time.replace(microsecond=0)
 
         return (start_time, end_time)
+
+    def remove(self, name):
+        self._backend.remove(name)
 
     def garbage_collect(self, collect):
         """
@@ -210,6 +213,13 @@ class DecadesDataset(object):
             self._decache = True
             return
         self._decache = False
+
+    @property
+    def outputs(self):
+        return self._backend.outputs
+
+    def clear_outputs(self):
+        self._backend.outputs = []
 
     @property
     def trim(self):
@@ -244,67 +254,60 @@ class DecadesDataset(object):
             if isinstance(value, str):
                 self.globals[key] = self.globals[key].format(**self.globals())
 
-    def _default_globals(self):
-        """
-        Add some default globals, which are dependent on dates / software
-        versions etc. These can be overridden in the flight constants file, but
-        probably shouldn't be.
-        """
-        self.globals['processing_software_version'] = ppodd.version
-        self.globals['processing_software_commit'] = ppodd.githash
-        self.globals['processing_software_url'] = ppodd.URL
-        self.globals['revision_date'] = datetime.date.today
-        self.globals['geospatial_vertical_positive'] = 'up'
-        self.globals['geospatial_vertical_units'] = 'm'
-
-        self.globals.add_data_global(
-            'geospatial_lat_max',
-            ('LAT_GIN', ('data', 'max'))
-        )
-
-        self.globals.add_data_global(
-            'geospatial_lat_min',
-            ('LAT_GIN', ('data', 'min'))
-        )
-
-        self.globals.add_data_global(
-            'geospatial_lon_max',
-            ('LON_GIN', ('data', 'max'))
-        )
-
-        self.globals.add_data_global(
-            'geospatial_lon_min',
-            ('LON_GIN', ('data', 'min'))
-        )
-
-        self.globals.add_data_global(
-            'geospatial_vertical_min',
-            ('ALT_GIN', ('data', 'min'))
-        )
-
-        self.globals.add_data_global(
-            'geospatial_vertical_max',
-            ('ALT_GIN', ('data', 'max'))
-        )
-
-        self.globals.add_data_global(
-            'time_coverage_start',
-            ('TIME_MIN_CALL', [])
-        )
-
-        self.globals.add_data_global(
-            'time_coverage_end',
-            ('TIME_MAX_CALL', [])
-        )
-
     def add_global(self, key, value):
         """
-        Add a global key/value pair to the dataset globals.
+        Add a global key/value pair to the dataset globals. The value can be
+        either a literal or a directive. Directives are strings of the form
+        <action args> where action is one of [call, data]. Call should have a
+        single argument identifying an object in the python path, which should
+        be either a serializable literal or a callable which resolves to one.
+        Data can have any number of (whitespace separated) arguments. The first
+        should be a variable name, and the following attributes to successively
+        call on that data. The final attribute may be a serializable literal,
+        or a callable which resolves to one.
+
+        Dictionaries may be passed as values; these will be recursively
+        flattened.
 
         Args:
             key: the name of the global attribute to add
             value: the value of the global attribute <key>
         """
+
+        # Recursively flatten any dictionaries passed as values
+        if type(value) is dict:
+            for _key, _val in value.items():
+                _key = '{}_{}'.format(key, _key)
+                self.add_global(_key, _val)
+            return
+
+        # See if the value passed is a directive
+        try:
+            rex = re.compile('<(?P<action>[a-z]+) (?P<value>.+)>')
+            result = rex.search(value)
+        except TypeError:
+            result = None
+
+        if result:
+            # The value is a directive; resolve it
+            groups = result.groupdict()
+
+            if groups['action'] == 'call':
+                # Attempt to locate the value of the call directive. Abandon
+                # this global if its not found
+                value = locate(groups['value'])
+                if value is None:
+                    return
+
+            if groups['action'] == 'data':
+                # Data directive: parse the string and delegate to
+                # add_data_global
+                values = [v.strip() for v in groups['value'].split()]
+                iter_vals = (values[0], values[1:])
+                self.globals.add_data_global(key, iter_vals)
+                return
+
+        # Add the global
         self.globals[key] = value
 
     @property
@@ -350,9 +353,16 @@ class DecadesDataset(object):
 
         self._backend.add_input(variable)
 
+        self[variable.name].flag._df = self[variable.name].flag._df.reindex(
+            self[variable.name].index
+        ).fillna(method='ffill').fillna(method='bfill')
+
+    def add_output(self, variable):
+        self._backend.add_output(variable)
+
     @property
     def variables(self):
-        return self._backend.variables + [i.name for i in self.outputs]
+        return self._backend.variables
 
     @property
     def files(self):
@@ -455,7 +465,6 @@ class DecadesDataset(object):
 
         for reader in self.readers:
             reader.read()
-            self._collect_garbage()
 
         self.readers = None
         gc.collect()
@@ -474,6 +483,8 @@ class DecadesDataset(object):
         self.flag_modules = [flag(self) for flag in ppodd.flags.flag_modules]
 
         self._interpolate_globals()
+
+        self._collect_garbage()
 
     @property
     def takeoff_time(self):
@@ -576,7 +587,7 @@ class DecadesDataset(object):
 
     def _trim_data(self):
         if self.takeoff_time and self.landing_time:
-            start_cutoff = self.takeoff_time - datetime.timedelta(hours=4)
+            start_cutoff = self.takeoff_time - datetime.timedelta(hours=1)
             end_cutoff = self.landing_time + datetime.timedelta(minutes=30)
             self._backend.trim(start_cutoff, end_cutoff)
 
@@ -622,7 +633,7 @@ class DecadesDataset(object):
 
         self.flag_modules = [flag(self) for flag in ppodd.flags.flag_modules]
 
-        self.outputs = []
+        self._backend.clear_outputs()
 
         self.completed_modules = []
         self.failed_modules = []
@@ -677,5 +688,5 @@ class DecadesDataset(object):
                 for key, value in self._variable_mods[name].items():
                     setattr(var, key, value)
 
-        # cleanup any rubbish that the backend may have left behind.
+    def cleanup(self):
         self._backend.cleanup()
