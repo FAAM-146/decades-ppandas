@@ -93,7 +93,7 @@ def drive_publish(date, flight_num):
     while True:
         response = drive_service.files().list(
             q="name contains 'core_faam_{}'".format(date.strftime('%Y%m%d')),
-            driveId='0AJqu9EB0d8fLUk9PVA',
+            driveId=read_config()['autoproc']['google_drive_id'],
             corpora='drive',
             supportsAllDrives=True,
             includeItemsFromAllDrives=True,
