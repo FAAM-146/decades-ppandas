@@ -97,12 +97,20 @@ def drive_publish(date, flight_num):
             corpora='drive',
             supportsAllDrives=True,
             includeItemsFromAllDrives=True,
-            fields='nextPageToken, files(id, name)',
+            fields='nextPageToken, files(id, name, createdTime, trashed)',
             pageToken=page_token
         ).execute()
 
         for _file in response.get('files', []):
-            if 'prelim' in _file['name'] and flight_num in _file['name']:
+            now = datetime.datetime.utcnow()
+            created = datetime.datetime.strptime(
+                _file['createdTime'], '%Y-%m-%dT%H:%M:%S.%fZ'
+            )
+            created_ago_seconds = (now - created).total_seconds()
+
+            if ('prelim' in _file['name'] and flight_num in _file['name']
+                and not _file['trashed'] and created_ago_seconds < 86400):
+
                 _files.append(_file)
 
         page_token = response.get('nextPageToken', None)
@@ -110,6 +118,7 @@ def drive_publish(date, flight_num):
             break
 
     for _file in _files:
+        logger.info(f'Publishing {_file}')
         drive_service.permissions().create(
             supportsAllDrives=True,
             fileId=_file['id'],
@@ -612,7 +621,10 @@ class AutoProcessor(object):
                 if read_config()['autoproc']['do_qa']:
                     init_prelimqa(fltnum, _ncfile, _ids)
 
+                logger.info(f'Removing constents trigger {constants_file}')
                 os.remove(constants_file)
+
+        logger.info('Finished processing')
 
 
 if __name__ == '__main__':
