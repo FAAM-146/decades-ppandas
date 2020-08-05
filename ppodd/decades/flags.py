@@ -47,6 +47,18 @@ class DecadesFlagABC(object):
         except KeyError:
             return None
 
+    def trim(self, start, end):
+        """
+        Drop any flagging data outside specified time bounds.
+
+        Args:
+            start: the minumum valid time
+            end: the maximum valid time
+        """
+
+        loc = (self._df.index >= start) & (self._df.index <= end)
+        self._df = self._df.loc[loc]
+
     def cfattrs(self):
         """
         Return a dict of flag attributes for cf compliant netCDF files.
@@ -98,9 +110,11 @@ class DecadesClassicFlag(DecadesFlagABC):
         if self.meanings:
             if 0 in self.meanings:
                 _meanings = self.meanings
-            else:
-                _meanings = {0: 'data_good'}
+            elif np.any(self() != -128):
+                _meanings = {0: DATA_GOOD}
                 _meanings.update(self.meanings)
+            else:
+                _meanings = self.meanings
         else:
             _meanings = {-128: 'data_not_flagged'}
 
@@ -168,7 +182,26 @@ class DecadesClassicFlag(DecadesFlagABC):
         else:
             self._df.FLAG = np.atleast_1d(flag)
 
-        self._df.FLAG.loc[self._df.FLAG < 0] = 0
+        self._df.FLAG.loc[self._df.FLAG < 0] = -128
+
+    @classmethod
+    def from_nc_variable(cls, var, decadesvar):
+        flag = cls(decadesvar)
+
+        _standard_meanings = (
+                'data_good', 'possible_minor_issues', 'possible_major_issues',
+                'data_bad_or_missing'
+            )
+        try:
+            for meaning, value in zip(
+                var.flag_meanings.split(), np.atleast_1d(var.flag_values)
+            ):
+                flag.add_meaning(value, meaning)
+        except AttributeError:
+            for meaning, value in zip(_standard_meanings, (0, 1, 2, 3)):
+                flag.add_meaning(value, meaning)
+
+        return flag
 
 
 class DecadesBitmaskFlag(DecadesFlagABC):
@@ -233,3 +266,22 @@ class DecadesBitmaskFlag(DecadesFlagABC):
 
         self._df[col_name] = np.atleast_1d(data).astype(bool)
         self.descriptions[col_name] = description
+
+    @classmethod
+    def from_nc_variable(cls, ncvar, decadesvar):
+        flag = cls(decadesvar)
+        masks = np.atleast_1d(ncvar.flag_masks)
+        meanings = np.atleast_1d(ncvar.flag_meanings.split())
+
+        _data = ncvar[:].ravel().data
+        _flags = []
+
+        for mask, meaning in zip(masks[::-1], meanings[::-1]):
+            _flag_data = (_data >= mask)
+            _flags.insert(0, _flag_data)
+            _data[_flag_data] -= mask
+
+        for _flag, meaning in zip(_flags, meanings):
+            flag.add_mask(_flag, meaning)
+
+        return flag

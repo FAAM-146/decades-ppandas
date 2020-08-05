@@ -10,7 +10,7 @@ from .shortcuts import *
 MACH_VALID_MIN = 0.05
 
 
-class RosemountTemperatures(PPBase):
+class PRTTemperatures(PPBase):
     r"""
     Calculate indicated and true (static)  air temperatures from the deiced and
     non-deiced Rosemount housings, when fitted with platinum resistance

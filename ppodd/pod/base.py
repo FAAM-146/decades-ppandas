@@ -48,6 +48,14 @@ class PPBase(abc.ABC):
         Declare the output variables that the processing module is going to
         create.
         """
+        if name in self.dataset.variables:
+            if not self.dataset.allow_overwrite:
+                raise ValueError(
+                    f'Cannot declare {name}, as it already exists in Dataset'
+                )
+            else:
+                self.dataset.remove(name)
+
         self.declarations[name] = kwargs
 
     def finalize(self):
@@ -72,7 +80,7 @@ class PPBase(abc.ABC):
                     setattr(output, key, value)
 
             # And append the output to the dataset
-            self.dataset.outputs.append(output)
+            self.dataset.add_output(output)
 
     def onto(self, dataframe, index, limit=1, period=None):
         return dataframe.reindex(

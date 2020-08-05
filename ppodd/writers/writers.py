@@ -39,7 +39,8 @@ class DecadesWriter(abc.ABC):
         """Get all of the required output frequencies"""
         output_freqs = []
 
-        for var in self.dataset.outputs:
+        for _var in self.dataset.variables:
+            var = self.dataset[_var]
 
             if not var.write:
                 continue
@@ -189,7 +190,10 @@ class NetCDFWriter(DecadesWriter):
             setattr(ncflag, attr_key, attr_val)
 
         # Create a new DatetimeIndex to interpolate to, given frequency
-        _end = self.end_time - datetime.timedelta(seconds=1/_freq)
+        if(self.end_time.microsecond == 0):
+            _end = self.end_time - datetime.timedelta(seconds=1/_freq)
+        else:
+            _end = self.end_time
 
         _index = pd.date_range(
             self.start_time,
@@ -212,14 +216,14 @@ class NetCDFWriter(DecadesWriter):
                 _data = var.data
 
             _data = _data.resample(
-                pd_freq[_freq], limit=var.frequency-1
+                pd_freq[_freq]
             ).apply('mean').reindex(_index).fillna(var.attrs['_FillValue'])
 
             if getattr(var, 'circular', False):
                 _data %= 360
 
             _flag = var.flag().resample(
-                pd_freq[_freq], limit=var.frequency-1
+                pd_freq[_freq]
             ).pad().reindex(_index).fillna(var.flag.cfattrs['_FillValue'])
 
         # Reshape the data if it is not at 1 Hz

@@ -12,13 +12,14 @@ import warnings
 
 from dateutil import relativedelta
 
+import netCDF4
 import numpy as np
 import pandas as pd
 import yaml
 
-
 from ppodd.decades import DecadesVariable
 from ppodd.readers import register
+from ppodd.decades.flags import (DecadesBitmaskFlag, DecadesClassicFlag)
 from ..utils import pd_freq
 
 C_BAD_TIME_DEV = 43200
@@ -61,6 +62,11 @@ class FlightConstantsReader(FileReader):
 
                 _file.dataset.add_global(key, value)
 
+            # Add a global indicating the flight constants file used
+            _file.dataset.add_global(
+                'flight_constants', os.path.basename(_file.filepath)
+            )
+
             for mod_name, mod_content in consts['Constants'].items():
                 for key, value in mod_content.items():
                     _file.dataset.constants[key] = value
@@ -86,6 +92,87 @@ class YamlConstantsReader(FlightConstantsReader):
         with open(_file.filepath, 'r') as _consts:
             consts = yaml.load(_consts, Loader=yaml.Loader)
             return consts
+
+@register(patterns=['.*_faam_.*\.csv'])
+class CSVReader(FileReader):
+    level = 2
+    def read(self):
+        for _file in self.files:
+            df = pd.read_csv(_file.filepath, index_col=[0], parse_dates=[0])
+            _freq = int(1 / (df.index[1] - df.index[0]).total_seconds())
+
+            df.columns = [f'CSV_{i}' for i in df.columns]
+
+            for variable_name in df.columns:
+                variable = DecadesVariable(
+                    df[variable_name],
+                    index=df.index,
+                    name=variable_name,
+                    long_name=variable_name,
+                    units='RAW',
+                    frequency=_freq,
+                    write=False
+                )
+
+                _file.dataset.add_input(variable)
+
+
+@register(patterns=['core_faam_.*\.nc', '.*\.nc'])
+class CoreNetCDFReader(FileReader):
+    level = 2
+
+    def _time_at(self, time, freq):
+        if freq == 1:
+            return time
+
+        return pd.date_range(
+            time[0], time[-1] + datetime.timedelta(seconds=1),
+            freq=pd_freq[freq]
+        )[:-1]
+
+    def _var_freq(self, var):
+        try:
+            return var.shape[1]
+        except IndexError:
+            return 1
+
+    def _flag_class(self, var_name, nc):
+        try:
+            nc[f'{var_name}_FLAG'].flag_masks
+            return DecadesBitmaskFlag
+        except AttributeError:
+            return DecadesClassicFlag
+
+    def flag(self, var, nc):
+        flag_var = nc[f'{var.name}_FLAG']
+        var.flag = type(var.flag).from_nc_variable(flag_var, var)
+
+    def read(self):
+        for _file in self.files:
+            print(f'Reading {_file}...')
+            with netCDF4.Dataset(_file.filepath) as nc:
+                time = pd.DatetimeIndex(
+                    netCDF4.num2date(nc['Time'][:], units=nc['Time'].units)
+                )
+
+                for var in nc.variables:
+                    if var.endswith('FLAG') or var == 'Time':
+                        continue
+
+                    variable = DecadesVariable(
+                        {var: nc[var][:].ravel()},
+                        index=self._time_at(time, self._var_freq(nc[var])),
+                        name=var,
+                        write=False,
+                        flag=self._flag_class(var, nc)
+                    )
+
+                    self.flag(variable, nc)
+
+                    for attr in nc[var].ncattrs():
+                        setattr(variable, attr, getattr(nc[var], attr))
+
+                    _file.dataset.add_input(variable)
 
 
 @register(patterns=['.*\.zip'])
@@ -342,6 +429,12 @@ class TcpFileReader(FileReader):
 
                 if variable.index.size != variable.index.unique().size:
                     print('Non-unique index: {}'.format(variable.name))
+                    print(f'{variable.name}: using last of non-unique entries')
+
+                    variable._df = variable._df.groupby(variable._df.index).last()
+                    variable.flag._df = variable.flag._df.groupby(
+                        variable.flag._df.index
+                    ).last()
 
                 _file.dataset.add_input(variable)
 
