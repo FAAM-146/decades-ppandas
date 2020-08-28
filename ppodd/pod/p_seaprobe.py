@@ -186,7 +186,7 @@ def dryair_calc(p_sense, T, ts, ps, tas, cloud_mask=None, rtn_func=False,
     ss_tot = np.sum((p_sense[~mask] - np.mean(p_sense[~mask])) ** 2)
     r2 = 1 - (ss_res / ss_tot)
 
-    if rtn_func & rtn_goodness == True:
+    if rtn_func & rtn_goodness:
         # This doesn't actually make a lot of sense due to constants
         return lambda x: func3(*popt), r2
 
@@ -280,7 +280,7 @@ def dryair_calc_comp(p_sense, p_comp, cloud_mask=None, rtn_func=False,
     ss_tot = np.sum((p_sense[~mask] - np.mean(p_sense[~mask]))**2)
     r2 = 1 - (ss_res / ss_tot)
 
-    if rtn_func & rtn_goodness == True:
+    if rtn_func & rtn_goodness:
         return lambda x: func(x,*popt), r2
 
     if rtn_func:
