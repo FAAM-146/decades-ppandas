@@ -464,7 +464,11 @@ class DecadesDataset(object):
         import ppodd.flags
 
         for reader in self.readers:
-            reader.read()
+            try:
+                reader.read()
+            except Exception as e:
+                print(f'Error in reading module {reader}')
+                print(str(e))
 
         self.readers = None
         gc.collect()
@@ -551,6 +555,10 @@ class DecadesDataset(object):
 
         for qa in self.qa_modules:
             _required_inputs += qa.inputs
+
+        for var in self.variables:
+            if self[var].write:
+                _required_inputs.append(var)
 
         _required_inputs = list(set(_required_inputs))
 
