@@ -143,7 +143,10 @@ class AL52CO(PPBase):
         fdf.loc[d['AL52CO_counts'] == 0, ZERO_COUNTS_FLAG] = 1
 
         # Flag before the first calibration
-        first_cal_start = d.loc[d['AL52CO_cal_status'] > 0].index[0]
+        try:
+            first_cal_start = d.loc[d['AL52CO_cal_status'] > 0].index[0]
+        except IndexError:
+            first_cal_start = d.index[-1]
         fdf.loc[d.index <= first_cal_start, NO_CAL_FLAG] = 1
 
         return fdf
