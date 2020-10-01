@@ -75,33 +75,25 @@ class AL52CO(PPBase):
                  of a mask flag.
         """
 
-        WOW_FLAG = (
-            'aircraft on ground',
-            'The aircraft is on the ground, as indicated by WOW\_IND.'
-        )
+        WOW_FLAG = 'aircraft on ground'
+        CO_RANGE_FLAG = 'co out of range'
+        IN_CAL_FLAG = 'in calibration'
+        NO_CAL_FLAG = 'no calibration'
+        ZERO_COUNTS_FLAG = 'counts zero'
 
-        CO_RANGE_FLAG = (
-            'co out of range',
-            'The derived CO concentration is considered out of valid range.'
-        )
+        descriptions = {
+            WOW_FLAG: ('The aircraft is on the ground, as indicated by '
+                       'WOW\_IND.'),
+            CO_RANGE_FLAG: ('The derived CO concentration is considered out '
+                            'of valid range.'),
+            IN_CAL_FLAG: ('The instrument is currently, or has recently been, '
+                          'in calibration. Data should be disregarded.'),
+            NO_CAL_FLAG: ('No calibration has yet been performed. Data should '
+                          'be disregarded.'),
+            ZERO_COUNTS_FLAG: ('The instrument is reporting zero counts. This '
+                               'is most likely erroneous.')
+        }
 
-        IN_CAL_FLAG = (
-            'in calibration',
-            ('The instrument is currently, or has recently been, in '
-             'calibration. Data should be disregarded.')
-        )
-
-        NO_CAL_FLAG = (
-            'no calibration',
-            ('No calibration has yet been performed. Data should be '
-             'disregarded.')
-        )
-
-        ZERO_COUNTS_FLAG = (
-            'counts zero',
-            ('The instrument is reporting zero counts. This is most likely '
-             'erroneous.')
-        )
 
         d = self.d
         fdf = pd.DataFrame(index=self.d.index)
@@ -149,7 +141,7 @@ class AL52CO(PPBase):
             first_cal_start = d.index[-1]
         fdf.loc[d.index <= first_cal_start, NO_CAL_FLAG] = 1
 
-        return fdf
+        return fdf, descriptions
 
     def process(self):
         """
@@ -202,7 +194,7 @@ class AL52CO(PPBase):
         d['CO_AERO'] = (d.AL52CO_counts - d.ZERO) / d.SENS
 
         # Flag build the qa flag dataframe
-        flag_df = self.flag()
+        flag_df, flag_descs = self.flag()
 
         # AL52CO output
         co_out = DecadesVariable(d['CO_AERO'], name='CO_AERO',
@@ -210,7 +202,7 @@ class AL52CO(PPBase):
 
         # Add flagging to the output
         for mask in flag_df.columns:
-            co_out.flag.add_mask(flag_df[mask].values, *mask)
+            co_out.flag.add_mask(flag_df[mask].values, mask, flag_descs[mask])
 
         # Write output
         self.add_output(co_out)
