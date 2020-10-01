@@ -469,6 +469,7 @@ class DecadesDataset(object):
             except Exception as e:
                 print(f'Error in reading module {reader}')
                 print(str(e))
+            del reader
 
         self.readers = None
         gc.collect()
@@ -560,6 +561,14 @@ class DecadesDataset(object):
             if self[var].write:
                 _required_inputs.append(var)
 
+        for var in self._variable_mods:
+            try:
+                if self._variable_mods[var]['write']:
+                    _required_inputs.append(var)
+            except KeyError:
+                # Likely an output modifier
+                pass
+
         _required_inputs = list(set(_required_inputs))
 
         return _required_inputs
@@ -580,6 +589,7 @@ class DecadesDataset(object):
             _mod = self.qa_modules.pop()
             try:
                 _mod.run()
+                del _mod
             except Exception as e:
                 print(' ** Error in {}: {}'.format(_mod, e))
 
@@ -590,6 +600,7 @@ class DecadesDataset(object):
             try:
                 print('running {}'.format(_flag))
                 _flag.flag()
+                del _flag
             except Exception as e:
                 print(' ** Error in {}: {}'.format(_flag, e))
 
@@ -662,10 +673,12 @@ class DecadesDataset(object):
                 ))
                 temp_modules.append(pp_module)
                 module_ran = True
+                del pp_module
                 continue
             if str(pp_module) in self._mod_exclusions:
                 print('Skipping {} (excluded)'.format(pp_module))
                 module_ran = True
+                del pp_module
                 continue
             try:
                 print('Running {}'.format(pp_module))
