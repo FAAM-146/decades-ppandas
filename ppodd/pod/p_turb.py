@@ -30,8 +30,6 @@ class TurbProbe(PPBase):
         'P0_S10',    # (derived) P0 - S10 pressure differential
         'PA_TURB',   # (derived)
         'PB_TURB',   # (derived)
-        'TBPC',      # (derived)
-        'TBPD'       # (derived)
     ]
 
     @staticmethod
@@ -58,7 +56,7 @@ class TurbProbe(PPBase):
         }
 
     def declare_outputs(self):
-
+        return
         self.declare(
             'AOA',
             units='degree',
@@ -111,6 +109,7 @@ class TurbProbe(PPBase):
         dcp_s10 = a0 + amach * (a1 + amach * a2)
 
     def process(self):
+        return
         self.get_dataframe()
         d = self.d
 

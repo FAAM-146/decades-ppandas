@@ -43,6 +43,7 @@ class TurbWinds(PPBase):
         }
 
     def declare_outputs(self):
+        return
         self.declare(
             'V_C',
             units='m s-1',
@@ -115,6 +116,7 @@ class TurbWinds(PPBase):
         return A1, A2, A3
 
     def process(self):
+        return
         self.get_dataframe()
         d = self.d
 
