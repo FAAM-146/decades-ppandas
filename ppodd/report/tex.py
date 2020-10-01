@@ -30,6 +30,8 @@ class ReportCompiler(object):
         self.qa_dir = qa_dir or os.getcwd()
         self.token = token
         self.output_dir = output_dir or os.getcwd()
+        self.takeoff_time = None
+        self.landing_time = None
 
         self._get_meta()
         self._get_chat()
@@ -57,8 +59,18 @@ class ReportCompiler(object):
                 meta['takeoff']['time_utc'],
                 '%Y-%m-%dT%H:%M:%S'
             )
-        except Exception:
-            self.takeoff_time = self.dataset.date
+        except Exception as e:
+            pass
+
+        if self.takeoff_time is None:
+            try:
+                self.takeoff_time = self.dataset.takeoff_time
+                self._meta['takeoff']['time_utc'] = self.takeoff_time.strftime(
+                    '%Y-%m-%dT%H:%M:%S'
+                )
+            except Exception as e:
+                print(e)
+                self.takeoff_time = self.dataset.date
 
         try:
             self.landing_time = datetime.datetime.strptime(
@@ -66,7 +78,16 @@ class ReportCompiler(object):
                 '%Y-%m-%dT%H:%M:%S'
             )
         except Exception:
-            self.landing_time = self.dataset.date
+            pass
+
+        if self.landing_time is None:
+            try:
+                self.landing_time = self.dataset.landing_time
+                self._meta['landing']['time_utc'] = self.landing_time.strftime(
+                    '%Y-%m-%dT%H:%M:%S'
+                )
+            except Exception:
+                self.landing_time = self.dataset.date
 
         try:
             self.date = self.takeoff_time.date()
@@ -110,9 +131,9 @@ class ReportCompiler(object):
 \usepackage{pdfpages}
 \usepackage{pdflscape}
 \usepackage[a4paper,left=20mm,right=20mm,bottom=30mm]{geometry}
-%\setmainfont[Path=/usr/local/share/fonts/n/]{Nexa_Light}
-\newfontfamily\nexalight[Path=/usr/local/share/fonts/n/]{Nexa_Light}
-\newfontfamily\nexabold[Path=/usr/local/share/fonts/n/]{Nexa_Bold}
+%\setmainfont[Path=/usr/share/fonts/opentype/nexa]{nexalight}
+\newfontfamily\nexalight[Path=/usr/share/fonts/opentype/nexa/]{nexalight}
+\newfontfamily\nexabold[Path=/usr/share/fonts/opentype/nexa/]{nexabold}
 \setmainfont{nexalight}
 
 \definecolor{FAAMDarkBlue}{HTML}{252243}
@@ -297,7 +318,8 @@ class ReportCompiler(object):
         }, index=alt.index)
         try:
             make_plot(flight_data, outfile='overview.pdf', meta=self._meta)
-        except Exception:
+        except Exception as e:
+            print(e)
             return ''
         _retstr = r'\begin{center}'
         _retstr += r'\includepdf[pages=-]{overview.pdf}'
