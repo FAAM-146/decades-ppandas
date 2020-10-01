@@ -206,12 +206,6 @@ class Gin(PPBase):
             circular=['GINDAT_hdg', 'GINDAT_trck', 'GINDAT_wand']
         )
 
-        try:
-            self.d['GINDAT_hdg'] += self.dataset['GIN_HDG_OFFSET']
-            self.d['GINDAT_hdg'] %= 360
-        except KeyError:
-            print('Warning: GIN_HDG_OFFSET not defined')
-
         flag = np.around(self.d['GINDAT_status'] / 3)
 
         self.d['STATUS_FLAG'] = self.d['GINDAT_status'] != 0
