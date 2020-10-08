@@ -558,8 +558,11 @@ class DecadesDataset(object):
             _required_inputs += qa.inputs
 
         for var in self.variables:
-            if self[var].write:
-                _required_inputs.append(var)
+            try:
+                if self[var].write:
+                    _required_inputs.append(var)
+            except KeyError:
+                continue
 
         for var in self._variable_mods:
             try:
