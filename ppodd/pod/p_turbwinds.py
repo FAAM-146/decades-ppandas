@@ -305,7 +305,7 @@ class TurbulentWinds(PPBase):
 
         for i in range(3):
             ws = []
-            alphas = (-2, 2) #np.arange(-1.5, 2, .5)
+            alphas = np.arange(-2, 3, 1)
 
             for alpha in alphas:
                 consts['ALPHA_COR'] = [alpha, 1]
@@ -316,7 +316,7 @@ class TurbulentWinds(PPBase):
             consts['ALPHA_COR'] = [np.polyval(fit, 0), 1]
 
             covs = []
-            betas = (-2, 2) #np.arange(-1.5, 2, .5)
+            betas = np.arange(-2, 3, 1)
 
             for beta in betas:
                 consts['BETA_COR'] = [beta, 1]
