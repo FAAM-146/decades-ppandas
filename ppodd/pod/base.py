@@ -82,6 +82,9 @@ class PPBase(abc.ABC):
             # And append the output to the dataset
             self.dataset.add_output(output)
 
+        self.outputs = None
+        self.d = None
+
     def onto(self, dataframe, index, limit=1, period=None):
         return dataframe.reindex(
             index.union(dataframe.index).sort_values()
