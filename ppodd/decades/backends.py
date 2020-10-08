@@ -341,6 +341,7 @@ class PandasConsolidatedInMemoryBackend(DecadesBackend):
 
     def __init__(self):
         self._dataframes = {}
+        self._output_dataframes = {}
         super().__init__()
 
     def __getitem__(self, item):
@@ -349,26 +350,54 @@ class PandasConsolidatedInMemoryBackend(DecadesBackend):
                 if _var._df is None:
                      _var._df = self._dataframes[
                          self._dlu_from_variable(_var)
-                     ][_var.frequency][[_var.name]].copy()
+                     ][_var.frequency][[_var.name]]
 
                 return _var
 
         for _var in self.outputs:
             if _var.name == item:
+                if _var._df is None:
+                     _var._df = self._output_dataframes[_var.frequency][
+                         [_var.name]
+                     ]
+
                 return _var
 
         raise KeyError('No input: {}'.format(item))
 
     def trim(self, start, end):
-        for key, value in self._dataframes.items():
-            dlu = self._dataframes[key]
-            for key, value in dlu.items():
-                df = dlu[key]
+        for dlu, dlu_freq in self._dataframes.items():
+            for _key, _value in dlu_freq.items():
+                self._dataframes[dlu][_key] = self._dataframes[dlu][_key].drop(
+                    _value.index[(_value.index < start) | (_value.index > end)]
+                )
 
-                df.drop(df.index[df.index < start], inplace=True)
-                df.drop(df.index[df.index > end], inplace=True)
+        for _var in self.inputs + self.outputs:
+            _var.flag.trim(start, end)
 
         self.decache(hard=True)
+
+    def add_output(self, var):
+        _var = None
+        try:
+            _df = self._output_dataframes[var.frequency]
+        except KeyError:
+            self._output_dataframes[var.frequency] = pd.DataFrame(
+                index=var.index
+            )
+            _df = self._output_dataframes[var.frequency]
+
+        _index = _df.index.union(var.index).sort_values().unique()
+
+        _df = _df.reindex(_index)
+        _df.loc[var.index, var.name] = var._df[var.name]
+
+        var._df = None
+        self._output_dataframes[var.frequency] = _df
+
+        var.flag._df = var.flag._df.reindex(_index)
+
+        self.outputs.append(var)
 
     def add_input(self, variable):
         _var = None
@@ -456,9 +485,16 @@ class PandasConsolidatedInMemoryBackend(DecadesBackend):
 
                 _freq = var.frequency
 
-                self._dataframes[_dlu][_freq].drop(
-                    var.name, axis=1, inplace=True, errors='ignore'
-                )
+                try:
+                    self._dataframes[_dlu][_freq].drop(
+                        var.name, axis=1, inplace=True, errors='ignore'
+                    )
+                except KeyError:
+                    return
+
+                # Get rid of empty dataframe
+                if not len(self._dataframes[_dlu][_freq].columns):
+                    del self._dataframes[_dlu][_freq]
 
                 self.inputs.remove(var)
                 print('GC: {}'.format(var))
