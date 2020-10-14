@@ -253,7 +253,7 @@ class NetCDFWriter(DecadesWriter):
         self.time.long_name = 'Time of measurement'
         self.time.standard_name = 'time'
         self.time.calendar = 'gregorian'
-        self.time.units = 'seconds since {}'.format(
+        self.time.units = 'seconds since {} 00:00:00 +0000'.format(
             self.dataset.date.strftime('%Y-%m-%d')
         )
 
