@@ -70,7 +70,7 @@ def get_cloud_mask(el_temperature, var_thresh=0.6, set_temp=140, var_temp=1):
     t_lo = set_temp - var_temp
     t_hi = set_temp + var_temp
 
-    _ptp = el_temperature.rolling(20).apply(np.ptp) >= var_thresh
+    _ptp = el_temperature.rolling(20).apply(np.ptp, raw=True) >= var_thresh
     _tmin = el_temperature.rolling(20).min() < t_lo
     _tmax = el_temperature.rolling(20).max() > t_hi
 
@@ -139,11 +139,13 @@ def dryair_calc(p_sense, T, ts, ps, tas, cloud_mask=None, rtn_func=False,
     """
 
     if (cloud_mask is None) or np.all(cloud_mask == False):
-        cloud = np.array([False] * len(p_sense))
+        cloud = np.zeros_like(p_sense).astype(bool)
     else:
         cloud = np.ma.make_mask(cloud_mask)
 
-    nan_mask = ~np.isfinite(p_sense)
+    nan_mask = ((~np.isfinite(p_sense)) | (~np.isfinite(T)) |
+                (~np.isfinite(ts)) | (~np.isfinite(ps)) | (~np.isfinite(tas)))
+
     mask = np.logical_or(cloud, nan_mask)
 
     if np.all(mask):
@@ -661,6 +663,9 @@ class SeaProbe(PPBase):
         )
         df = self.d
 
+        # 1 Hz variable requires filling
+        df['WOW_IND'] = df['WOW_IND'].fillna(method='ffill').astype(bool)
+
         key = lambda e, s: f'SEAPROBE_d0_{e}_{s}'
 
         def _wc(_el, _Levap, _Tevap, _l, _w):
@@ -690,7 +695,7 @@ class SeaProbe(PPBase):
 
             df[_key('WC')] = calc_sense_wc(
                 df[_key('P')] - DAT, _Levap, _Tevap, df['TAT_DI_R'],
-                df['TAS_RVSM'], (_l,_w)
+                df['TAS_RVSM'], (_l, _w)
             )
 
         # calculate the powers for the sensors
