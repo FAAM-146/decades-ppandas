@@ -101,11 +101,17 @@ def get_fitted_k(col_p, ref_p, ias, ps, no_cloud_mask, k):
             x[0, :] / x[1, :] - k - (a * (1 / x[2, :]) + b * np.log10(x[3, :]))
         )
 
+    # Generate a mask that is out of cloud and everywhere-finite for all input
+    # variables
+    mask = ((no_cloud_mask == 1) & (np.isfinite(col_p)) & (np.isfinite(ref_p))
+            & (np.isfinite(ias)) & (np.isfinite(ps)))
+
+    # Create input data array for fit_func
     xdata = np.vstack([
-        col_p.loc[no_cloud_mask == 1].values,
-        ref_p.loc[no_cloud_mask == 1].values,
-        ias.loc[no_cloud_mask == 1].values,
-        ps.loc[no_cloud_mask == 1].values
+        col_p.loc[mask].values,
+        ref_p.loc[mask].values,
+        ias.loc[mask].values,
+        ps.loc[mask].values
     ])
 
     popt, pcov = curve_fit(fit_func, xdata, xdata[0, :] * 0.0)
