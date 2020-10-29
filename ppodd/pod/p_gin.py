@@ -20,7 +20,7 @@ class Gin(PPBase):
         'GINDAT_vele', 'GINDAT_veld', 'GINDAT_roll', 'GINDAT_ptch',
         'GINDAT_hdg', 'GINDAT_wand', 'GINDAT_trck', 'GINDAT_gspd',
         'GINDAT_rolr', 'GINDAT_pitr', 'GINDAT_hdgr', 'GINDAT_aclf',
-        'GINDAT_acls', 'GINDAT_acld', 'GINDAT_status'
+        'GINDAT_acls', 'GINDAT_acld', 'GINDAT_status',
         ]
 
     @staticmethod
@@ -220,16 +220,16 @@ class Gin(PPBase):
 
             dv = DecadesVariable(self.d[declaration], flag=DecadesBitmaskFlag)
 
-            dv.flag.add_mask(
-                self.d.STATUS_FLAG, 'gin status nonzero',
-                ('The GIN status indicator is non-zero, indicating a potential '
-                 'issue.')
-            )
+#            dv.flag.add_mask(
+#                self.d.STATUS_FLAG, 'gin status nonzero',
+#                ('The GIN status indicator is non-zero, indicating a potential '
+#                 'issue.')
+#            )
 
             dv.flag.add_mask(
                 self.d.ZERO_FLAG, 'latlon identically zero',
-                ('Either the latitude or longitude is exactly zero. This most '
-                 'probably indicates erroneous data')
+                ('Either the latitude or longitude is exactly zero. This '
+                 'indicates an erroneous data message')
             )
 
             self.add_output(dv)
