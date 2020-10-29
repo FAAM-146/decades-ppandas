@@ -65,6 +65,9 @@ class WVSS2(object):
             self.declare(
                 'WVSS2{}_{}'.format(self._ident, name),
                 frequency=1,
+                comment=('WVSS-II measurements rely on manufacturer '
+                         'calibrations, and are not tracable to national '
+                         'standards'),
                 **attrs
             )
 
@@ -116,7 +119,6 @@ class WVSS2(object):
             _key = 'WVSS2{}_{}'.format(self._ident, name)
             _vmr_key = 'WVSS2{}_VMR'.format(self._ident)
 
-            interp_df['CALIBRATED_FLAG'] = 1
             interp_df['VMR_RANGE_FLAG'] = 0
             interp_df['DATA_MISSING_FLAG'] = 0
 
@@ -146,7 +148,6 @@ class WVSS2(object):
             )
             self.declarations[var.name]['long_name'] = long_name
 
-            var.flag.add_mask(interp_df.CALIBRATED_FLAG, 'data uncalibrated')
             if _key == _vmr_key:
                 var.flag.add_mask(interp_df.VMR_RANGE_FLAG, flags.OUT_RANGE)
             var.flag.add_mask(interp_df.DATA_MISSING_FLAG, flags.DATA_MISSING)
