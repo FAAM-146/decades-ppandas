@@ -1,4 +1,4 @@
-import numpy as np
+mport numpy as np
 import pandas as pd
 
 from ..decades import DecadesVariable, DecadesBitmaskFlag
@@ -8,7 +8,7 @@ from .shortcuts import _l, _o, _z
 
 class Gin(PPBase):
     r"""
-    This module provides variables from the Applanix POS AV 410 GPS-aided
+    This module provides variables from the Applanix POS AV 510 GPS-aided
     inertial navigation system (GIN). The GIN provides parameters at a
     frequency of 50 Hz; this module simply downsamples these parameters to 32
     Hz.
@@ -19,7 +19,7 @@ class Gin(PPBase):
         \item 0: Full Nav. (user accuracies met)
         \item 1: Fine Align (heading RMS < 15 deg)
         \item 2: GC CHI 2 (alignment w/ GPS, RMS heading error > 15 deg)
-        \item 3:PC CHI 2 (alignment w/o GPS, RMS heading error > 15 deg)
+        \item 3: PC CHI 2 (alignment w/o GPS, RMS heading error > 15 deg)
         \item 4: GC GHI 1 (alignment w/ GPS, RMS heading error > 45 deg)
         \item 5: PC CHI 1 (alignment w/o GPS, RMS heading error > 45 deg)
         \item 6: Course levelling active
@@ -232,7 +232,10 @@ class Gin(PPBase):
         )
 
         # Round the status message to a integer
-        self.d['GINDAT_status'] = self.d['GINDAT_status'].astype(int)
+        finite = np.isfinite(self.d['GINDAT_status'])
+        self.d.loc[
+            finite, 'GINDAT_status'
+        ] = self.d.loc[finite, 'GINDAT_status'].astype(int)
 
         self.d['SOLUTION_FLAG'] = self.d['GINDAT_status'] == 8
         self.d['HEADING_FLAG'] = (
