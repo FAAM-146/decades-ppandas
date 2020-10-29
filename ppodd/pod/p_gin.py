@@ -11,8 +11,21 @@ class Gin(PPBase):
     This module provides variables from the Applanix POS AV 410 GPS-aided
     inertial navigation system (GIN). The GIN provides parameters at a
     frequency of 50 Hz; this module simply downsamples these parameters to 32
-    Hz. Optionally, an offset can be applied to the GIN heading, throught the
-    flight constants parameter \texttt{GIN\_HDG\_OFFSET}.
+    Hz.
+
+    The STATUS_GIN parameter gives the current solution status reported by the
+    GIN. This is defined as
+    \begin{itemize}
+        \item 0: Full Nav. (user accuracies met)
+        \item 1: Fine Align (heading RMS < 15 deg)
+        \item 2: GC CHI 2 (alignment w/ GPS, RMS heading error > 15 deg)
+        \item 3:PC CHI 2 (alignment w/o GPS, RMS heading error > 15 deg)
+        \item 4: GC GHI 1 (alignment w/ GPS, RMS heading error > 45 deg)
+        \item 5: PC CHI 1 (alignment w/o GPS, RMS heading error > 45 deg)
+        \item 6: Course levelling active
+        \item 7: Initial solution assigned
+        \item 8: No solution
+    \end{itemize}
     """
 
     inputs = [
@@ -48,11 +61,13 @@ class Gin(PPBase):
         }
 
     def declare_outputs(self):
+        gin_name = 'POS AV 510 GPS-aided Inertial Navigation unit'
+
         self.declare(
             'LAT_GIN',
             units='degree_north',
             frequency=32,
-            long_name='Latitude from POS AV 510 GPS-aided Inertial Navigation unit',
+            long_name=f'Latitude from {gin_name}',
             standard_name='latitude'
         )
 
@@ -60,7 +75,7 @@ class Gin(PPBase):
             'LON_GIN',
             units='degree_east',
             frequency=32,
-            long_name='Longitude from POS AV 510 GPS-aided Inertial Navigation unit',
+            long_name=f'Longitude from {gin_name}',
             standard_name='longitude'
         )
 
@@ -68,7 +83,7 @@ class Gin(PPBase):
             'ALT_GIN',
             units='m',
             frequency=32,
-            long_name='Altitude from POS AV 510 GPS-aided Inertial Navigation unit',
+            long_name=f'Altitude from {gin_name}',
             standard_name='altitude'
         )
 
@@ -76,7 +91,7 @@ class Gin(PPBase):
             'VELN_GIN',
             units='m s-1',
             frequency=32,
-            long_name='Aircraft velocity north from POS AV 510 GPS-aided Inertial Navigation unit',
+            long_name=f'Aircraft velocity north from {gin_name}',
             standard_name=None
         )
 
@@ -84,7 +99,7 @@ class Gin(PPBase):
             'VELE_GIN',
             units='m s-1',
             frequency=32,
-            long_name='Aircraft velocity east from POS AV 510 GPS-aided Inertial Navigation unit',
+            long_name=f'Aircraft velocity east from {gin_name}',
             standard_name=None
         )
 
@@ -92,7 +107,7 @@ class Gin(PPBase):
             'VELD_GIN',
             units='m s-1',
             frequency=32,
-            long_name='Aircraft velocity down from POS AV 510 GPS-aided Inertial Navigation unit',
+            long_name=f'Aircraft velocity down from {gin_name}',
             standard_name=None
         )
 
@@ -100,7 +115,7 @@ class Gin(PPBase):
             'ROLL_GIN',
             units='degree',
             frequency=32,
-            long_name='Roll angle from POS AV 510 GPS-aided Inertial Navigation unit',
+            long_name=f'Roll angle from {gin_name}',
             standard_name='platform_roll_angle'
         )
 
@@ -108,7 +123,7 @@ class Gin(PPBase):
             'PTCH_GIN',
             units='degree',
             frequency=32,
-            long_name='Pitch angle from POS AV 510 GPS-aided Inertial Navigation unit',
+            long_name=f'Pitch angle from {gin_name}',
             standard_name='platform_pitch_angle'
         )
 
@@ -116,7 +131,7 @@ class Gin(PPBase):
             'HDG_GIN',
             units='degree',
             frequency=32,
-            long_name='Heading from POS AV 510 GPS-aided Inertial Navigation unit',
+            long_name=f'Heading from {gin_name}',
             standard_name='platform_yaw_angle',
             circular=True
         )
@@ -125,7 +140,7 @@ class Gin(PPBase):
             'WAND_GIN',
             units='degree s-1',
             frequency=32,
-            long_name='GIN wander angle',
+            long_name=f'Wander angle from {gin_name}',
             standard_name=None,
             circular=True
         )
@@ -134,7 +149,7 @@ class Gin(PPBase):
             'TRCK_GIN',
             units='degree',
             frequency=32,
-            long_name='Aircraft track angle from POS AV 510 GPS-aided Inertial Navigation unit',
+            long_name=f'Aircraft track angle from {gin_name}',
             standard_name='platform_course',
             circular=True
         )
@@ -143,7 +158,7 @@ class Gin(PPBase):
             'GSPD_GIN',
             units='m s-1',
             frequency=32,
-            long_name='Groundspeed from POS AV 510 GPS-aided Inertial Navigation unit',
+            long_name=f'Groundspeed from {gin_name}',
             standard_name='platform_speed_wrt_ground'
         )
 
@@ -151,7 +166,7 @@ class Gin(PPBase):
             'ROLR_GIN',
             units='degree s-1',
             frequency=32,
-            long_name='Rate-of-change of GIN roll angle',
+            long_name=f'Rate-of-change of roll angle from {gin_name}',
             standard_name='platform_roll_rate'
         )
 
@@ -159,7 +174,7 @@ class Gin(PPBase):
             'PITR_GIN',
             units='degree s-1',
             frequency=32,
-            long_name='Rate-of-change of GIN pitch angle',
+            long_name=f'Rate-of-change of pitch angle from {gin_name}',
             standard_name='platform_pitch_rate'
         )
 
@@ -167,7 +182,7 @@ class Gin(PPBase):
             'HDGR_GIN',
             units='degree s-1',
             frequency=32,
-            long_name='Rate-of-change of GIN heading',
+            long_name=f'Rate-of-change of heading from {gin_name}',
             standard_name='platform_yaw_rate'
         )
 
@@ -175,7 +190,8 @@ class Gin(PPBase):
             'ACLF_GIN',
             units='m s-2',
             frequency=32,
-            long_name='Acceleration along the aircraft longitudinal axis (GIN) (positive forward)',
+            long_name=('Acceleration along the aircraft longitudinal axis '
+                       f'from {gin_name} (positive forward)'),
             standard_name=None
         )
 
@@ -183,7 +199,8 @@ class Gin(PPBase):
             'ACLS_GIN',
             units='m s-2',
             frequency=32,
-            long_name='Acceleration along the aircraft transverse axis (GIN) (positive starboard)',
+            long_name=('Acceleration along the aircraft transverse axis from '
+                       f'{gin_name} (positive starboard)'),
             standard_name=None
         )
 
@@ -191,7 +208,15 @@ class Gin(PPBase):
             'ACLD_GIN',
             units='m s-2',
             frequency=32,
-            long_name='Acceleration along the aircraft vertical axis (GIN) (positive down)',
+            long_name=('Acceleration along the aircraft vertical axis from '
+                       f'{gin_name} (positive down)'),
+            standard_name=None
+        )
+
+        self.declare(
+            'STATUS_GIN',
+            frequency=32,
+            long_name=f'Solution status from {gin_name}',
             standard_name=None
         )
 
@@ -206,9 +231,14 @@ class Gin(PPBase):
             circular=['GINDAT_hdg', 'GINDAT_trck', 'GINDAT_wand']
         )
 
-        flag = np.around(self.d['GINDAT_status'] / 3)
+        # Round the status message to a integer
+        self.d['GINDAT_status'] = self.d['GINDAT_status'].astype(int)
 
-        self.d['STATUS_FLAG'] = self.d['GINDAT_status'] != 0
+        self.d['SOLUTION_FLAG'] = self.d['GINDAT_status'] == 8
+        self.d['HEADING_FLAG'] = (
+            (self.d['GINDAT_status'] > 0) & (self.d['GINDAT_status'] < 6)
+        )
+
         self.d['ZERO_FLAG'] = (
             (self.d['GINDAT_lon'] == 0) & (self.d['GINDAT_lat'] == 0)
         )
@@ -220,16 +250,24 @@ class Gin(PPBase):
 
             dv = DecadesVariable(self.d[declaration], flag=DecadesBitmaskFlag)
 
-#            dv.flag.add_mask(
-#                self.d.STATUS_FLAG, 'gin status nonzero',
-#                ('The GIN status indicator is non-zero, indicating a potential '
-#                 'issue.')
-#            )
+            if input_name != 'GINDAT_status':
+                dv.flag.add_mask(
+                    self.d.SOLUTION_FLAG, 'no solution',
+                    ('The GIN status flag indicates no solution has been '
+                     'obtained.')
+                )
+
+            if input_name == 'GINDAT_hdg':
+                dv.flag.add_mask(
+                    self.d.HEADING_FLAG, 'gin align',
+                    ('Status flag indicates instrument is in align, which may '
+                     'indicate an elevated heading error')
+                )
 
             dv.flag.add_mask(
                 self.d.ZERO_FLAG, 'latlon identically zero',
-                ('Either the latitude or longitude is exactly zero. This '
-                 'indicates an erroneous data message')
+                ('Latitude and Longitude are exactly zero. This '
+                 'indicates an erroneous data message.')
             )
 
             self.add_output(dv)
