@@ -93,14 +93,20 @@ class PPBase(abc.ABC):
         ).loc[index]
 
     def get_dataframe(self, method='outerjoin', index=None, limit=1,
-                      circular=None):
+                      circular=None, exclude=None):
 
         if circular is None:
             circular = []
 
+        if exclude is None:
+            exclude = []
+
         df = pd.DataFrame()
 
-        _inputs = [i for i in self.inputs if i not in self.dataset.constants]
+        _inputs = [
+            i for i in self.inputs if i not in self.dataset.constants
+            and i not in exclude
+        ]
 
         if method == 'outerjoin':
             for _input in _inputs:
