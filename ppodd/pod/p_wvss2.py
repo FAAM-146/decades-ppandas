@@ -35,7 +35,8 @@ class WVSS2(object):
         self.inputs = [
             '{}_ident'.format(self.unit),
             '{}_utc_time_msec'.format(self.unit),
-            '{}_serial_data'.format(self.unit)
+            '{}_serial_data'.format(self.unit),
+            'WOW_IND'
         ]
 
         super().__init__(*args, **kwargs)
@@ -75,7 +76,7 @@ class WVSS2(object):
         serial_data_key = '{}_serial_data'.format(self.unit)
         millisecond_key = '{}_utc_time_msec'.format(self.unit)
 
-        self.get_dataframe()
+        self.get_dataframe(exclude=['WOW_IND'])
 
         # Split the serial strings
         serial_data = np.chararray.split(
@@ -114,28 +115,31 @@ class WVSS2(object):
             self.d.index.union(new_index).sort_values()
         ).interpolate('time', limit=3).loc[new_index]
 
+        interp_df['WOW_IND'] = self.dataset['WOW_IND'].reindex(
+            interp_df.index
+        ).fillna(method='bfill')
+
+        interp_df['VMR_RANGE_FLAG'] = 0
+        interp_df['WOW'] = interp_df['WOW_IND'].fillna(method='bfill')
+
         # Output data
         for name in parameters.keys():
             _key = 'WVSS2{}_{}'.format(self._ident, name)
             _vmr_key = 'WVSS2{}_VMR'.format(self._ident)
 
-            interp_df['VMR_RANGE_FLAG'] = 0
             interp_df['DATA_MISSING_FLAG'] = 0
 
             # Flag VMR outside the design specifications of the instrument
-            if _key is _vmr_key:
-
+            if _key == _vmr_key:
                 interp_df.loc[
-                    interp_df[_key] > VMR_VALID_MAX, 'VMR_RANGE_FLAG'
-                ] = 1
-
-                interp_df.loc[
-                    interp_df[_key] < VMR_VALID_MIN, 'VMR_RANGE_FLAG'
+                    (interp_df[_key] > VMR_VALID_MAX) |
+                    (interp_df[_key] < VMR_VALID_MIN),
+                    'VMR_RANGE_FLAG'
                 ] = 1
 
             interp_df.loc[
                 ~np.isfinite(interp_df[_key]), 'DATA_MISSING_FLAG'
-            ] = 3
+            ] = 1
 
             var = DecadesVariable(interp_df[_key], name=_key,
                                   flag=DecadesBitmaskFlag)
@@ -150,7 +154,9 @@ class WVSS2(object):
 
             if _key == _vmr_key:
                 var.flag.add_mask(interp_df.VMR_RANGE_FLAG, flags.OUT_RANGE)
+
             var.flag.add_mask(interp_df.DATA_MISSING_FLAG, flags.DATA_MISSING)
+            var.flag.add_mask(interp_df.WOW_IND, flags.WOW)
 
             self.add_output(var)
 
