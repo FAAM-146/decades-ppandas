@@ -220,7 +220,7 @@ class NetCDFWriter(DecadesWriter):
             ).apply('mean').reindex(_index).fillna(var.attrs['_FillValue'])
 
             if getattr(var, 'circular', False):
-                _data %= 360
+                _data[_data != var.attrs['_FillValue']] %= 360
 
             _flag = var.flag().resample(
                 pd_freq[_freq]
