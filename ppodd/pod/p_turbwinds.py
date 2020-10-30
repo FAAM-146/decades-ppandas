@@ -113,7 +113,6 @@ def p_turb(d, consts):
         if itern > 5:
             break
 
-    print(consts['TASCOR1'])
     tas = (
         consts['TASCOR1'] * 340.294 * amach
         * np.sqrt(d['TAT_DI_R'] / 288.15)
@@ -303,9 +302,9 @@ class TurbulentWinds(PPBase):
 
         _in_roll = d.ROLL_GIN.abs() > 10
 
-        for i in range(3):
+        for i in range(2):
             ws = []
-            alphas = np.arange(-2, 3, 1)
+            alphas = [-2, 2]
 
             for alpha in alphas:
                 consts['ALPHA_COR'] = [alpha, 1]
@@ -316,7 +315,7 @@ class TurbulentWinds(PPBase):
             consts['ALPHA_COR'] = [np.polyval(fit, 0), 1]
 
             covs = []
-            betas = np.arange(-2, 3, 1)
+            betas = [-2, 2]
 
             for beta in betas:
                 consts['BETA_COR'] = [beta, 1]
