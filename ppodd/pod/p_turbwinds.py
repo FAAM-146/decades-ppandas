@@ -3,8 +3,14 @@ from functools import reduce
 import numpy as np
 
 from .base import PPBase
-from ..decades import DecadesVariable
-from ..utils import slrs
+from ..decades import DecadesVariable, DecadesBitmaskFlag, flags
+from ..utils import slrs, get_range_flag
+
+TAS_VALID_RANGE = (50, 250)
+AOA_VALID_RANGE = (-10, 15)
+AOSS_VALID_RANGE = (-5, 5)
+MACH_VALID_RANGE = (0.05, 0.8)
+WIND_VALID_RANGE = (-60, 60)
 
 def mach(p, q):
     return np.sqrt(5*((1 + q / p)**(2./7.) - 1))
@@ -207,7 +213,6 @@ class TurbulentWinds(PPBase):
         'TAT_DI_R',
         'PS_RVSM',
         'Q_RVSM',
-        'PALT_RVS',
         'P0_S10',
         'PA_TURB',
         'PB_TURB',
@@ -333,5 +338,55 @@ class TurbulentWinds(PPBase):
         d = p_turb(d, consts)
         d = p_winds(d, consts)
 
-        for var in ('U_C', 'V_C', 'W_C', 'TAS', 'AOSS', 'AOA', 'PSP_TURB'):
-            self.add_output(DecadesVariable(d[var], name=var))
+        # Create outputs
+        u_out = DecadesVariable(
+            d['U_C'], name='U_C', flag=DecadesBitmaskFlag
+        )
+        v_out = DecadesVariable(
+            d['V_C'], name='V_C', flag=DecadesBitmaskFlag
+        )
+        tas_out = DecadesVariable(
+            d['TAS'], name='TAS', flag=DecadesBitmaskFlag
+        )
+        aoa_out = DecadesVariable(
+            d['AOA'], name='AOA', flag=DecadesBitmaskFlag
+        )
+        aoss_out = DecadesVariable(
+            d['AOSS'], name='AOSS', flag=DecadesBitmaskFlag
+        )
+        psp_turb_out = DecadesVariable(
+            d['AOSS'], name='AOSS', flag=DecadesBitmaskFlag
+        )
+
+        tas_flag = get_range_flag(d.TAS, TAS_VALID_RANGE)
+        u_flag = get_range_flag(d.U_C, WIND_VALID_RANGE)
+        v_flag = get_range_flag(d.V_C, WIND_VALID_RANGE)
+        aoa_flag = get_range_flag(d.AOA, AOA_VALID_RANGE)
+        aoss_flag = get_range_flag(d.AOSS, AOSS_VALID_RANGE)
+        mach_flag = get_range_flag(mach(d.PS_RVSM, d.PSP_TURB),
+                                   MACH_VALID_RANGE)
+
+        _out_range_desc = (
+            '{} is outside the specified valid range [({}, {})]{}'
+        )
+        tas_desc = _out_range_desc.format('TAS', *TAS_VALID_RANGE, ' m/s')
+        aoa_desc = _out_range_desc.format('AOA', *AOA_VALID_RANGE, ' deg')
+        aoss_desc = _out_range_desc.format('AOSS', *AOSS_VALID_RANGE, ' deg')
+        mach_desc = _out_range_desc.format('Mach #', *MACH_VALID_RANGE, '')
+        u_desc = _out_range_desc.format('U_C', *WIND_VALID_RANGE, ' m/s')
+        v_desc = _out_range_desc.format('V_C', *WIND_VALID_RANGE, ' m/s')
+        mach_meaning = 'mach out of range'
+
+        tas_out.flag.add_mask(tas_flag, flags.OUT_RANGE, tas_desc)
+        aoa_out.flag.add_mask(aoa_flag, flags.OUT_RANGE, aoa_desc)
+        aoss_out.flag.add_mask(aoss_flag, flags.OUT_RANGE, aoss_desc)
+        u_out.flag.add_mask(u_flag, flags.OUT_RANGE, u_desc)
+        v_out.flag.add_mask(v_flag, flags.OUT_RANGE, v_desc)
+
+        for var in (aoa_out, aoss_out, psp_turb_out, u_out, v_out):
+            var.flag.add_mask(mach_flag, mach_meaning, mach_desc)
+
+        for var in (tas_out, aoa_out, aoss_out, psp_turb_out, u_out, v_out):
+            var.flag.add_mask(d.WOW_IND, flags.WOW, 'aircraft on ground')
+
+            self.add_output(var)
