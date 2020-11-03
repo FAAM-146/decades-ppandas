@@ -167,7 +167,7 @@ def p_winds(d, consts):
     R = np.einsum(MATMUL, np.einsum(MATMUL, A3, A2), A1)
 
     # Transform the aircraft TAS vector to geo coords
-    tas_p = tas / (1 + np.tan(beta)**2 + np.tan(alpha**2))**.5
+    tas_p = tas / (1 + np.tan(beta)**2 + np.tan(alpha)**2)**.5
     TAS = np.array([-tas_p, -tas_p * np.tan(beta), tas_p * np.tan(alpha)])
     TASR = np.einsum(DOT, R, TAS)
 

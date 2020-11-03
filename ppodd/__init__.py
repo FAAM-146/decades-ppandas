@@ -5,7 +5,7 @@ import subprocess
 
 import ppodd
 
-__version__ = '0.9.1'
+__version__ = '0.9.2'
 URL = 'https://github.com/faam-146/decades-ppandas'
 
 def version():
