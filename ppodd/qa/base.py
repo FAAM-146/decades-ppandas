@@ -67,6 +67,7 @@ class QAFigure(object):
         self.title = title
         self.subtitle = subtitle
         self.dataset = dataset
+        self.landscape = landscape
 
         try:
             self.flightnum = self.dataset.globals['flight_number']
@@ -121,8 +122,9 @@ class QAFigure(object):
         else:
             _save_path = '.'
 
-        _save_file = '{}_{}.pdf'.format(
-            self.flightnum, self.title.replace(' ', '')
+        _save_file = '{}_{}_{}.pdf'.format(
+            self.flightnum, self.title.replace(' ', ''),
+            'l' if self.landscape else 'p'
         )
 
         _save_file = os.path.join(_save_path, _save_file)
@@ -161,6 +163,11 @@ class QAFigure(object):
             pass
 
         return getattr(self._fig, attr)
+
+    def filter_in_flight(self, var):
+        return var.loc[
+            (var.index > self.to_time) & (var.index < self.land_time)
+        ]
 
     def set_subtitle(self, subtitle):
         self.text(.5, .95, subtitle, horizontalalignment='center',
