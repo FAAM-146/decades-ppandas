@@ -136,7 +136,7 @@ class QAFigure(object):
 
         land_time = self.dataset['WOW_IND'].loc[
             np.gradient(self.dataset['WOW_IND'].data) > 0
-        ].index[0]
+        ].index[-1]
 
         self.to_time = to_time
         self.land_time = land_time
