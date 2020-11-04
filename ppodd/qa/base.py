@@ -36,12 +36,14 @@ class QAAxis(object):
 
         return getattr(self._ax, attr)
 
-    def add_121(self):
+    def add_121(self, linewidth=1):
         xlim = self._ax.get_xlim()
         ylim = self._ax.get_ylim()
         _start = np.min([xlim[0], ylim[0]])
         _end = np.max([xlim[1], ylim[1]])
-        self._ax.plot([_start, _end], [_start, _end], '--k')
+        self._ax.plot(
+            [_start, _end], [_start, _end], '--k', linewidth=linewidth
+        )
         self._ax.set_xlim([_start, _end])
         self._ax.set_ylim([_start, _end])
 
