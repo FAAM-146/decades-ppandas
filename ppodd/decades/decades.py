@@ -1,6 +1,7 @@
 import collections
 import datetime
 import gc
+import glob
 import importlib
 import sys
 import re
@@ -437,6 +438,16 @@ class DecadesDataset(object):
             self.readers.sort(key=lambda r: r.level)
 
         reader.files.append(dfile)
+
+    def add_glob(self, pattern):
+        """
+        Add files to the dataset which match a given globbing pattern.
+
+        Args:
+            pattern: the glob pattern to match.
+        """
+        for f in glob.glob(pattern):
+            self.add_file(f)
 
     def add_file(self, filename):
         """
