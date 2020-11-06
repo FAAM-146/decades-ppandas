@@ -342,6 +342,9 @@ class TurbulentWinds(PPBase):
         u_out = DecadesVariable(
             d['U_C'], name='U_C', flag=DecadesBitmaskFlag
         )
+        w_out = DecadesVariable(
+            d['W_C'], name='W_C', flag=DecadesBitmaskFlag
+        )
         v_out = DecadesVariable(
             d['V_C'], name='V_C', flag=DecadesBitmaskFlag
         )
@@ -355,7 +358,7 @@ class TurbulentWinds(PPBase):
             d['AOSS'], name='AOSS', flag=DecadesBitmaskFlag
         )
         psp_turb_out = DecadesVariable(
-            d['AOSS'], name='AOSS', flag=DecadesBitmaskFlag
+            d['PSP_TURB'], name='PSP_TURB', flag=DecadesBitmaskFlag
         )
 
         tas_flag = get_range_flag(d.TAS, TAS_VALID_RANGE)
@@ -383,10 +386,11 @@ class TurbulentWinds(PPBase):
         u_out.flag.add_mask(u_flag, flags.OUT_RANGE, u_desc)
         v_out.flag.add_mask(v_flag, flags.OUT_RANGE, v_desc)
 
-        for var in (aoa_out, aoss_out, psp_turb_out, u_out, v_out):
+        for var in (aoa_out, aoss_out, psp_turb_out, u_out, v_out, w_out):
             var.flag.add_mask(mach_flag, mach_meaning, mach_desc)
 
-        for var in (tas_out, aoa_out, aoss_out, psp_turb_out, u_out, v_out):
+        for var in (tas_out, aoa_out, aoss_out, psp_turb_out, u_out, v_out,
+                    w_out):
             var.flag.add_mask(d.WOW_IND, flags.WOW, 'aircraft on ground')
 
             self.add_output(var)
