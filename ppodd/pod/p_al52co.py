@@ -9,7 +9,7 @@ from ..utils import flagged_avg
 
 INIT_SKIP = 100         # Number of datapoints to skip at the start
 SENS_CUTOFF = 0         # Sensitivity vals at or below considered bad
-CAL_FLUSH_TIME = 3      # Time for system to flush after a cal
+CAL_FLUSH_TIME = 5      # Time for system to flush after a cal
 CO_VALID_MIN = -10      # Flag if CO below this value
 
 
@@ -130,6 +130,21 @@ class AL52CO(PPBase):
             start = group[1].index[0]
             end = group[1].index[-1] + datetime.timedelta(seconds=CAL_FLUSH_TIME)
             fdf.loc[start:end, IN_CAL_FLAG] = 1
+
+        # Try to flag where CHFGGA_V1 = 1
+        try:
+            v1 = self.dataset['CHFGGA_V1'].data.reindex(fdf.index).dropna()
+            _v1_groups = (v1 != v1.shift()).cumsum()
+            _v1_groups[v1 < 1] = np.nan
+            _v1_groups.dropna(inplace=True)
+            v1_groups = v1.groupby(_v1_groups)
+            for group in v1_groups:
+                start = group[1].index[0]
+                end = group[1].index[-1]
+                end += datetime.timedelta(seconds=CAL_FLUSH_TIME)
+                fdf.loc[start:end, IN_CAL_FLAG] = 1
+        except KeyError:
+            pass
 
         # Flag when counts are identically zero
         fdf.loc[d['AL52CO_counts'] == 0, ZERO_COUNTS_FLAG] = 1
