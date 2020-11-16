@@ -9,11 +9,11 @@ class RosemountTempDeltaFlag(FlaggingBase):
 
     def flag(self):
         _diff = np.abs(
-            self.dataset['TAT_DI_R'].data - self.dataset['TAT_ND_R'].data
+            self.dataset['TAT_DI_R'].array - self.dataset['TAT_ND_R'].array
         )
 
         mask = pd.Series(
-            np.zeros_like(self.dataset['TAT_DI_R'].data),
+            np.zeros_like(self.dataset['TAT_DI_R'].array),
             index=self.dataset['TAT_DI_R'].index
         )
         mask.loc[_diff > 1.] = 1
@@ -34,9 +34,10 @@ class RosemountTempCloudFlag(FlaggingBase):
             except (KeyError, AttributeError):
                 continue
 
-            mask = self.dataset['NV_CLEAR_AIR_MASK'].data == 0
-            nv_start = self.dataset['NV_CLEAR_AIR_MASK'].data.index[0]
-            nv_end = self.dataset['NV_CLEAR_AIR_MASK'].data.index[-1]
+            clear_air_series = self.dataset['NV_CLEAR_AIR_MASK']()
+            mask = clear_air_series == 0
+            nv_start = clear_air_series.index[0]
+            nv_end = clear_air_series.index[-1]
             mask = mask.reindex(index)
             mask.loc[(mask.index <= nv_start) | (mask.index >= nv_end)] = 0
             mask.fillna(method='ffill', inplace=True)

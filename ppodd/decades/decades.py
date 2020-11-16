@@ -11,12 +11,14 @@ from pydoc import locate
 
 import numpy as np
 import pandas as pd
+from scipy.stats import mode
 
 import ppodd
 
-from .backends import PandasInMemoryBackend
+from .backends import DefaultBackend
 from .globals import GlobalsCollection
 from .flags import DecadesClassicFlag
+from ..utils import pd_freq, infer_freq
 
 
 class DecadesFile(object):
@@ -30,7 +32,6 @@ class DecadesFile(object):
 
 
 class DecadesVariable(object):
-
     NC_ATTRS = [
         'long_name', 'frequency', 'standard_name', 'units',
         '_FillValue', 'valid_min', 'valid_max', 'comment', 'sensor_type',
@@ -38,53 +39,54 @@ class DecadesVariable(object):
     ]
 
     def __init__(self, *args, **kwargs):
-        name = kwargs.pop('name', None)
+        self.name = kwargs.pop('name', None)
+        self.write = kwargs.pop('write', True)
         _flag = kwargs.pop('flag', DecadesClassicFlag)
 
         self.attrs = {
-            '_FillValue': -9999.,
+            '_FillValue': -9999
         }
 
-        write = kwargs.pop('write', True)
-
-        for _attr in DecadesVariable.NC_ATTRS:
+        for _attr in self.NC_ATTRS:
             _val = kwargs.pop(_attr, None)
             if _val is not None:
                 self.attrs[_attr] = _val
 
-        self._df = pd.DataFrame(*args, **kwargs)
+        _df = pd.DataFrame(*args, **kwargs)
+        _freq = self._get_freq(df=_df)
 
-        # We only want to be given at most two columns (variable, flag) and at
-        # least one column (variable). Raise an error if this is not the case.
-        _columns = [i for i in self._df]
-        if len(_columns) != 1:
-            raise ValueError('Too many columns in instance DataFrame')
+        _index = pd.date_range(
+            start=_df.index[0], end=_df.index[-1],
+            freq=_freq
+        )
 
+        if self.name is None:
+            self.name = _df.columns[0]
 
-        # Deal with variable/instance naming. If no 'name' keyword is
-        # specified, then insist that the variable and flag are consistently
-        # named. Otherwise, rename both to be consistent with the kwarg.
-        _var = _columns[0]
-        if name is None:
-            self.name = _var
-        else:
-            self.name = name
-            _rename = {_var: name}
-            self._df.rename(columns=_rename, inplace=True)
+        if len(_df.index) != len(_df.index.unique()):
+            _df = _df.groupby(_df.index).last()
 
-        self._write = write
+        self.array = self._downcast(np.array(
+            _df.reindex(
+                _index, tolerance=_freq, method='nearest', limit=1
+            ).values.flatten()
+        ))
 
-        self.attrs['ancillary_variables'] = '{}_FLAG'.format(self.name)
+        self.t0 = _index[0]
+        self.t1 = _index[-1]
         self.flag = _flag(self)
 
+    def __call__(self):
+        i = pd.date_range(
+            start=self.t0, end=self.t1,
+            freq=self._get_freq()
+        )
+        return pd.Series(
+            self.array, index=i, name=self.name
+        )
+
     def __len__(self):
-        return len(self._df)
-
-    def __str__(self):
-        return 'DecadesVariable: {}'.format(self.name)
-
-    def __repr__(self):
-        return '<DecadesVariable({!r})>'.format(self.name)
+        return len(self.array)
 
     def __getattr__(self, attr):
         try:
@@ -97,34 +99,125 @@ class DecadesVariable(object):
         except KeyError:
             pass
 
+        if attr == 'index':
+            return self().index
+
         if attr == 'data':
-            return self._df[self.name]
+            return self()
 
         if attr == 'flag':
             return self.flag
 
-        return getattr(self._df, attr)
+        try:
+            return getattr(self(), attr)
+        except AttributeError:
+            pass
+
+        raise AttributeError(f'Not a variable attribute: {attr}')
 
     def __setattr__(self, attr, value):
-        if attr in DecadesVariable.NC_ATTRS:
+        if attr in self.NC_ATTRS:
             self.attrs[attr] = value
         else:
             super().__setattr__(attr, value)
 
+    def __str__(self):
+        return f'DecadesVariable[{self.name}]'
+
+    def __repr__(self):
+        return r'<DecadesVariable[{!r}]>'.format(self.name)
+
+    def _get_freq(self, df=None):
+        try:
+            return pd_freq[self.attrs['frequency']]
+        except (KeyError, AttributeError):
+            _freq = pd.infer_freq(df.index)
+
+        if _freq is None:
+            _freq = infer_freq(df.index)
+
+        if len(_freq) == 1:
+            _freq = f'1{_freq}'
+
+        self.frequency = int(1/pd.to_timedelta(_freq).total_seconds())
+        return _freq
+
+    def _downcast(self, array):
+        """
+        Downcast a numeric array to its smallest compatable type, via
+        pd.to_numeric.
+
+        Args:
+            array: the numpy array, or pd.Series to downcast.
+
+        Returns:
+            a downcast copy of array, or array if it cannot be downcast.
+        """
+        dc = 'float'
+        try:
+            if np.all(array == array.astype(int)):
+                dc = 'integer'
+        except (ValueError, TypeError):
+            pass
+
+        try:
+            return pd.to_numeric(array, downcast=dc)
+        except (ValueError, TypeError):
+            pass
+
+        return array
+
+    def _merge_fast(self, other):
+        _data = np.concatenate([self.array, other.array])
+        _index = self.index.union(other.index)
+
+        _df = pd.DataFrame(_data, index=_index).reindex(
+            pd.date_range(start=_index[0], end=_index[-1],
+                          freq=pd_freq[self.frequency])
+        )
+
+        self.array = _df.values.flatten()
+        self.t0 = _df.index[0]
+        self.t1 = _df.index[-1]
+
+    def trim(self, start, end):
+        self.flag.trim(start, end)
+
+        _df = self()
+        loc = (_df.index >= start) & (_df.index <= end)
+        trimmed = _df.loc[loc]
+        self.array = trimmed.values.flatten()
+        self.t0 = trimmed.index[0]
+        self.t1 = trimmed.index[-1]
+
+    def merge(self, other):
+
+        if(other.t0 > self.t1):
+            self._merge_fast(other)
+            return
+
+        other = other()
+        current = self()
+
+        merge_index = current.index.union(other.index).sort_values().unique()
+        current = current.reindex(merge_index)
+        current.loc[other.index] = other
+        full_index = pd.date_range(
+            start=merge_index[0], end=merge_index[-1],
+            freq=pd_freq[self.frequency]
+        )
+        current = current.reindex(full_index)
+
+        self.array = current.values.flatten()
+        self.t0 = current.index[0]
+        self.t1 = current.index[-1]
+
     def time_bounds(self):
-        return (self.index[0], self.index[-1])
-
-    @property
-    def write(self):
-        return self._write
-
-    @write.setter
-    def write(self, write):
-        self._write = write
+        return (self.t0, self.t1)
 
 
 class DecadesDataset(object):
-    def __init__(self, date=None, backend=PandasInMemoryBackend):
+    def __init__(self, date=None, backend=DefaultBackend):
 
         self._date = date
         self.readers = []
@@ -184,11 +277,11 @@ class DecadesDataset(object):
             if not var.write:
                 continue
 
-            if var.data.index[0] < start_time:
-                start_time = var.data.index[0]
+            if var.t0 < start_time:
+                start_time = var.t0
 
-            if var.data.index[-1] > end_time:
-                end_time = var.data.index[-1]
+            if var.t1 > end_time:
+                end_time = var.t1
 
             self._backend.decache()
 
@@ -354,10 +447,6 @@ class DecadesDataset(object):
 
         self._backend.add_input(variable)
 
-        self[variable.name].flag._df = self[variable.name].flag._df.reindex(
-            self[variable.name].index
-        ).fillna(method='ffill').fillna(method='bfill')
-
     def add_output(self, variable):
         self._backend.add_output(variable)
 
@@ -513,18 +602,13 @@ class DecadesDataset(object):
             return self._takeoff_time
 
         try:
-            wow = self['PRTAFT_wow_flag']
+            wow = self['PRTAFT_wow_flag']()
         except KeyError:
             return None
 
         try:
-            series = wow.data.astype(np.int8)
-        except ValueError:
-            return None
-
-        try:
-            self._takeoff_time = series.diff().where(
-                series.diff() == -1
+            self._takeoff_time = wow.diff().where(
+                wow.diff() == -1
             ).dropna().tail(1).index[0]
         except IndexError:
             return None
@@ -542,18 +626,13 @@ class DecadesDataset(object):
             return self._landing_time
 
         try:
-            wow = self['PRTAFT_wow_flag']
+            wow = self['PRTAFT_wow_flag']()
         except KeyError:
             return None
 
         try:
-            series = wow.data.astype(np.int8)
-        except ValueError:
-            return None
-
-        try:
-            self._landing_time = series.diff().where(
-                series.diff() == 1
+            self._landing_time = wow.diff().where(
+                wow.diff() == 1
             ).dropna().tail(1).index[0]
         except IndexError:
             return None
@@ -622,6 +701,7 @@ class DecadesDataset(object):
         if self.takeoff_time and self.landing_time:
             start_cutoff = self.takeoff_time - datetime.timedelta(hours=2)
             end_cutoff = self.landing_time + datetime.timedelta(minutes=30)
+            print(f'trimming: {start_cutoff} -- {end_cutoff}')
             self._backend.trim(start_cutoff, end_cutoff)
 
 

@@ -163,16 +163,6 @@ class AL52CO(PPBase):
         Entry point for the postprocessing module.
         """
 
-        # Reduce the AL52 input from ca. 3 vals per sec to 1 Hz
-        for var in self.inputs:
-            if 'AL52CO' not in var:
-                continue
-            _df = self.dataset[var]._df
-            if _df.index.size != _df.index.unique().size:
-                self.dataset[var]._df = _df.groupby(_df.index).agg(
-                    {var: 'first'}
-                )
-
         self.get_dataframe()
         d = self.d
 

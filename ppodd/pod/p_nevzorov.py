@@ -250,7 +250,7 @@ class Nevzorov(PPBase):
         self.declare(
             'NV_CLEAR_AIR_MASK',
             units=None,
-            frequency=1,
+            frequency=64,
             long_name=('Clear air mask based on Nevzorov Total Water power '
                        'variance'),
             write=False

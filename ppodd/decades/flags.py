@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 
+from ppodd.utils import pd_freq
 
 __all__ = ('DecadesClassicFlag', 'DecadesBitmaskFlag')
 
@@ -27,11 +28,27 @@ class DecadesFlagABC(object):
             var: the DecadesVariable that this flag is attached to.
         """
 
-        _index = var._df.index
-        self._df = pd.DataFrame(index=_index)
+        self._df = pd.DataFrame(index=range(len(var.data)),
+                                dtype=np.dtype('int8'))
         self._var = var
+        self.t0 = var.t0
+        self.t1 = var.t1
+        self.frequency = var.frequency
         self._long_name = f'Flag for {var.name}'
         self.descriptions = {}
+
+    @property
+    def index(self):
+        return pd.date_range(
+            start=self.t0, end=self.t1, freq=pd_freq[self.frequency]
+        )
+
+    @property
+    def df(self):
+        _df = self._df.copy()
+        _df.index = self.index
+        return _df
+
 
     def description(self, flag_name_or_val):
         """
@@ -55,9 +72,16 @@ class DecadesFlagABC(object):
             start: the minumum valid time
             end: the maximum valid time
         """
+        _index = self.index
+        loc = (_index >= start) & (_index <= end)
 
-        loc = (self._df.index >= start) & (self._df.index <= end)
-        self._df = self._df.loc[loc]
+        _df = self._df.copy(deep=True)
+        _df.index = _index
+        _df = _df.loc[loc]
+        _df.index = range(len(_df.index))
+        self._df = _df
+        self.t0 = start
+        self.t1 = end
 
     def cfattrs(self):
         """
@@ -82,7 +106,7 @@ class DecadesClassicFlag(DecadesFlagABC):
         super(DecadesClassicFlag, self).__init__(var)
 
         # Initialize the flag to -128, a fill_value
-        self._df['FLAG'] = -128
+        self._df['FLAG'] = np.int8(-128)
         self.descriptions[-128] = ('A fill value. No flagging information '
                                    'has been provided')
         self.descriptions[0] = ('Data are assumed to be valid and '
@@ -97,7 +121,7 @@ class DecadesClassicFlag(DecadesFlagABC):
         """
         Return flag values when the instance is called.
         """
-        return self._df.FLAG
+        return pd.DataFrame(self._df.copy(deep=True), index=self.index)
 
     @property
     def cfattrs(self):
@@ -170,6 +194,7 @@ class DecadesClassicFlag(DecadesFlagABC):
         flag = np.atleast_1d(flag)
 
         if len(flag) != len(self._df.index):
+            print(f'{len(flag)} != {len(self._df.index)}')
             raise ValueError('Flag length is incorrect')
 
         if np.any(flag > np.atleast_1d(np.max(list(self.meanings.keys())))):
@@ -216,16 +241,18 @@ class DecadesBitmaskFlag(DecadesFlagABC):
         return it.
         """
 
-        _meanings = self._df.columns
+        _meanings = list(self._df.columns)
 
         _masks = self.masks
 
         _flag_vals = np.zeros((len(self._df.index),))
 
         for i, meaning in enumerate(_meanings):
-            _flag_vals += _masks[i] * self._df[meaning]
+            _flag_vals += _masks[i] * np.array(self._df[meaning])
 
-        return pd.Series(_flag_vals.astype(np.int8), index=self._df.index)
+        _flag_vals = _flag_vals.astype(np.int8)
+
+        return pd.Series(_flag_vals, index=self._var.index)
 
     @property
     def masks(self):
@@ -260,6 +287,7 @@ class DecadesBitmaskFlag(DecadesFlagABC):
         """
 
         if len(data) != len(self._df.index):
+            print(f'{len(data)} != {len(self._df.index)}')
             raise ValueError('Flag length is incorrect')
 
         col_name = meaning.replace(' ', '_').lower()

@@ -3,6 +3,7 @@ import datetime
 import os
 
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
@@ -134,16 +135,16 @@ class QAFigure(object):
         self._fig.savefig(_save_file)
 
     def __enter__(self):
-        to_time = self.dataset['WOW_IND'].loc[
-            np.gradient(self.dataset['WOW_IND'].data) < 0
+        to_time = self.dataset['WOW_IND'].data.loc[
+            np.gradient(self.dataset['WOW_IND'].array) < 0
         ].index[-1]
 
-        land_time = self.dataset['WOW_IND'].loc[
-            np.gradient(self.dataset['WOW_IND'].data) > 0
+        land_time = self.dataset['WOW_IND'].data.loc[
+            np.gradient(self.dataset['WOW_IND'].array) > 0
         ].index[-1]
 
-        self.to_time = to_time
-        self.land_time = land_time
+        self.to_time = pd.to_datetime(to_time)
+        self.land_time = pd.to_datetime(land_time)
 
         self.set_subtitle(
             'Report for {flight}, on {date}'.format(

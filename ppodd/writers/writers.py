@@ -170,9 +170,13 @@ class NetCDFWriter(DecadesWriter):
             )
 
         # Write variable attributes, excluding _FillValue, which must be given
-        # when the variable is created.
+        # when the variable is created, and frequency, which is set as the
+        # write frequency, if given
         for attr_key, attr_val in var.attrs.items():
             if attr_key is '_FillValue' or attr_val is None:
+                continue
+            if attr_key is 'frequency' and self.write_freq is not None:
+                setattr(ncvar, attr_key, self.write_freq)
                 continue
             setattr(ncvar, attr_key, attr_val)
 
@@ -204,16 +208,16 @@ class NetCDFWriter(DecadesWriter):
         if _freq == var.frequency:
             # variable is alreay at the correct frequency, all we require is a
             # reindex, filling any missing data with _FillValue
-            _data = var.data.reindex(_index).fillna(var.attrs['_FillValue'])
+            _data = var().reindex(_index).fillna(var.attrs['_FillValue'])
             _flag = var.flag().reindex(_index).fillna(var.flag.cfattrs['_FillValue'])
         else:
             # Variable and flag must be resampled to bring onto the correct
             # frequency and then reindexed. Apply a mean to the data and a pad
             # to the flag.
             if getattr(var, 'circular', False):
-                _data = unwrap_array(var.data)
+                _data = unwrap_array(var())
             else:
-                _data = var.data
+                _data = var()
 
             _data = _data.resample(
                 pd_freq[_freq]
@@ -296,7 +300,7 @@ class NetCDFWriter(DecadesWriter):
 
         setattr(nc, key, value)
 
-    def write(self, filename, freq=None):
+    def write(self, filename=None, freq=None):
         """
         Write a DecadesDataset to a netCDF file, optionally forcing the output
         to a specified frequency. Note that forcing to anything onther than 1
@@ -311,6 +315,20 @@ class NetCDFWriter(DecadesWriter):
 
         # The frequency to force the output to, if any
         self.write_freq = freq
+
+        # If no filename is given, build a standard pattern
+        if filename is None:
+            _freq = f'_{freq}hz'
+            if freq is None:
+                _freq = ''
+            filename = (
+                'core_faam_{date}_v005_r{revision}_{flight}{freq}.nc'.format(
+                    date=self.dataset.date.strftime('%Y%m%d'),
+                    revision=self.dataset.globals()['revision_number'],
+                    flight=self.dataset.globals()['flight_number'],
+                    freq=_freq
+                )
+            )
 
         with Dataset(filename, 'w', format=self._format) as nc:
 

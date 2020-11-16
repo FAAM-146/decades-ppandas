@@ -9,17 +9,7 @@ from ..decades import DecadesDataset, DecadesVariable
 
 class PPBase(abc.ABC):
 
-    freq = {
-        1: '1S',
-        2: '500L',
-        4: '250L',
-        8: '125L',
-        16: '62500U',
-        32: '31250000N',
-        64: '15625000N',
-        128: '7812500N',
-        256: '3906250N'
-    }
+    freq = pd_freq
 
     inputs = []
     test = {}
@@ -110,13 +100,18 @@ class PPBase(abc.ABC):
 
         if method == 'outerjoin':
             for _input in _inputs:
-                df = df.join(self.dataset[_input].data.dropna(), how='outer')
+                df = df.join(self.dataset[_input]().dropna(), how='outer')
+
+            _freq = np.max([self.dataset[i].frequency for i in _inputs])
+            df = df.reindex(pd.date_range(
+                start=df.index[0], end=df.index[-1], freq=pd_freq[_freq]
+            ))
 
         elif method == 'onto':
 
             if index is None:
-                df = self.dataset[_inputs[0]].data
-                index = df[_inputs[0]].data.index
+                df = self.dataset[_inputs[0]]()
+                index = df.index
                 _start = 1
             else:
                 df = pd.DataFrame(index=index)
@@ -127,18 +122,19 @@ class PPBase(abc.ABC):
 
                 if _input in circular:
 
-                    _data = self.dataset[_input_name].data.values.copy()
+                    _tmp = self.dataset[_input_name]()
+                    _data = _tmp.values.copy()
 
                     _input = pd.DataFrame(
                         [],
-                        index=self.dataset[_input_name].data.index
+                        index=_tmp.index
                     )
 
                     _input[_input_name] = _data
                     _input[_input_name] = unwrap_array(_input[_input_name])
 
                 else:
-                    _input = self.dataset[_input_name].data
+                    _input = self.dataset[_input_name]()
 
                 df[_input_name] = _input.reindex(
                     index.union(
@@ -165,8 +161,11 @@ class PPBase(abc.ABC):
 
         try:
             good_start = np.min(np.where(~np.isnan(variable.data)))
-            variable._df = variable._df.iloc[good_start:]
-            variable.flag._df = variable.flag._df.iloc[good_start:]
+            _df = variable()
+            start_time = _df.index[good_start]
+            end_time = _df.index[-1]
+            variable.trim(start_time, end_time)
+
         except ValueError:
             variable.write = False
             print('Warning: no good data: {}'.format(variable.name))

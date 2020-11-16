@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 
+from scipy.stats import mode
+
 pd_freq = {
     1: '1S',
     2: '500L',
@@ -9,11 +11,24 @@ pd_freq = {
     10: '100L',
     16: '62500U',
     20: '50L',
+    50: '20L',
     32: '31250000N',
     64: '15625000N',
     128: '7812500N',
     256: '3906250N'
 }
+
+
+def infer_freq(index, mode_conf=0.99):
+    diff = index[1:] - index[:-1]
+    a = mode(diff)
+    print(a.count[0] / len(index))
+    if (a.count[0] / len(index)) >= mode_conf:
+        return f'{a.mode[0]}N'
+
+    raise ValueError('Cannot infer frequency')
+
+
 
 
 def get_range_flag(var, limits, flag_val=2):

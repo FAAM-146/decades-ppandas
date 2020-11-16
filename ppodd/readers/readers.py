@@ -164,7 +164,8 @@ class CoreNetCDFReader(FileReader):
                         index=self._time_at(time, self._var_freq(nc[var])),
                         name=var,
                         write=False,
-                        flag=self._flag_class(var, nc)
+                        flag=self._flag_class(var, nc),
+                        frequency=nc[var].frequency
                     )
 
                     self.flag(variable, nc)
@@ -426,15 +427,6 @@ class TcpFileReader(FileReader):
                     frequency=frequency,
                     write=False
                 )
-
-                if variable.index.size != variable.index.unique().size:
-                    print('Non-unique index: {}'.format(variable.name))
-                    print(f'{variable.name}: using last of non-unique entries')
-
-                    variable._df = variable._df.groupby(variable._df.index).last()
-                    variable.flag._df = variable.flag._df.groupby(
-                        variable.flag._df.index
-                    ).last()
 
                 _file.dataset.add_input(variable)
 
