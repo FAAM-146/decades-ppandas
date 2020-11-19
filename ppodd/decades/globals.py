@@ -1,4 +1,7 @@
 import collections
+import warnings
+
+from ppodd.standard import faam_globals
 
 STR_DERIVED_FROM_FILE = '<derived from file>'
 GLOBAL_NOT_SET = 'GLOBAL_NOT_SET'
@@ -8,24 +11,27 @@ class GlobalNotSetError(Exception):
     pass
 
 
+class NonStandardGlobalError(Exception):
+    pass
+
+
 class GlobalsCollection(object):
     REQUIRED_GLOBALS = [
-        'Conventions', 'flight_number', 'date', 'project', 'title', 'keywords',
-        'institution', 'source', 'platform', 'references', 
-        'summary', 'creator_type', 'creator_institution', 'creator_email',
-        'creator_url', 'revision_number', 'revision_date',
-        'processing_software_url', 'processing_software_version',
-        'time_coverage_start', 'time_coverage_end', 'geospatial_lat_min',
-        'geospatial_lat_max', 'geospatial_lon_min', 'geospatial_lon_max',
-        'geospatial_vertical_min', 'geospatial_vertical_max',
-        'geospatial_vertical_units', 'date_created'
+        g for g in faam_globals['Globals'].keys()
+        if faam_globals['Globals'][g]['required']
     ]
 
-    def __init__(self, dataset=None):
+    OPTIONAL_GLOBALS = [
+        g for g in faam_globals['Globals'].keys()
+        if not faam_globals['Globals'][g]['required']
+    ]
+
+    def __init__(self, dataset=None, strict_mode=True):
         self._dataset = dataset
         self._globals = []
         self._data_globals = {}
         self._compliance = False
+        self._strict_mode = strict_mode
 
         for key in self.REQUIRED_GLOBALS:
             self.add(Global(key, GLOBAL_NOT_SET))
@@ -72,14 +78,27 @@ class GlobalsCollection(object):
                 self._globals.remove(i)
                 break
 
+        if glo.key not in self.REQUIRED_GLOBALS + self.OPTIONAL_GLOBALS:
+            _message = f'Global \'{glo.key}\' is not defined in standard'
+            if self.strict_mode:
+                raise NonStandardGlobalError(_message)
+            else:
+                warnings.warn(_message)
+
         self._globals.append(glo)
 
     @property
+    def strict_mode(self):
+        return self._strict_mode
+
+    @strict_mode.setter
+    def strict_mode(self, strict):
+        self._strict_mode = bool(strict)
+
+    @property
     def is_compliant(self):
-        print(self.REQUIRED_GLOBALS)
         for required in self.REQUIRED_GLOBALS:
             if self[required] == GLOBAL_NOT_SET:
-                print(f'No {required}')
                 return False
         return True
 
@@ -87,7 +106,7 @@ class GlobalsCollection(object):
         self._data_globals[param] = attrs
 
     def static_items(self):
-        return self._as_dict(dynamic=False).items()
+        return self._as_dict(dynamic=False).items
 
     def _as_dict(self, dynamic=True):
         _dict = {}
