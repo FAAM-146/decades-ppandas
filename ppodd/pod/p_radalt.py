@@ -18,8 +18,8 @@ class RadAlt(PPBase):
     least significant bit resolution of 0.25 ft, giving a max valid value of
     $(((2^{16} / 2) - 1) / 4)$.
 
-    Data are flagged when outside a slightly narrower range than.range of the
-    16 bit signal.
+    Data are flagged when outside a slightly narrower range than the range of
+    the 16 bit signal.
     """
 
     inputs = [

@@ -12,7 +12,7 @@ from .shortcuts import _o, _z
 
 class BuckCR2(PPBase):
     r"""
-    Produces dew point temterature and water vapour volume mixing ratio derived
+    Produces dew point temperature and water vapour volume mixing ratio derived
     from the Buck CR2 hygrometer, along with associated uncertainty estimates.
     """
 

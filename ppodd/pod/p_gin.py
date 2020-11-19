@@ -264,7 +264,7 @@ class Gin(PPBase):
                 dv.flag.add_mask(
                     self.d.HEADING_FLAG, 'gin align',
                     ('Status flag indicates instrument is in align, which may '
-                     'indicate an elevated heading error')
+                     'indicate an increased heading error')
                 )
 
             dv.flag.add_mask(

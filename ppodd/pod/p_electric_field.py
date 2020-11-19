@@ -8,7 +8,7 @@ from .shortcuts import _o
 class ElectricFieldJci140(PPBase):
     r"""
     This module reports the raw counts from the JCI static monitor on the
-    forward core console.
+    core console.
     """
 
     inputs = ['PRTAFT_jci140_signal']

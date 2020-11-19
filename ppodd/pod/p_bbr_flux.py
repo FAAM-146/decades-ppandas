@@ -306,13 +306,18 @@ class BBRFlux(PPBase):
                 # Flag when the aircraft is in a significant roll
                 output.flag.add_mask(
                     np.abs(d.ROLL_GIN_rmean) >= ROLL_LIMIT,
-                    'roll limit exceeded'
+                    'roll limit exceeded',
+                    ('The aircraft is in a roll exceeding the specified max '
+                     f'roll limit of {ROLL_LIMIT} degrees from horizontal.')
                 )
 
                 # Flag when sun angle is too low
                 output.flag.add_mask(
                     beta > SUN_ANGLE_MAX / deg2rad,
-                    'low sun angle'
+                    'low sun angle',
+                    ('The sun is low relative to the axis of the aircraft, '
+                     'exceeding the maximum allowed limit of '
+                     f'{SUN_ANGLE_MAX/deg2rad} degrees.')
                 )
 
                 # Flag when out of range
@@ -328,7 +333,9 @@ class BBRFlux(PPBase):
 
                 output.flag.add_mask(
                     (d[_flux] < flux_limit_lo) | (d[_flux] > flux_limit_hi),
-                    'flux out of range'
+                    'flux out of range',
+                    ('The calculated is outside of the specified allowable '
+                     f'flux range [{flux_limit_lo}, {flux_limit_hi}] W/m$^2$')
                 )
 
                 self.add_output(output)

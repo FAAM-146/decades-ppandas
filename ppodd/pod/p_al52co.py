@@ -27,6 +27,11 @@ class AL52CO(PPBase):
     $$
     where $c$ is the count reported by ther instrument, $z_i$ is the linearly
     interpolated zero and $S_i$ is the linearly interpolated sensitivity.
+
+    After a calibration, data continue to be flagged for 5 seconds, to allow
+    for calibrations gasses to be flushed from the system. Where available, the
+    state of the V1 valve on the Fast Greenhouse Gas Analyser (FGGA) is used to
+    identify and flag span calibrations.
     """
 
     inputs = [
