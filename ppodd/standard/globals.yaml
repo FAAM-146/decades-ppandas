@@ -2,10 +2,11 @@ Globals:
     Conventions:
         required: true
         description: >-
-            The conventions to which the dataset adhere. Typically these are expected to be 
+            The conventions to which the dataset adhere. Typically these are expected to be
             CF-1.6 and ACDD-1.3.
         inherits_from: null
         aliases: []
+        versions: [1.0]
 
     flight_number:
         required: true
@@ -15,33 +16,37 @@ Globals:
             x should be lowercase.
         inherits_from: null
         aliases: []
+        versions: [1.0]
 
     date:
         required: true
         description: >-
-            The date on which the flight occurred. This should be in the ISO 8601 format 
+            The date on which the flight occurred. This should be in the ISO 8601 format
             YYYY-MM-DD
         inherits_from: null
         aliases:
             - flight_date
+         versions: [1.0]
 
     flight_date:
         required: true
         description: >-
-            The date on which the flight occurred. This should be in the ISO 8601 format 
+            The date on which the flight occurred. This should be in the ISO 8601 format
             YYYY-MM-DD
         aliases:
             - date
+        versions: [1.0]
 
     date_created:
         required: true
         description: >-
-            The date on which this version of the data was created. (Modification of values implies 
-            a new version, hence this would be assigned the date of the most recent values 
-            modification.) Metadata changes are not considered when assigning the date_created. 
+            The date on which this version of the data was created. (Modification of values implies
+            a new version, hence this would be assigned the date of the most recent values
+            modification.) Metadata changes are not considered when assigning the date_created.
             The ISO 8601:2004 extended date format is recommended.
         inherits_from: ACDD13
         aliases: []
+        versions: [1.0]
 
     references:
         required: false
@@ -49,6 +54,7 @@ Globals:
             Published or web-based references that describe the data or methods used to produce it.
         inherits_from: CF16
         aliases: []
+        versions: [1.0]
 
     summary:
         required: false
@@ -56,6 +62,7 @@ Globals:
             A paragraph describing the dataset, analogous to an abstract for a paper.
         inherits_from: ACDD13
         aliases: []
+        versions: [1.0]
 
     comment:
         required: false
@@ -63,27 +70,30 @@ Globals:
             Miscellaneous information about the data or methods used to produce it.
         inherits_from: CF16
         aliases: []
+        versions: [1.0]
 
     project:
         required: true
         description: >-
-            The acronym of the project with which this flight was associated. If the flight was 
-            associated with more than one project, a comma-space separated list should be 
+            The acronym of the project with which this flight was associated. If the flight was
+            associated with more than one project, a comma-space separated list should be
             provided. Where no project is associated with the flight, for example FAAM instrument
             test flights, the project should be FAAM.
         inherits_from: null
         aliases:
             - project_acronym
+        versions: [1.0]
 
     project_name:
         required: false
         description: >-
-            The full name of the project with which this flight was associated. If the flight was 
-            associated with more than one project, a comma-space separated list should be 
+            The full name of the project with which this flight was associated. If the flight was
+            associated with more than one project, a comma-space separated list should be
             provided. Where no project is associated with the flight, for example FAAM instrument
             test flights, the project name should be FAAM.
         inherits_from: null
         aliases: []
+        versions: [1.0]
 
     title:
         required: true
@@ -92,6 +102,7 @@ Globals:
             include the flight number.
         inherits_from: ACDD13
         aliases: []
+        versions: [1.0]
 
     keywords:
         required: true
@@ -101,18 +112,20 @@ Globals:
             in the keywords_vocabulary attribute.
         inherits_from: ACDD13
         aliases: []
+        versions: [1.0]
 
     keywords_vocabulary:
         required: false
         description: >-
-                If you are using a controlled vocabulary for the words/phrases in your keywords 
-                attribute, this is the unique name or identifier of the vocabulary from which 
-                keywords are taken. If more than one keyword vocabulary is used, each may be 
-                presented with a prefix and a following comma, so that keywords may optionally 
-                be prefixed with the controlled vocabulary key. 
+                If you are using a controlled vocabulary for the words/phrases in your keywords
+                attribute, this is the unique name or identifier of the vocabulary from which
+                keywords are taken. If more than one keyword vocabulary is used, each may be
+                presented with a prefix and a following comma, so that keywords may optionally
+                be prefixed with the controlled vocabulary key.
                 Example GCMD:GCMD Keywords, CF:NetCDF COARDS Climate and Forecast Standard Names.
         inherits_from: ACDD13
         aliases: []
+        versions: [1.0]
 
     institution:
         required: true
@@ -120,24 +133,27 @@ Globals:
             Specifies where the original data was produced.
         inherits_from: CF16
         aliases: []
+        versions: [1.0]
 
     source:
         required: true
         description: >-
-            The method of production of the original data. This may be the name of an instrument 
-            or rack, or the name of the data system used to gather and/or process data where a file 
+            The method of production of the original data. This may be the name of an instrument
+            or rack, or the name of the data system used to gather and/or process data where a file
             contains the output of numerous instruments.
         inherits_from: CF16
         aliases: []
+        versions: [1.0]
 
     platform:
         required: true
         description: >-
-            Name of the platform that supported the sensor data used to create this data set or 
-            product. Canonically this should be FAAM BAe-146 Atmospheric Research Aircraft for 
+            Name of the platform that supported the sensor data used to create this data set or
+            product. Canonically this should be FAAM BAe-146 Atmospheric Research Aircraft for
             data gathered on the FAAM aircraft.
         inherits_from: ACDD13
         aliases: []
+        versions: [1.0]
 
     creator_institution:
         required: true
@@ -146,7 +162,8 @@ Globals:
             For FAAM core data, the institution is FAAM.
         inherits_from: ACDD13
         aliases: []
-    
+        versions: [1.0]
+
     creator_type:
         required: true
         description: >-
@@ -155,120 +172,135 @@ Globals:
             attribute should always be present in FAAM data
         inherits_from: ACDD13
         aliases: []
+        versions: [1.0]
 
     creator_email:
         required: true
-        description: >- 
-            The email address of the person (or other creator type specified by the creator_type 
+        description: >-
+            The email address of the person (or other creator type specified by the creator_type
             attribute) principally responsible for creating this data.
         inherits_from: ACDD13
         aliases: []
+        versions: [1.0]
 
     creator_url:
         required: true
         description: >-
-            The URL of the person (or other creator type specified by the creator_type attribute) 
+            The URL of the person (or other creator type specified by the creator_type attribute)
             principally responsible for creating this data. Where the creator_type is a person,
             the URL should be their ORCHID URL, if they have one.
         inherits_from: ACDD13
         aliases: []
+        versions: [1.0]
 
     publisher_type:
         required: true
         description: >-
-            Specifies type of publisher with one of person, group, institution, or position. 
+            Specifies type of publisher with one of person, group, institution, or position.
             Data produced from the FAAM aircraft are expected to be archived on CEDA (Centre
             for Environmental Data Analysis), in which case publisher_type should be
             institution
         inherits_from: ACDD13
         aliases: []
+        versions: [1.0]
 
     publisher_institution:
         required: true
         description: >-
-            The institution that presented the data file or equivalent product to users; should 
-            uniquely identify the institution. Data produced from the FAAM aircraft are expected 
-            to be archived on CEDA (Centre for Environmental Data Analysis), in which case 
+            The institution that presented the data file or equivalent product to users; should
+            uniquely identify the institution. Data produced from the FAAM aircraft are expected
+            to be archived on CEDA (Centre for Environmental Data Analysis), in which case
             publisher_institution should be CEDA.
         inherits_from: ACDD13
         aliases: []
+        versions: [1.0]
 
     publisher_email:
         required: true
         description: >-
-            The email address of the person (or other entity specified by the publisher_type 
-            attribute) responsible for publishing the data file or product to users, with its 
+            The email address of the person (or other entity specified by the publisher_type
+            attribute) responsible for publishing the data file or product to users, with its
             current metadata and format. Data produced from the FAAM aircraft are expected
-            to be archived on CEDA (Centre for Environmental Data Analysis), in which case 
+            to be archived on CEDA (Centre for Environmental Data Analysis), in which case
             publisher_institution should be support@ceda.ac.uk.
+        inherits_from: ACDD13
+        aliases: []
+        versions: [1.0]
 
     publisher_url:
         required: true
         description: >-
-            The URL of the person (or other entity specified by the publisher_type attribute) 
-            responsible for publishing the data file or product to users, with its current metadata 
-            and format. Data produced from the FAAM aircraft are expected to be archived on CEDA 
-            (Centre for Environmental Data Analysis), in which case publisher_url should be 
+            The URL of the person (or other entity specified by the publisher_type attribute)
+            responsible for publishing the data file or product to users, with its current metadata
+            and format. Data produced from the FAAM aircraft are expected to be archived on CEDA
+            (Centre for Environmental Data Analysis), in which case publisher_url should be
             https://www.ceda.ac.uk.
         inherits_from: ACDD13
         aliases: []
+        versions: [1.0]
 
     geospatial_lat_max:
         required: true
         description: >-
-            Describes a simple upper latitude limit; may be part of a 2- or 3-dimensional bounding 
+            Describes a simple upper latitude limit; may be part of a 2- or 3-dimensional bounding
             region. The attribute geospatial_lat_max specifies the northernmost latitude covered by
             the dataset.
         inherits_from: ACDD13
         aliases: []
+        versions: [1.0]
 
     geospatial_lat_min:
         required: true
         description: >-
-            Describes a simple lower latitude limit; may be part of a 2- or 3-dimensional bounding 
+            Describes a simple lower latitude limit; may be part of a 2- or 3-dimensional bounding
             region. The attribute geospatial_lat_min specifies the southernmost latitude covered by
             the dataset.
         inherits_from: ACDD13
         aliases: []
+        versions: [1.0]
 
     geospatial_lon_max:
         required: true
         description: >-
-                Describes a simple longitude limit; may be part of a 2- or 3-dimensional bounding 
-                region. geospatial_lon_max specifies the easternmost longitude covered by the 
-                dataset. Cases where geospatial_lon_min is greater than geospatial_lon_max indicate 
-                the bounding box extends from geospatial_lon_max, through the longitude range 
-                discontinuity meridian (either the antimeridian for -180:180 values, or Prime 
+                Describes a simple longitude limit; may be part of a 2- or 3-dimensional bounding
+                region. geospatial_lon_max specifies the easternmost longitude covered by the
+                dataset. Cases where geospatial_lon_min is greater than geospatial_lon_max indicate
+                the bounding box extends from geospatial_lon_max, through the longitude range
+                discontinuity meridian (either the antimeridian for -180:180 values, or Prime
                 Meridian for 0:360 values), to geospatial_lon_min; for example, geospatial_lon_min=170
-                and geospatial_lon_max=-175 incorporates 15 degrees of longitude (ranges 170 to 180 
+                and geospatial_lon_max=-175 incorporates 15 degrees of longitude (ranges 170 to 180
                 and -180 to -175).
         inherits_from: ACDD13
         aliases: []
+        versions: [1.0]
 
     geospatial_lon_min:
         required: true
         description: >-
-            Describes a simple lower longitude limit; may be part of a 2- or 3-dimensional bounding 
+            Describes a simple lower longitude limit; may be part of a 2- or 3-dimensional bounding
             region. The attribute geospatial_lon_min specifies the westernmost longitude covered by
             the dataset.
         inherits_from: ACDD13
         aliases: []
+        versions: [1.0]
 
     geospatial_vertical_min:
         required: true
         description: >-
-            Describes the numerically smaller vertical limit; may be part of a 2- or 3-dimensional 
+            Describes the numerically smaller vertical limit; may be part of a 2- or 3-dimensional
             bounding region. See geospatial_vertical_positive and geospatial_vertical_units.
         inherits_from: ACDD13
         aliases: []
+        versions: [1.0]
 
     geospatial_vertical_max:
         required: true
         description: >-
-            Describes the numerically larger vertical limit; may be part of a 2- or 3-dimensional 
+            Describes the numerically larger vertical limit; may be part of a 2- or 3-dimensional
             bounding region. See geospatial_vertical_positive and geospatial_vertical_units.
         inherits_from: ACDD13
         aliases: []
+        versions: [1.0]
 
     geospatial_vertical_positive:
         required: true
@@ -277,6 +309,7 @@ Globals:
             as altitude, with negative values below the reference datum.
         inherits_from: ACDD13
         aliases: []
+        versions: [1.0]
 
     geospatial_vertical_units:
         required: true
@@ -287,22 +320,25 @@ Globals:
             coordinate systems may be specified, if required.
         inherits_from: ACDD13
         aliases: []
+        versions: [1.0]
 
     time_coverage_start:
         required: true
         description: >-
-            Describes the time of the first data point in the data set, Using the ISO 8601:2004 date 
-            format. 
+            Describes the time of the first data point in the data set, Using the ISO 8601:2004 date
+            format.
         inherits_from: ACDD13
         aliases: []
+        versions: [1.0]
 
     time_coverage_end:
         required: true
         description: >-
-            Describes the time of the last data point in the data set, Using the ISO 8601:2004 date 
-            format. 
+            Describes the time of the last data point in the data set, Using the ISO 8601:2004 date
+            format.
         inherits_from: ACDD13
         aliases: []
+        versions: [1.0]
 
     revision_number:
         required: true
@@ -312,6 +348,7 @@ Globals:
             available, the dataset with the largest revision number should be preferentially used.
         inherits_from: null
         aliases: []
+        versions: [1.0]
 
     revision_date:
         required: false
@@ -320,14 +357,16 @@ Globals:
             format is recommended.
         inherits_from: null
         aliases: []
+        versions: [1.0]
 
     revision_comment:
         required: false
         description: >-
-            A freeform string describing how this data revision differs from the previous data 
+            A freeform string describing how this data revision differs from the previous data
             revision. Strongly recommended for any non-zero revision number.
         inherits_from: null
         aliases: []
+        versions: [1.0]
 
     processing_software_version:
         required: true
@@ -335,16 +374,18 @@ Globals:
             This is the version number of the software used to produce this dataset.
         inherits_from: null
         aliases: []
+        versions: [1.0]
 
     processing_software_url:
         required: false
         description: >-
-            Where the processing software used to produced this data file is open source and 
+            Where the processing software used to produced this data file is open source and
             version controlled, this should point to the software repository. Where the processing
             software is proprietary this may point to a website describing the software, or it may
             be omitted.
         inherits_from: null
         aliases: []
+        versions: [1.0]
 
     processing_software_commit:
         required: false
@@ -354,3 +395,4 @@ Globals:
             available, then this attribute may be omitted.
         inherits_from: null
         aliases: []
+        versions: [1.0]
