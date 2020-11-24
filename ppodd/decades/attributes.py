@@ -1,47 +1,47 @@
 import collections
 import warnings
 
-from ppodd.standard import faam_globals
-
 STR_DERIVED_FROM_FILE = '<derived from file>'
-GLOBAL_NOT_SET = 'GLOBAL_NOT_SET'
+ATTRIBUTE_NOT_SET = 'ATTRIBUTE_NOT_SET'
 
 
-class GlobalNotSetError(Exception):
+class AttributeNotSetError(Exception):
     pass
 
 
-class NonStandardGlobalError(Exception):
+class NonStandardAttributeError(Exception):
     pass
 
 
-class GlobalsCollection(object):
-    REQUIRED_GLOBALS = [
-        g for g in faam_globals['Globals'].keys()
-        if faam_globals['Globals'][g]['required']
-    ]
+class AttributesCollection(object):
 
-    OPTIONAL_GLOBALS = [
-        g for g in faam_globals['Globals'].keys()
-        if not faam_globals['Globals'][g]['required']
-    ]
+    def __init__(self, dataset=None, definition=None, version=1.0, strict_mode=True):
 
-    def __init__(self, dataset=None, strict_mode=True):
+        self.REQUIRED_ATTRIBUTES = [
+            g for g in definition.keys() if definition[g]['required']
+            and version in definition[g]['versions']
+        ]
+
+        self.OPTIONAL_ATTRIBUTES = [
+            g for g in definition.keys() if not definition[g]['required']
+            and version in definition[g]['versions']
+        ]
+
         self._dataset = dataset
-        self._globals = []
-        self._data_globals = {}
+        self._attributes = []
+        self._data_attributes = {}
         self._compliance = False
         self._strict_mode = strict_mode
 
-        for key in self.REQUIRED_GLOBALS:
-            self.add(Global(key, GLOBAL_NOT_SET))
+        for key in self.REQUIRED_ATTRIBUTES:
+            self.add(Attribute(key, ATTRIBUTE_NOT_SET))
 
     def __getitem__(self, key):
-        for g in self._globals:
+        for g in self._attributes:
             if g.key == key:
                 return self._compliancify(g)
 
-        raise KeyError('{} not a global'.format(key))
+        raise KeyError('{} not an attribute'.format(key))
 
     def __setitem__(self, key, value):
         if type(value) is dict:
@@ -50,42 +50,43 @@ class GlobalsCollection(object):
                 self[__k] = _v
 
         else:
-            self.add(Global(key, value))
+            self.add(Attribute(key, value))
 
     def __call__(self):
         return self.dict
 
-    def _compliancify(self, glo):
+    def _compliancify(self, att):
         if self._compliance:
-            if callable(glo.value) or glo.value == GLOBAL_NOT_SET:
+            if callable(att.value) or att.value == ATTRIBUTE_NOT_SET:
                 return STR_DERIVED_FROM_FILE
         else:
-            if callable(glo.value):
-                return glo.value()
+            if callable(att.value):
+                return att.value()
             else:
-                return glo.value
-        return glo.value
+                return att.value
+
+        return att.value
 
     def set_compliance_mode(self, comp):
         self._compliance = comp
 
-    def add(self, glo):
-        if not isinstance(glo, Global):
-            raise TypeError('globals must be of type <Global>')
+    def add(self, att):
+        if not isinstance(att, Attribute):
+            raise TypeError('attributes must be of type <Attribute>')
 
-        for i in self._globals:
-            if i.key == glo.key:
-                self._globals.remove(i)
+        for i in self._attributes:
+            if i.key == att.key:
+                self._attributes.remove(i)
                 break
 
-        if glo.key not in self.REQUIRED_GLOBALS + self.OPTIONAL_GLOBALS:
-            _message = f'Global \'{glo.key}\' is not defined in standard'
+        if att.key not in self.REQUIRED_ATTRIBUTES + self.OPTIONAL_ATTRIBUTES:
+            _message = f'Attribute \'{att.key}\' is not defined in standard'
             if self.strict_mode:
-                raise NonStandardGlobalError(_message)
+                raise NonStandardAttributeError(_message)
             else:
                 warnings.warn(_message)
 
-        self._globals.append(glo)
+        self._attributes.append(att)
 
     @property
     def strict_mode(self):
@@ -97,26 +98,26 @@ class GlobalsCollection(object):
 
     @property
     def is_compliant(self):
-        for required in self.REQUIRED_GLOBALS:
-            if self[required] == GLOBAL_NOT_SET:
+        for required in self.REQUIRED_ATTRIBUTES:
+            if self[required] == ATTRIBUTE_NOT_SET:
                 return False
         return True
 
-    def add_data_global(self, param, attrs):
-        self._data_globals[param] = attrs
+    def add_data_attribute(self, param, attrs):
+        self._data_attributes[param] = attrs
 
     def static_items(self):
-        return self._as_dict(dynamic=False).items
+        return self._as_dict(dynamic=False).items()
 
     def _as_dict(self, dynamic=True):
         _dict = {}
-        for glo in self._globals:
+        for glo in self._attributes:
             _dict[glo.key] = self._compliancify(glo)
 
         if not dynamic:
             return _dict
 
-        for name, _pack in self._data_globals.items():
+        for name, _pack in self._data_attributes.items():
             key, attrs = _pack
             try:
                 var = self._dataset[key]
@@ -128,7 +129,7 @@ class GlobalsCollection(object):
             for _attr in attrs:
                 var = getattr(var, _attr)
 
-            _dict[name] = self._compliancify(Global(name, var))
+            _dict[name] = self._compliancify(Attribute(name, var))
 
         return _dict
 
@@ -149,13 +150,13 @@ class GlobalsCollection(object):
         return _sorted
 
 
-class Global(object):
+class Attribute(object):
     def __init__(self, key, value):
         self._key = key
         self._value = value
 
     def __repr__(self):
-        return r'Global({!r}, {!r})'.format(self.key, self.value)
+        return r'Attribute({!r}, {!r})'.format(self.key, self.value)
 
     @property
     def key(self):
