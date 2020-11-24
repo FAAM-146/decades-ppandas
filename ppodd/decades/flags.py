@@ -144,7 +144,7 @@ class DecadesClassicFlag(DecadesFlagABC):
 
         # If the variable we're flagging has a standard name, then we use that
         # along with status_flag. Otherwise just use status_flag
-        if getattr(self._var, 'standard_name', None):
+        if getattr(self._var.attrs, 'standard_name', None):
             _cfattrs['standard_name'] = '{} status_flag'.format(
                 self._var.standard_name
             )
