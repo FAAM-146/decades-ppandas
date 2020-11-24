@@ -16,8 +16,9 @@ from scipy.stats import mode
 import ppodd
 
 from .backends import DefaultBackend
-from .globals import GlobalsCollection
+from .attributes import AttributesCollection
 from .flags import DecadesClassicFlag
+from ..standard import faam_globals
 from ..utils import pd_freq, infer_freq
 
 
@@ -44,7 +45,8 @@ class DecadesVariable(object):
         _flag = kwargs.pop('flag', DecadesClassicFlag)
 
         self.attrs = {
-            '_FillValue': -9999
+            '_FillValue': -9999,
+            'units': 1
         }
 
         for _attr in self.NC_ATTRS:
@@ -122,7 +124,7 @@ class DecadesVariable(object):
             super().__setattr__(attr, value)
 
     def __str__(self):
-        return f'DecadesVariable[{self.name}]'
+        return self.name
 
     def __repr__(self):
         return r'<DecadesVariable[{!r}]>'.format(self.name)
@@ -217,7 +219,7 @@ class DecadesVariable(object):
 
 
 class DecadesDataset(object):
-    def __init__(self, date=None, backend=DefaultBackend):
+    def __init__(self, date=None, version=1.0, backend=DefaultBackend):
 
         self._date = date
         self.readers = []
@@ -227,7 +229,11 @@ class DecadesDataset(object):
         self._mod_exclusions = []
         self.pp_modules = []
         self.qa_modules = []
-        self.globals = GlobalsCollection(dataset=self)
+
+        self.globals = AttributesCollection(
+            dataset=self, definition=faam_globals['Globals'], version=version
+        )
+
         self._dataframes = {}
         self.lon = None
         self.lat = None
@@ -398,7 +404,7 @@ class DecadesDataset(object):
                 # add_data_global
                 values = [v.strip() for v in groups['value'].split()]
                 iter_vals = (values[0], values[1:])
-                self.globals.add_data_global(key, iter_vals)
+                self.globals.add_data_attribute(key, iter_vals)
                 return
 
         # Add the global
