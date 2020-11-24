@@ -26,7 +26,7 @@ Globals:
         inherits_from: null
         aliases:
             - flight_date
-         versions: [1.0]
+        versions: [1.0]
 
     flight_date:
         required: true
@@ -45,6 +45,17 @@ Globals:
             modification.) Metadata changes are not considered when assigning the date_created.
             The ISO 8601:2004 extended date format is recommended.
         inherits_from: ACDD13
+        aliases: []
+        versions: [1.0]
+
+    constants_file:
+        required: true
+        description: >-
+            An external file which provides and catalogs constants (calibration coefficients etc.)
+            which are used in the processing of the raw data, as well as specifying global attributes
+            and potentially adding or modifying variable attributes. The constants can also modify
+            which processing modules are run and which variables are output.
+        inherits_from: null
         aliases: []
         versions: [1.0]
 
