@@ -64,7 +64,7 @@ class FlightConstantsReader(FileReader):
 
             # Add a global indicating the flight constants file used
             _file.dataset.add_global(
-                'flight_constants', os.path.basename(_file.filepath)
+                'constants_file', os.path.basename(_file.filepath)
             )
 
             for mod_name, mod_content in consts['Constants'].items():
