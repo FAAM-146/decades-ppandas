@@ -167,8 +167,9 @@ class PPBase(abc.ABC):
             variable.trim(start_time, end_time)
 
         except ValueError:
-            variable.write = False
-            print('Warning: no good data: {}'.format(variable.name))
+            if not self.test_instance:
+                variable.write = False
+                print('Warning: no good data: {}'.format(variable.name))
 
         self.outputs[variable.name] = variable
 
