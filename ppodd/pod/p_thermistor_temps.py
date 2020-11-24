@@ -20,51 +20,54 @@ class ThermistorV1Temperatures(PPBase):
     when using this circuit, only one of the housings may host a thermistor
     type sensor.
 
-    \begin{itemize}
-    \item{Processes the NPL calibrations to produce a resistance to probe
-          temperature relationship. The NPL calibration is performed with two
-          different applied voltages so that self-heating can be calculated.
-          This allows the probe temperature to be inferred by adding the
-          calibration chamber temperature to the self-heating in order to
-          produce a useable probe temperature to resistance calibration.}
-    \item{Processes the NPL calibrations for a temperature to dissipation
-          constant relationship. The dissipation constant measured in the
-          calibration chamber for a given temperature is used later in the
-          removal of self-heating in flight.}
-    \item{Calculates the indicated temperature of the thermistor sensor by
-          applying the NPL calibration and the DECADES counts to voltage
-          calibration.}
-    \item{Calculates the dissipation constant at that indicated temperature
-          based on the calibration dissipation constant and the flight
-          dissipation multiplier (as described in FAAM013004A).}
-    \item{Calculates the in-flight self-heating for each measurement, based
-          on the voltage measurements and in-flight dissipation constants.}
-    \item{Produces an indicated temperature corrected for self-heating by
-          subtracting the self-heating from the temperature of the sensor.}
-    \end{itemize}
+    * Processes the NPL calibrations to produce a resistance to probe
+      temperature relationship. The NPL calibration is performed with two
+      different applied voltages so that self-heating can be calculated.
+      This allows the probe temperature to be inferred by adding the
+      calibration chamber temperature to the self-heating in order to
+      produce a useable probe temperature to resistance calibration.}
+    * Processes the NPL calibrations for a temperature to dissipation
+      constant relationship. The dissipation constant measured in the
+      calibration chamber for a given temperature is used later in the
+      removal of self-heating in flight.}
+    * Calculates the indicated temperature of the thermistor sensor by
+      applying the NPL calibration and the DECADES counts to voltage
+      calibration.
+    * Calculates the dissipation constant at that indicated temperature
+      based on the calibration dissipation constant and the flight
+      dissipation multiplier (as described in FAAM013004A).}
+    * Calculates the in-flight self-heating for each measurement, based
+      on the voltage measurements and in-flight dissipation constants.}
+    * Produces an indicated temperature corrected for self-heating by
+      subtracting the self-heating from the temperature of the sensor.}
 
     The deiced indicated temperature is subject to a heating correction term
     when the heater is active, given by
-    \[
-    \Delta T_{\text{IAT}} = \frac{1}{10}\exp{\left(\exp{\left(a +
-    \left(\log\left(M\right)+b\right)\left(c\left(q+P\right)+d\right)\right)
-    }\right),}
-    \]
-    where $M$ is the Mach number, $q$ is the dynamic pressure and $P$ the
-    static pressure. The parameters $a$, $b$, $c$, and $d$ are
-    $\left[1.171, 2.738, -0.000568, -0.452\right]$.
+
+    .. math::
+        \Delta T_{\text{IAT}} = \frac{1}{10}\exp{\left(\exp{\left(a +
+        \left(\log\left(M\right)+b\right)\left(c\left(q+P\right)+d\right)\right)
+        }\right),}
+
+    where :math:`M` is the Mach number, :math:`q` is the dynamic pressure and
+    :math:`P` the static pressure. The parameters :math:`a`, :math:`b`,
+    :math:`c`, and :math:`d` are
+
+    .. math::
+        \left[1.171, 2.738, -0.000568, -0.452\right].
 
     True air temperatures are a function of indicated temperatures, Mach number
     and housing recovery factor, and are given by
-    \[
-    T_\text{TAT} = \frac{T_\text{IAT}}{1 + \left(0.2 R_f M^2\right)},
-    \]
-    where $M$ is the Mach number and $R_f$ the recovery factor. Recovery
-    factors are currently considered constant, and are specified in the flight
-    constants parameters \texttt{RM\_RECFAC/DI} and \texttt{RM\_RECFAC/ND}.
 
-    A flag is applied to the data when the Mach number is out of range. Further
-    flags may be added by standalone flagging modules.
+    .. math::
+        T_\text{TAT} = \frac{T_\text{IAT}}{1 + \left(0.2 R_f M^2\right)},
+
+    where :math:`M` is the Mach number and :math:`R_f` the recovery factor.
+    Recovery factors are currently considered constant, and are specified in the
+    flight constants parameters ``RM_RECFAC/DI`` and ``RM\_RECFAC/ND``.
+
+    A flag is applied to the data when the Mach number is out of range. **Further
+    flags may be added by standalone flagging modules.**
     """
 
     inputs = [

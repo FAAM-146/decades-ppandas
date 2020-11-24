@@ -14,17 +14,18 @@ class S9Pressure(PPBase):
     r"""
     Calculate static pressure from the S9 fuselage ports. Static pressure is
     calulated by applying a polynomial transformation to the DLU signal. The
-    coefficients, specified in the flight constants parameter \texttt{CALS9SP},
+    coefficients, specified in the flight constants parameter ``CALS9SP``,
     combine both the DLU and pressure transducer calibrations. Additionally, a
     Mach dependent `position error' correction term is applied, aimed at
     accounting for the unknown position error associated with the S9 port,
     derived by minimising errors between the S9 and RVSM static pressure
     measurements. This correction is of the form
-    \[
-    \Delta P = \alpha M ^ \beta,
-    \]
-    with parameters $\alpha$ and $\beta$ specified in the flight constants
-    parameter \texttt{S9\_PE\_C}.
+
+    .. math::
+        \Delta P = \alpha M ^ \beta,
+
+    with parameters :math:`\alpha` and :math:`\beta` specified in the flight
+    constants parameter ``S9_PE_C``.
 
     Data are flagged when they are considered out of range.
     """

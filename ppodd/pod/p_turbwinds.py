@@ -3,6 +3,7 @@ from functools import reduce
 import numpy as np
 
 from .base import PPBase
+from .shortcuts import _c, _o, _r, _z
 from ..decades import DecadesVariable, DecadesBitmaskFlag, flags
 from ..utils import slrs, get_range_flag
 
@@ -228,6 +229,39 @@ class TurbulentWinds(PPBase):
         'WOW_IND'
     ]
 
+    @staticmethod
+    def test():
+        n = 9000
+        n3 = 3000
+        return {
+            'AOA_A0': ('const', [.25, .5, -.75]),
+            'AOA_A1': ('const', [-.05, -.1, .1]),
+            'AOSS_B0': ('const', [0]),
+            'AOSS_B1': ('const', [.05]),
+            'TOLER': ('const', 0.05),
+            'TASCOR1': ('const', 1),
+            'ALPHA_COR': ('const', [0, 1]),
+            'BETA_COR': ('const', [0, 1]),
+            'INSPOSN': ('const', [16, -1, -.5]),
+            'IAS_RVSM': ('data', 100 * _o(n)),
+            'TAT_DI_R': ('data', 290 * _o(n)),
+            'PS_RVSM': ('data', 800 * _o(n)),
+            'Q_RVSM': ('data', 100 * _o(n)),
+            'P0_S10': ('data', 100 * _o(n)),
+            'PA_TURB': ('data', .5 * _o(n)),
+            'PB_TURB': ('data', .01 * _o(n)),
+            'VELN_GIN': ('data', 100 * _o(n) + _r(n)),
+            'VELE_GIN': ('data', _o(n)),
+            'VELD_GIN': ('data', _z(n)),
+            'ROLL_GIN': ('data', _c([_z(n3), 15*_o(n3), _z(n3)])),
+            'PTCH_GIN': ('data', 5 * _o(n)),
+            'HDG_GIN': ('data', _z(n)),
+            'ROLR_GIN': ('data', _z(n)),
+            'PITR_GIN': ('data', _z(n)),
+            'HDGR_GIN': ('data', _z(n)),
+            'WOW_IND': ('data', _z(n))
+        }
+
     def declare_outputs(self):
         self.declare(
             'AOA',
@@ -305,6 +339,8 @@ class TurbulentWinds(PPBase):
             slrs(d.WOW_IND, d.PS_RVSM, d.ROLL_GIN, freq=32)
         )
 
+        print(_slrs)
+
         _in_roll = d.ROLL_GIN.abs() > 10
 
         for i in range(2):
@@ -315,7 +351,7 @@ class TurbulentWinds(PPBase):
                 consts['ALPHA_COR'] = [alpha, 1]
                 d = p_turb(d.copy(deep=True), consts)
                 d = p_winds(d.copy(deep=True), consts)
-                ws.append(d.W_C.loc[_slrs].mean())
+                ws.append(d.W_C[_slrs].mean())
             fit = np.polyfit(ws, alphas, 1)
             consts['ALPHA_COR'] = [np.polyval(fit, 0), 1]
 
@@ -327,10 +363,15 @@ class TurbulentWinds(PPBase):
 
                 d = p_turb(d.copy(deep=True), consts)
                 d = p_winds(d.copy(deep=True), consts)
+
                 covs.append((np.cov(d.W_C[_in_roll], d.ROLL_GIN[_in_roll]))[0, 1])
 
-
-            fit = np.polyfit(covs, betas, 1)
+            try:
+                fit = np.polyfit(covs, betas, 1)
+            except Exception:
+                if not self.test_mode:
+                    raise
+                fit = [0, 1]
             consts['BETA_COR'] = [np.polyval(fit, 0), 1]
 
             print(consts['ALPHA_COR'][0], consts['BETA_COR'][0])

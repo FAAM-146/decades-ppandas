@@ -10,8 +10,8 @@ class CabinTemp(PPBase):
     r"""
     Derives cabin temperature from a sensor located on the right of the core
     console. A polynomial fit, with coefficients provided in the constants
-    variable \texttt{CALCABT}, converts DLU counts $\rightarrow$ raw 
-    $\rightarrow$ temperature.
+    variable ``CALCABT``, converts DLU counts :math:`\rightarrow` raw
+    :math:`\rightarrow` temperature.
     """
 
 

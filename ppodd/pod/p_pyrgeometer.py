@@ -53,34 +53,36 @@ def crg4(ampage, temperature):
 class KippZonenPyrgeometer(PPBase):
     r"""
     Calculation of longwave fluxes from the upward and downward facing
-    Kipp \& Zonen CR4 Pyrgeometers.
+    Kipp and Zonen CR4 Pyrgeometers.
 
-    The 0 - 32 mV output of the CR4 thermopile is mapped to a 4~-~20~mA signal
+    The 0 - 32 mV output of the CR4 thermopile is mapped to a 4 - 20 mA signal
     in the amp box, which carries sensor specific calibrations, corresponding
-    to a flux range of $-600$~-~200~Wm$^{-2}$. This is then converted to a
-    voltage using a 350 $\Omega$ resistor, with is recorded in the DLU, with 16
-    bits covering a $-10$ - $10$ V range. Similarly, the thermistor is placed
-    in parallel with a 100~k$\Omega$ linearising resistor, and 100~$\mu$A is
-    passed through the combination, with the resulting voltage measured at the
-    DLU.
+    to a flux range of :math:`-600` - :math:`200` Wm\ :math:`^{-2}`. This is then
+    converted to a voltage using a 350 :math:`\Omega` resistor, which is recorded
+    in the DLU, with 16 bits covering a :math:`-10` - :math:`10` V range.
+    Similarly, the thermistor is placed in parallel with a 100 k\ :math:`\Omega`
+    linearising resistor, and 100 :math:`\mu`\ A is passed through the
+    combination, with the resulting voltage measured at the DLU.
 
     This module first applies the inverse transformations to recover the amp
     box current and the thermistor resistance. The thermistor temperature is
     given by
-    \[
-    T = \left(\alpha + \left(\beta\log\left(R\right) +
-    \gamma\log\left(R\right)^3\right)\right)^{-1},
-    \]
-    where $R$ is the thermistor resistance and $\alpha$, $\beta$, and $\gamma$
-    are calibration coefficients supplied by the manufacturer. The longwave
-    flux, $L_D$, is then given by
-    \[
-    L_D = \beta(A - \alpha) - \gamma + \sigma T^4,
-    \]
-    where $\alpha = 4$, $\beta=50$, and $\gamma=600$ map the current from the
-    amp box, $A$, onto the specified range of flux values, $T$ is the
-    temperature recorded by the thermistor, and $\sigma$ is the
-    Stefan-Boltzmann constant.
+
+    .. math::
+        T = \left(\alpha + \left(\beta\log\left(R\right) +
+        \gamma\log\left(R\right)^3\right)\right)^{-1},
+
+    where :math:`R` is the thermistor resistance and :math:`\alpha`,
+    :math:`\beta`, and :math:`\gamma` are calibration coefficients supplied by
+    the manufacturer. The longwave flux, :math:`L_D`, is then given by
+
+    .. math::
+        L_D = \beta(A - \alpha) - \gamma + \sigma T^4,
+
+    where :math:`\alpha = 4`, :math:`\beta=50`, and :math:`\gamma=600` map the
+    current from the amp box, :math:`A`, onto the specified range of flux
+    values, :math:`T` is the temperature recorded by the thermistor, and
+    :math:`\sigma` is the Stefan-Boltzmann constant.
     """
 
     inputs = [

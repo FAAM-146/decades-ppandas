@@ -171,7 +171,8 @@ class WVSS2A(WVSS2, PPBase):
             'WVSS2A_utc_time_msec': ('data', _z(100)),
             'WVSS2A_serial_data':  (
                 'data', b'14500  990  35  12000 20000 260 72 50 50 1 1\n'
-            )
+            ),
+            'WOW_IND': ('data', _z(100))
         }
 
 
@@ -185,5 +186,6 @@ class WVSS2B(WVSS2, PPBase):
             'WVSS2B_utc_time_msec': ('data', _z(100)),
             'WVSS2B_serial_data':  (
                 'data', b'14500  990  35  12000 20000 260 72 50 50 1 1\n'
-            )
+            ),
+            'WOW_IND': ('data', _z(100))
         }

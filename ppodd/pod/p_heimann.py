@@ -14,12 +14,12 @@ class Heimann(PPBase):
     r"""
     Processing for the Heimann Radiometer. The Heimann outputs a voltage with a
     range of 0 - 10 V corresponding to an inferred brightness temperature of
-    $-50$ - $50$ $^\circ$C. This module simply applies a linear transformation
-    to the counts recorded on the DLU to convert counts $\rightarrow$ volts
-    $\rightarrow$ temperature. During a calibration, temperature from the black
-    body are reported. Parameters for the linear transformations are taken from
-    the flight constant parameters \texttt{HEIMCAL} for the Heimann and
-    \texttt{PRTCCAL} for the PRT on the black body.
+    :math:`-50` - :math:`50` :math:`^\circ\text{C}`. This module simply applies
+    a linear transformation to the counts recorded on the DLU to convert counts
+    :math:`\rightarrow` volts :math:`\rightarrow` temperature. During a
+    calibration, temperature from the black body are reported. Parameters for
+    the linear transformations are taken from the flight constant parameters
+    ``HEIMCAL`` for the Heimann and ``PRTCCAL`` for the PRT on the black body.
     """
 
     inputs = [

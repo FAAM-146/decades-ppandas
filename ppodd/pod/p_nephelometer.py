@@ -7,7 +7,8 @@ from .shortcuts import _z
 
 class Nephelometer(PPBase):
     r"""
-    The Nephelometer is u/s
+    The Nephelometer currently out of service. This module is currently
+    retained for possible future use.
     """
 
     inputs = [

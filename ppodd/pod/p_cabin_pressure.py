@@ -11,8 +11,8 @@ class CabinPressure(PPBase):
     r"""
     Derives cabin pressure from a pressure transducer located in the core
     console. A polynomial fit, with coefficients provided in the constants
-    variable \texttt{CALCABP}, converts DLU counts $\rightarrow$ transducer
-    voltage $\rightarrow$ pressure.
+    variable ``CALCABP``, converts DLU counts :math:`\rightarrow` transducer
+    voltage :math:`\rightarrow` pressure.
     """
 
     inputs = [

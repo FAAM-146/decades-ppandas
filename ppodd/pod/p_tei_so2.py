@@ -14,18 +14,20 @@ CAL_FLUSH_END = 5
 
 class TecoSO2(PPBase):
     r"""
-    Calculate SO$_2$ concentration from the TECO 43 instrument. The instrument
-    reports a nominal concentration and sensitivity, valve states V6
+    Calculate SO\ :math:`_2` concentration from the TECO 43 instrument. The
+    instrument reports a nominal concentration and sensitivity, valve states V6
     (indicating cylinder air) and V8 (indicating cabin air), and a status flag.
 
     Zeros are taken whenever the instrument in sampling cylinder or cabin air,
     and interploated back to 1 Hz, assuming a linear drift of the offsets
-    between zeros. SO$_2$ concentration is then given by
-    \[
-    \left[\text{SO}_2\right] = \frac{\left[\text{SO}_{2|\text{INS}}\right]}{S},
-    \]
-    where $\left[\text{SO}_{2|\text{INS}}\right]$ is the concentration reported
-    by the instrument, and $S$ is the sensitivity reported by the instrument.
+    between zeros. SO\ :math:`_2` concentration is then given by
+
+    .. math::
+        \left[\text{SO}_2\right] = \frac{\left[\text{SO}_{2|\text{INS}}\right] - Z}{S},
+
+    where :math:`\left[\text{SO}_{2|\text{INS}}\right]` is the concentration reported
+    by the instrument, :math:`Z` is the zero obtained from sampling cylinder or
+    cabin air, and :math:`S` is the sensitivity reported by the instrument.
 
     Flagging is based on valve states and the instrument status flag.
     """
@@ -104,14 +106,15 @@ class TecoSO2(PPBase):
 
         # The SO2 data sometimes produces duplicates in the TCP data stream,
         # ensure that the inputs are unique.
-        for var in self.inputs:
-            if 'WOW' in var:
-                continue
-            _df = self.dataset[var]._df
-            if _df.index.size != _df.index.unique().size:
-                self.dataset[var]._df = _df.groupby(_df.index).agg(
-                    {var: 'first'}
-                )
+        # This is now done in reading...
+        # for var in self.inputs:
+        #     if 'WOW' in var:
+        #         continue
+        #     _df = self.dataset[var]._df
+        #     if _df.index.size != _df.index.unique().size:
+        #         self.dataset[var]._df = _df.groupby(_df.index).agg(
+        #             {var: 'first'}
+        #         )
 
         self.get_dataframe()
 

@@ -15,17 +15,16 @@ class Gin(PPBase):
 
     The STATUS_GIN parameter gives the current solution status reported by the
     GIN. This is defined as
-    \begin{itemize}
-        \item 0: Full Nav. (user accuracies met)
-        \item 1: Fine Align (heading RMS < 15 deg)
-        \item 2: GC CHI 2 (alignment w/ GPS, RMS heading error > 15 deg)
-        \item 3: PC CHI 2 (alignment w/o GPS, RMS heading error > 15 deg)
-        \item 4: GC GHI 1 (alignment w/ GPS, RMS heading error > 45 deg)
-        \item 5: PC CHI 1 (alignment w/o GPS, RMS heading error > 45 deg)
-        \item 6: Course levelling active
-        \item 7: Initial solution assigned
-        \item 8: No solution
-    \end{itemize}
+
+    * 0: Full Nav. (user accuracies met)
+    * 1: Fine Align (heading RMS < 15 deg)
+    * 2: GC CHI 2 (alignment w/ GPS, RMS heading error > 15 deg)
+    * 3: PC CHI 2 (alignment w/o GPS, RMS heading error > 15 deg)
+    * 4: GC GHI 1 (alignment w/ GPS, RMS heading error > 45 deg)
+    * 5: PC CHI 1 (alignment w/o GPS, RMS heading error > 45 deg)
+    * 6: Course levelling active
+    * 7: Initial solution assigned
+    * 8: No solution
     """
 
     inputs = [

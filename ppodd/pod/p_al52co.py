@@ -22,11 +22,13 @@ class AL52CO(PPBase):
     changes, we assume that the sensitivity and zero drift linearly between
     calibrations, and interpolate across the step changes to produce smoother
     sensitivity and zero-offset curves. The CO concentration is then given by
-    $$
-    \text{CO} = \frac{c - z_i}{S_i},
-    $$
-    where $c$ is the count reported by ther instrument, $z_i$ is the linearly
-    interpolated zero and $S_i$ is the linearly interpolated sensitivity.
+
+    .. math::
+        \text{CO} = \frac{c - z_i}{S_i},
+
+    where :math:`c` is the count reported by ther instrument, :math:`z_i` is the
+    linearly interpolated zero and :math:`S_i` is the linearly interpolated
+    sensitivity.
 
     After a calibration, data continue to be flagged for 5 seconds, to allow
     for calibrations gasses to be flushed from the system. Where available, the

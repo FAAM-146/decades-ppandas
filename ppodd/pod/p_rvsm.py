@@ -17,32 +17,37 @@ class Rvsm(PPBase):
     r"""
     Calculate derived parameters from the aircraft's RVSM system. Pressure
     altitude and indicated air speed are obtained from the aircraft's ARINC-429
-    data bus, with a least significant bit resolution of 4 ft and $1/32$ kts
-    respectively.
+    data bus, with a least significant bit resolution of 4 ft and :math:`1/32`
+    kts respectively.
 
-    Static pressure, $P$, is obtained from the pressure altitude, $Z_p$, using
-    the ICAO standard atmosphere,
-    \[
-    P = P_0\left(\frac{T_0}{T_0 + L_0 \left(Z_p - h_0\right)}\right)^{\frac{g_0
-    M}{R L_0}},
-    \]
-    where $T_0=288.15$, $L_0=-0.0065$, $h_0=0$, $g_0=9.80655$, $M=0.0289644$,
-    $R=8.31432$, $P_0=1013.25$ below 11000 m, or
-    \[
-    P = P_1\exp\left(\frac{-g_0 M \left(Z_p - h_1\right)}{R T_1}\right),
-    \]
-    where $T_1=216.65$, $P_1=226.321$, $h_1=11000$, above 11000 m.
+    Static pressure, :math:`P`, is obtained from the pressure altitude,
+    :math:`Z_p`, using the ICAO standard atmosphere,
 
-    Pitot static pressure, $q$, is given as
-    \[
-    q = P \left(\frac{M^2}{5} + 1\right)^{\frac{7}{2}} - 1,
-    \]
+    .. math::
+        P = P_0\left(\frac{T_0}{T_0 + L_0 \left(Z_p - h_0\right)}\right)^{\frac{g_0
+        M}{R L_0}},
+
+    where :math:`T_0=288.15`, :math:`L_0=-0.0065`, :math:`h_0=0`,
+    :math:`g_0=9.80655`, :math:`M=0.0289644`, :math:`R=8.31432`,
+    :math:`P_0=1013.25` below 11000 m, or
+
+    .. math::
+        P = P_1\exp\left(\frac{-g_0 M \left(Z_p - h_1\right)}{R T_1}\right),
+
+    where :math:`T_1=216.65`, :math:`P_1=226.321`, :math:`h_1=11000`, above 11000 m.
+
+    Pitot static pressure, :math:`q`, is given as
+
+    .. math::
+        q = P \left(\frac{M^2}{5} + 1\right)^{\frac{7}{2}} - 1,
+
     with the Mach number, $M$, given by
-    \[
-    M = \frac{V_{IAS}}{V_0 \sqrt{\frac{P}{P_0}}},
-    \]
-    where $V_0 = 340.294$ and $P_0=1013.25$, and $V_{IAS}$ is the indicated air
-    speed.
+
+    .. math::
+        M = \frac{V_{IAS}}{V_0 \sqrt{\frac{P}{P_0}}},
+
+    where :math:`V_0 = 340.294` and :math:`P_0=1013.25`, and :math:`V_{IAS}` is
+    the indicated air speed.
 
     Data are flagged where either the pressure altitude or indicated air speed
     are considered out of range.

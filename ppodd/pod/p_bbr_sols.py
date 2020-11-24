@@ -9,14 +9,13 @@ class BBRSols(PPBase):
     linear calibration, using coefficients defined in the flight constants.
     Each radiometer provides a signal, a zero and a thermopile temperature.
 
-    Required calibration coefficients are \texttt{CALUP1S}, \texttt{CALUP2S},
-    \texttt{CALLP1S}, and \texttt{CALLP2S}. The forth character in each of
-    these identifies whether the calibration is for an (U)pper or (L)ower
-    radiometer, and the fifth and sixth characters indicate whether the
-    calibration is for position 1 (P1) or position 2 (P2). The first two
-    constants in each calibration array are $n_0$ and $n_1$ linear coefficents
-    for the sensitivity, while the second two are the linear coefficients for
-    the thermopile temperature.
+    Required calibration coefficients are ``CALUP1S``, ``CALUP2S``, ``CALLP1S``,
+    and ``CALLP2S``. The forth character in each of these identifies whether the
+    calibration is for an (U)pper or (L)ower radiometer, and the fifth and sixth
+    characters indicate whether the calibration is for position 1 (P1) or
+    position 2 (P2). The first two constants in each calibration array are
+    :math:`n_0` and :math:`n_1` linear coefficents for the sensitivity, while
+    the second two are the linear coefficients for the thermopile temperature.
     """
 
     inputs = [

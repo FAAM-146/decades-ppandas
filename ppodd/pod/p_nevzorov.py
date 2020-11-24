@@ -122,36 +122,39 @@ def get_fitted_k(col_p, ref_p, ias, ps, no_cloud_mask, k):
 class Nevzorov(PPBase):
     r"""
     Post processing for liquid and total water from the Nevzorov Vane. Works
-    with both \texttt{1T1L2R} and \texttt{1T2L1R} vanes, which should be
-    specified in the flight constants as \texttt{VANETYPE}.
+    with both ``1T1L2R`` and ``1T2L1R`` vanes, which should be specified in
+    the flight constants as ``VANETYPE``.
 
     The Nevzorov hot-wire probe measures total and liquid water content by
     recording the powers required to hold exposed and sheltered wires at a
     constant temperature.
 
-    The water content, $W$, measured by a collector is given by
-    \[
-    W = \frac{P_c - K P_r}{V_t A L},
-    \]
-    where $P_c$ is the collector power, $P_r$ is the reference power, $K$ is
-    the baseline, the ratio of $P_c$ and $P_r$ in clear air, $V_t$ is the true
-    air speed, $A$ is the forward-facing area of the collector, and $L$ is the
-    energy required to melt and then evaporate the water impacted on the
-    sensor, specified in the flight constants as \texttt{CALNVL}.
+    The water content, :math:`W`, measured by a collector is given by
 
-    The baseline, $K$, is not a true constant, but varies with the ambient
-    conditions. Abel et al. (2014) parameterise $K$ as a function of indicated
-    air speed, $V_\text{IAS}$ and ambient pressure, $P$,
-    \[
-    K = \alpha_\text{IAS}\frac{1}{V_\text{IAS}} + \alpha_P\log_{10}(P).
-    \]
+    .. math::
+        W = \frac{P_c - K P_r}{V_t A L},
+
+    where :math:`P_c` is the collector power, :math:`P_r` is the reference
+    power, :math:`K` is the baseline, the ratio of :math:`P_c` and :math:`P_r`
+    in clear air, :math:`V_t` is the true air speed, :math:`A` is the
+    forward-facing area of the collector, and :math:`L` is the energy required
+    to melt and then evaporate the water impacted on the sensor, specified in
+    the flight constants as ``CALNVL``.
+
+    The baseline, :math:`K`, is not a true constant, but varies with the ambient
+    conditions. Abel et al. (2014) parameterise :math:`K` as a function of
+    indicated air speed, :math:`V_\text{IAS}` and ambient pressure, :math:`P`,
+
+    .. math::
+        K = \alpha_\text{IAS}\frac{1}{V_\text{IAS}} + \alpha_P\log_{10}(P).
+
     If, for any reason, the fitting above fails, then only the uncorrected
-    outputs, using a constant $K$ specified in the flight constants, are
+    outputs, using a constant :math:`K` specified in the flight constants, are
     written to file.
 
-    The outputs listed here are for the new \texttt{1T2L1R} vane type. If an
-    old \texttt{1T1L2R} vane is flown, the outputs \texttt{\_LWC1\_} and
-    \texttt{\_LWC2\_} will be replaced by \texttt{\_LWC\_}.
+    The outputs listed here are for the new ``1T2L1R`` vane type. If an
+    old ``1T1L2R`` vane is flown, the outputs ``_LWC1_`` and ``_LWC2_`` will be
+    replaced by ``_LWC_``.
     """
 
     TEST_SETUP = {'VANETYPE': 'all'}

@@ -16,31 +16,36 @@ class PRTTemperatures(PPBase):
     non-deiced Rosemount housings, when fitted with platinum resistance
     thermometer sensors. Indicated temperatures are calculated with a
     polynomial transformation of the DLU signal, using calibration factors in
-    constants variables \texttt{CALDIT} and \texttt{CALNDT}, which incorporates
+    constants variables ``CALDIT`` and ``CALNDT``, which incorporates
     the DLU and sensor calibrations.
 
     The deiced indicated temperature is subject to a heating correction term
     when the heater is active, given by
-    \[
-    \Delta T_{\text{IAT}} = \frac{1}{10}\exp{\left(\exp{\left(a +
-    \left(\log\left(M\right)+b\right)\left(c\left(q+P\right)+d\right)\right)
-    }\right),}
-    \]
-    where $M$ is the Mach number, $q$ is the dynamic pressure and $P$ the
-    static pressure. The parameters $a$, $b$, $c$, and $d$ are
-    $\left[1.171, 2.738, -0.000568, -0.452\right]$.
+
+    .. math::
+        \Delta T_{\text{IAT}} = \frac{1}{10}\exp{\left(\exp{\left(a +
+        \left(\log\left(M\right)+b\right)\left(c\left(q+P\right)+d\right)\right)
+        }\right),}
+
+    where :math:`M` is the Mach number, :math:`q` is the dynamic pressure and
+    :math:`P` the static pressure. The parameters :math:`a`, :math:`b`,
+    :math:`c`, and :math:`s` are
+
+    .. math::
+        \left[1.171, 2.738, -0.000568, -0.452\right].
 
     True air temperatures are a function of indicated temperatures, Mach number
     and housing recovery factor, and are given by
-    \[
-    T_\text{TAT} = \frac{T_\text{IAT}}{1 + \left(0.2 R_f M^2\right)},
-    \]
-    where $M$ is the Mach number and $R_f$ the recovery factor. Recovery
-    factors are currently considered constant, and are specified in the flight
-    constants parameters \texttt{RM\_RECFAC/DI} and \texttt{RM\_RECFAC/ND}.
 
-    A flag is applied to the data when the Mach number is out of range. Further
-    flags may be added by standalone flagging modules.
+    .. math::
+        T_\text{TAT} = \frac{T_\text{IAT}}{1 + \left(0.2 R_f M^2\right)},
+
+    where :math:`M` is the Mach number and :math:`R_f` the recovery factor.
+    Recovery factors are currently considered constant, and are specified in the
+    flight constants parameters ``RM_RECFAC/DI`` and ``RM_RECFAC/ND``.
+
+    A flag is applied to the data when the Mach number is out of range. **Further
+    flags may be added by standalone flagging modules**.
     """
 
     inputs = [

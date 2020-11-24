@@ -12,9 +12,9 @@ FLAG_AFTER_TO = 20
 
 class TeiOzone(PPBase):
     r"""
-    Provides ozone concentration from the TE49C O$_3$ analyser. Ozone data are
-    taken as-is from the instrument; this module provides flagging information
-    based on threshold values and instrument status flags.
+    Provides ozone concentration from the TE49C O\ :math:`_3` analyser. Ozone
+    data are taken as-is from the instrument; this module provides flagging
+    information based on threshold values and instrument status flags.
     """
 
     inputs = [

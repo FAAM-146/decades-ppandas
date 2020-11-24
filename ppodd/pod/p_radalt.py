@@ -16,7 +16,7 @@ class RadAlt(PPBase):
     is read from the aircraft ARINC-429 data bus at the rear core console, at
     a frequency of 2 Hz. The signal is received as a 16 bit signed int, with a
     least significant bit resolution of 0.25 ft, giving a max valid value of
-    $(((2^{16} / 2) - 1) / 4)$.
+    :math:`(((2^{16} / 2) - 1) / 4)`.
 
     Data are flagged when outside a slightly narrower range than the range of
     the 16 bit signal.

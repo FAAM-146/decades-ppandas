@@ -29,58 +29,66 @@ class BBRFlux(PPBase):
 
     The thermistors in the pyranometers have a characteristic non-linear
     temperature dependence due to the manufacturing process. If not corrected
-    for, this can lead to errors in temperature of up to 1 $^\circ$C. A quintic
-    equation has been fitted to the manufacturer provided corrections for a
-    range of temperatures, providing a correction between $-50$ $^\circ$C and
-    $40$ $^\circ$C to within $\pm0.07$~$^\circ$C.
-    \[
-    T_c = T + \left(\alpha_0 + T\left(\alpha_1 + T\left(\alpha_2 +
-    T\left(\alpha_3 + T\left(\alpha_4 +
-    T\alpha_5\right)\right)\right)\right)\right).
-    \]
-    The polynomial coefficents $\alpha_0\ldots\alpha_5$ are hard-coded, and
-    take the values $\left[-0.774, 6.08\times10^{-2}, 2.47\times10^{-3},
-    -6.29\times10^{-5}, -8.78\times10^{-7}, 1.37\times10^{-8}\right]$.
+    for, this can lead to errors in temperature of up to 1 :math:`^\circ\text{C}`.
+    A quintic equation has been fitted to the manufacturer provided corrections
+    for a range of temperatures, providing a correction between
+    :math:`-50 ^\circ` C and :math:`40 ^\circ` C to within
+    :math:`\pm0.07` :math:`^\circ` C.
 
-    The flux for each dome, $F_d$, is calculated by subtracting a 10 second
+    .. math::
+        T_c = T + \left(\alpha_0 + T\left(\alpha_1 + T\left(\alpha_2 +
+        T\left(\alpha_3 + T\left(\alpha_4 +
+        T\alpha_5\right)\right)\right)\right)\right).
+
+    The polynomial coefficents :math:`\alpha_0\ldots\alpha_5` are hard-coded, and
+    take the values
+
+    .. math::
+        \left[-0.774, 6.08\times10^{-2}, 2.47\times10^{-3},
+        -6.29\times10^{-5}, -8.78\times10^{-7}, 1.37\times10^{-8}\right].
+
+    The flux for each dome, :math:`F_d`, is calculated by subtracting a 10 second
     running mean of the zero from the signal. The flux is then corrected for
     temperature sensitivity using
-    \[
-    F_{d_c} = \frac{F_d}{1 + T_c\left(\gamma_1 + T_c\left(\gamma_2 +
-    T_c\gamma_3\right)\right)},
-    \]
-    where $T_c$ is the corrected dome thermistor temperature, and $\gamma_n$
-    are the first $n$ values in the dome constants array.
 
-    A threshold value, $F_{\text{crit}} = 920\cos(\zeta)^{1.28}$, is used to
-    determine whether the dome is in direct or diffuse radiation, with fluxes
-    above $F_{\text{crit}}$ (or $F_{\text{crit}} / 2$ for red domes) assumed to
-    indicate direct radiation. This expression for $F_{\text{crit}}$
-    approximates the `German' equation (ref?) but is simpler and remains
-    positive at low sun elevations. If the flux is determined to be direct,
-    then the upper radiometers are corrected for the pitch and roll of the
-    aircraft (Ref: M/MRF/13/5):
-    \[
-    F = \frac{F_{d_c}}{1 -f_r(\zeta)\left(1-c(\zeta)\frac{\cos\beta}{\cos\zeta}
-    \right)}.
-    \]
-    Here, $f_r(\zeta)$ is the ratio of of direct:direct+diffuse radiation,
-    currently assumed to be 0.95 for all solar zenith angles, $c(\zeta)$ is a
-    correction term for the cosine effect (Ref: Tech note 8, table 4). The
-    angle between the solar zenith and normal-to-instrument, $\beta$, is
-    given by
-    \begin{align*}
-    \cos\beta &= \sin\phi\sin\zeta\sin\psi \\
-              &+ \cos\phi\cos\theta\cos\zeta \\
-              &- \cos\phi\sin\theta\sin\zeta\cos\psi,
-    \end{align*}
-    where $\phi$ is the aircraft roll, $\zeta$ is the solar zenith angle, $\psi$
-    is the `sun heading', the difference between the solar azimuth angle and
-    the aircraft heading, and $\theta$ is the aircraft pitch angle. Ref: Tech.
-    note 7, page 10. Prior to this correction, platform relative pitch and roll
-    offsets, determined through flying clear sky box patterns, are added to the
-    instrument-derived pitch and roll. These are given as elements 4 and 5 in
-    the flight constants for each dome.
+    .. math::
+        F_{d_c} = \frac{F_d}{1 + T_c\left(\gamma_1 + T_c\left(\gamma_2 +
+        T_c\gamma_3\right)\right)},
+
+    where :math:`T_c` is the corrected dome thermistor temperature, and
+    :math:`\gamma_n` are the first :math:`n` values in the dome constants array.
+
+    A threshold value, :math:`F_{\text{crit}} = 920\cos(\zeta)^{1.28}`, is used
+    to determine whether the dome is in direct or diffuse radiation, with fluxes
+    above :math:`F_{\text{crit}}` (or :math:`F_{\text{crit}} / 2` for red domes)
+    assumed to indicate direct radiation. This expression for
+    :math:`F_{\text{crit}}` approximates the 'German' equation (ref?) but is
+    simpler and remains positive at low sun elevations. If the flux is
+    determined to be direct, then the upper radiometers are corrected for the
+    pitch and roll of the aircraft (Ref: M/MRF/13/5):
+
+    .. math::
+        F = \frac{F_{d_c}}{1 -f_r(\zeta)\left(1-c(\zeta)\frac{\cos\beta}{\cos\zeta}
+        \right)}.
+
+    Here, :math:`f_r(\zeta)` is the ratio of of direct:direct+diffuse radiation,
+    currently assumed to be ``0.95`` for all solar zenith angles,
+    :math:`c(\zeta)` is a correction term for the cosine effect (Ref: Tech note
+    8, table 4). The angle between the solar zenith and normal-to-instrument,
+    :math:`\beta`, is given by
+
+    .. math::
+        \cos\beta &= \sin\phi\sin\zeta\sin\psi \\
+                  &+ \cos\phi\cos\theta\cos\zeta \\
+                  &- \cos\phi\sin\theta\sin\zeta\cos\psi,
+
+    where :math:`\phi` is the aircraft roll, :math:`\zeta` is the solar zenith
+    angle, :math:`\psi` is the 'sun heading', the difference between the solar
+    azimuth angle and the aircraft heading, and :math:`\theta` is the aircraft
+    pitch angle. Ref: Tech. note 7, page 10. Prior to this correction, platform
+    relative pitch and roll offsets, determined through flying clear sky box
+    patterns, are added to the instrument-derived pitch and roll. These are
+    given as elements 4 and 5 in the flight constants for each dome.
     """
 
     inputs = [
@@ -317,7 +325,7 @@ class BBRFlux(PPBase):
                     'low sun angle',
                     ('The sun is low relative to the axis of the aircraft, '
                      'exceeding the maximum allowed limit of '
-                     f'{SUN_ANGLE_MAX/deg2rad} degrees.')
+                     f'{SUN_ANGLE_MAX} degrees.')
                 )
 
                 # Flag when out of range
@@ -335,7 +343,7 @@ class BBRFlux(PPBase):
                     (d[_flux] < flux_limit_lo) | (d[_flux] > flux_limit_hi),
                     'flux out of range',
                     ('The calculated is outside of the specified allowable '
-                     f'flux range [{flux_limit_lo}, {flux_limit_hi}] W/m$^2$')
+                     f'flux range [{flux_limit_lo}, {flux_limit_hi}] W/m2')
                 )
 
                 self.add_output(output)

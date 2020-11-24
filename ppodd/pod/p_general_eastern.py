@@ -14,11 +14,11 @@ class GeneralEastern(PPBase):
     Processing module to calculate Dew Point temperature from the General
     Eastern 1011B chilled mirror hygrometer. Counts from the core console are
     converted to dew point with a polynomial fit, using coefficients provided
-    in the flight constants paramater \texttt{CALGE}. The General Eastern
+    in the flight constants paramater ``CALGE``. The General Eastern
     provides a control signal voltage to indicate whether the instrument is
     controlling on a due point, and the data are flagged when outside this
     range. The valid range is provided through the flight constants parameter
-    \texttt{GELIMS}.
+    ``GELIMS``.
     """
 
     inputs = [

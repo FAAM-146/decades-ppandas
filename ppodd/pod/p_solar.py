@@ -11,7 +11,7 @@ from .shortcuts import _o, _z
 class SolarAngles(PPBase):
     r"""
     Calculates solar azimuth and zenith angles at the aircraft location. Uses
-    the third party python module \texttt{pysolar}.
+    the third party python module ``pysolar``.
     """
 
     inputs = [

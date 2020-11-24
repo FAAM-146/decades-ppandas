@@ -18,7 +18,7 @@ class CPC(PPBase):
     r"""
     Reports particle counts from the TSI 3786 condensation particle counter.
     Counts are reported as-is from the instrument; this module only provides
-    flagging information. 
+    flagging information.
     """
 
     inputs = [

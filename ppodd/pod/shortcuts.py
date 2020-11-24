@@ -3,4 +3,6 @@ from numpy import (
     linspace as _l
 )
 
-__all__ = ('_a', '_c', '_o', '_z', '_l')
+from numpy.random import random as _r
+
+__all__ = ('_a', '_c', '_o', '_z', '_l', '_r')

@@ -11,24 +11,24 @@ FLOW_VALID_MIN = 1
 class PSAP(PPBase):
     r"""
     Reports data from the Radiance Research Particle Soot Absorbtion
-    Photometer.
-    The following transformations are applied to the data from the aerosol rack
-    DLU:
-    \[
-    F = \frac{F_\text{DLU}}{2},
-    \]
-    \[
-    P_\text{lin} = \frac{P_{\text{lin}_\text{DLU}}}{2\times10^{5}},
-    \]
-    \[
-    P_\text{log} = 10^{(P_{\text{log}_\text{DLU}} / 2) - 7},
-    \]
-    \[
-    T = \frac{T_\text{DLU}}{8},
-    \]
-    where $P_\text{lin}$, $P_\text{log}$, $F$, and $T$ correspond to the
-    outputs \texttt{PSAP\_LIN}, \texttt{PSAP\_LOG}, \texttt{PSAP\_FLO}, and
-    \texttt{PSAP\_TRA} respectively.
+    Photometer.  The following transformations are applied to the data
+    from the aerosol rack DLU:
+
+    .. math::
+        F = \frac{F_\text{DLU}}{2},
+
+    .. math::
+        P_\text{lin} = \frac{P_{\text{lin}_\text{DLU}}}{2\times10^{5}},
+
+    .. math::
+        P_\text{log} = 10^{(P_{\text{log}_\text{DLU}} / 2) - 7},
+
+    .. math::
+        T = \frac{T_\text{DLU}}{8},
+
+    where :math:`P_\text{lin}`, :math:`P_\text{log}`, :math:`F`, and :math:`T`
+    correspond to the outputs ``PSAP_LIN``, ``PSAP_LOG``, ``PSAP_FLO``, and
+    ``PSAP_TRA`` respectively.
 
     Flagging is based on the flow rate and transmittance ratio limits.
     """

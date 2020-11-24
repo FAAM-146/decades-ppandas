@@ -8,27 +8,33 @@ from .shortcuts import _l, _o
 
 class AirSpeed(PPBase):
     r"""
-    Calculates aircraft indicated and true air speeds. Mach number, $M$, is
-    calculated from static and dynamic pressures (here $p$ and $q$, derived
-    as \texttt{PS\_RVSM} and \texttt{Q\_RVSM}, in processing module p\_rvsm.py)
-    using the standard calculation sp\_mach defined in ppodd.utils.calcs:
-    $$
-    M = \sqrt{5\left(1 + \frac{q}{p}\right)^{2/7} - 1}
-    $$
+    Calculates aircraft indicated and true air speeds. Mach number, :math:`M`,
+    is calculated from static and dynamic pressures (here :math:`p` and
+    :math:`q`, derived as ``PS_RVSM`` and ``Q_RVSM``, in processing
+    module ``p_rvsm.py``) using the standard calculation ``sp_mach`` defined in
+    ppodd.utils.calcs:
+
+    .. math::
+        M = \sqrt{5\left(1 + \frac{q}{p}\right)^{2/7} - 1}
+
     Indicated airspeed is then given as
-    $$
-    \text{IAS} = V_s M \sqrt{\frac{p}{P_\text{std}}},
-    $$
-    where $V_s$ is the speed of sound at standard temperature and pressure, and
-    $P_{std}$ is the surface pressure in the ICAO standard atmosphere.
+
+    .. math::
+        \text{IAS} = V_s M \sqrt{\frac{p}{P_\text{std}}},
+
+    where :math:`V_s` is the speed of sound at standard temperature and
+    pressure, and :math:`P_{std}` is the surface pressure in the ICAO standard
+    atmosphere.
 
     True airspeed is given as
-    $$
-    \text{TAS} = T_c V_s M \sqrt{\frac{T_\text{di}}{T_\text{std}}},
-    $$
-    where $T_c$ is a TAS correction term, defined in the flight constants,
-    $T_\text{di}$ is the temperature from the de-iced temperature sensor, and
-    $T_\text{std}$ is the surface temperature in the ICAO standard atmosphere.
+
+    .. math::
+        \text{TAS} = T_c V_s M \sqrt{\frac{T_\text{di}}{T_\text{std}}},
+
+    where :math:`T_c` is a TAS correction term, defined in the flight constants,
+    :math:`T_\text{di}` is the temperature from the de-iced temperature sensor,
+    and :math:`T_\text{std}` is the surface temperature in the ICAO standard
+    atmosphere.
     """
 
     inputs = [
