@@ -1,0 +1,101 @@
+VariableAttrs:
+    long_name: 
+        required: true
+        description: >-
+            A long descriptive name of the variable.
+        inherits_from: null  # NUG? It's specified by unidata...
+        aliases: []
+        versions: [1.0]
+
+    standard_name:
+        required: false
+        description: >-
+            A standard name from the list of CF (Climate and Forecast) standard names vocabulary
+        inherits_from: CF16
+        alaises: []
+        versions: [1.0]
+
+    units:
+        required: true
+        description: >-
+            The physical units of the variable, which should be interpretable by the UDUNITS
+            library. If the variable has a standard_name, then the units must be equivalent
+            to the canonical units of that standard_name. If the variable has no physical units,
+            then the units attribute takes the value 1.
+        inherits_from: null  # NUG...?
+        aliases: []
+        versions: [1.0]
+
+    _FillValue:
+        required: true
+        description: >-
+            Technically the _FillValue attribute is the value used to pre-fill disk space assigned
+            to a variable. Practically, _FillValue is used to indicate missing data. The default
+            _FillValue for core data is -9999, however this can, if required, be set on a
+            variable-by-variable basis.
+        inherits_from: null  # Again NUG? Unidata? Essentially integral to the API
+        aliases: []
+        versions: [1.0]
+
+    coordinates:
+        required: false
+        description: >-
+            Auxillary coordinates for variables are variables which contain coordinate data,
+            but which are not themselves coordinate variables (FAAM core data do not
+            include any non-temporal coordinate variables). When the coordinates attribute
+            is given, it should be a blank separated string naming the longitute, latitude and
+            altitude of (one of) the aircraft GPS solution(s). It is not required by the standard
+            to allow for the unlikely case where there is no GPS solution available.
+        inherits_from: CF16
+        aliases: []
+        versions: [1.0]
+
+    frequency:
+        required: true
+        description: >-
+            The frequency of the variable after processing, in Hz. In a 'full' resolution file,
+            the frequency will correspond to the numeric part of the second dimension, e.g. a
+            variable with a frequency of 32 will have sps32 as a second dimension. In a fixed
+            resolution file, the frequency will always correspond to the fixed frequency.
+        inherits_from: null
+        aliases: []
+        versions: [1.0]
+
+    sensor_serial:
+        required: false
+        description: >-
+            The serial number of the sensor responsible for making this measurement. A sensor is
+            a single, calibratable unit.
+        inherits_from: null
+        aliases: []
+        versions: [1.0]
+
+    sensor_type:
+        required: false
+        description: >-
+            The type of the sensor responsible for making a measurement, where more than one type
+            of sensor may make the same measurement. A canonical example of this is for temperature
+            sensors, which may be of type 'plate', 'loom', or 'thermistor'.
+        inherits_from: null
+        aliases: []
+        versions: [1.0]
+
+    instrument_serial:
+        required: false
+        description: >-
+            The serial number of the instrument responsible for making a measurement. Use in
+            preference to sensor_serial when the instrument is not a simple sensor.
+        inherits_from: null
+        aliases: []
+        versions: [1.0]
+
+    ancillary_variables:
+        required: false
+        description: >-
+            When one data variable provides metadata about the individual values of another data
+            variable it may be desirable to express this association by providing a link between
+            the variables. All non flag variables should have at least one ancillary variable, 
+            that of their flag, which should be named <variable_name>_FLAG.
+        inherits_from: CF16
+        aliases: []
+        versions: [1.0]
