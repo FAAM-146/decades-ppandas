@@ -102,10 +102,9 @@ def get_module_vardoc(m):
         return output
 
     for out_var in m.dataset.outputs:
-        output += (
-            f'* **{out_var.name}** - {out_var.long_name} (``{out_var.units}``) '
-            f'at {out_var.frequency} Hz\n'
-        )
+        output += f'* ``{out_var.name}``\n'
+        for attr in out_var.attrs().items():
+            output += f'    * ``{attr[0]}``: {attr[1]}\n'
 
     output += '\n'
     return output
@@ -149,7 +148,7 @@ def get_module_flagdoc(m):
     elif type(m.dataset[var].flag) is DecadesClassicFlag:
         output += '\n'
         for var in m.dataset.outputs:
-            output += f'* {var.name}\n'
+            output += f'* {var.name}_FLAG\n'
             meanings = m.dataset[var.name].flag.cfattrs['flag_meanings'].split()
             values = m.dataset[var.name].flag.cfattrs['flag_values']
             for value, meaning in zip(values, meanings):
