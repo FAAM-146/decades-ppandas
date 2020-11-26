@@ -172,12 +172,13 @@ class NetCDFWriter(DecadesWriter):
         # Write variable attributes, excluding _FillValue, which must be given
         # when the variable is created, and frequency, which is set as the
         # write frequency, if given
-        for attr_key, attr_val in var.attrs.items():
-            if attr_key is '_FillValue' or attr_val is None:
+        for attr_key, attr_val in var.attrs().items():
+            if attr_key == '_FillValue' or attr_val is None:
                 continue
-            if attr_key is 'frequency' and self.write_freq is not None:
+            if attr_key == 'frequency' and self.write_freq is not None:
                 setattr(ncvar, attr_key, self.write_freq)
                 continue
+            print(attr_key, attr_val)
             setattr(ncvar, attr_key, attr_val)
 
         # Set coordinates attribute on variables, if they've been specified
