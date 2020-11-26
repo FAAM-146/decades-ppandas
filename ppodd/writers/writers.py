@@ -178,7 +178,6 @@ class NetCDFWriter(DecadesWriter):
             if attr_key == 'frequency' and self.write_freq is not None:
                 setattr(ncvar, attr_key, self.write_freq)
                 continue
-            print(attr_key, attr_val)
             setattr(ncvar, attr_key, attr_val)
 
         # Set coordinates attribute on variables, if they've been specified
