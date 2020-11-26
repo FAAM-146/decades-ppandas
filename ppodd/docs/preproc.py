@@ -2,7 +2,7 @@ import os
 import shutil
 import sys
 
-from ppodd.standard import faam_globals
+from ppodd.standard import faam_globals, faam_attrs
 from ppodd.pod import pp_modules
 from ppodd.decades.flags import (DecadesBitmaskFlag, DecadesClassicFlag)
 
@@ -14,7 +14,6 @@ core_base = os.path.join(BASE_DIR, 'coredata_base.rst')
 modules_base = os.path.join(BASE_DIR, 'modules_base.rst')
 core = os.path.join(DYN_DIR, 'coredata.rst')
 modules = os.path.join(DYN_DIR, 'modules.rst')
-
 
 shutil.copy2(core_base, core)
 shutil.copy2(modules_base, modules)
@@ -60,6 +59,20 @@ def get_global_attrs_string(required=True):
         globals_str += f' **Versions**: {versions}\n'
     return globals_str
 
+def get_variable_attrs_string(required=True):
+    filtered_attrs = sorted(
+        [i for i in faam_attrs['VariableAttrs'].items() if
+        i[1]['required'] == required], key=lambda x: x[0]
+    )
+
+    attrs_str = ''
+    for attr, details in filtered_attrs:
+        versions = ', '.join([f'{i:0.1f}' for i in details['versions']])
+        attrs_str += f'* **{attr}** - {details["description"]}'
+        attrs_str += f' **Versions**: {versions}\n'
+    return attrs_str
+
+
 def get_module_doc(module):
     m = module.test_instance()
     m.process()
@@ -68,7 +81,8 @@ def get_module_doc(module):
     if _doc is None:
         _doc = 'No module documentation has been provided'
 
-    txt = '-' * len(module.__name__) + '\n'
+    txt = '.. _{}:\n\n'.format(module.__name__)
+    txt += '-' * len(module.__name__) + '\n'
     txt += f'{module.__name__}\n'
     txt += '-' * len(module.__name__) + '\n\n'
     txt += trim_docstr(_doc.strip()) + '\n'
@@ -146,7 +160,76 @@ def get_module_flagdoc(m):
 
     return output
 
+def get_variables_tex(default=True):
+    mods = [i.test_instance() for i in pp_modules]
+    output = '.. csv-table:: Default Variables\n'
+    output += '    :header: "Name", "Long Name", "Processing Module"\n'
+    output += '    :widths: 30, 40, 30\n\n'
+    _vars = []
+    for m in mods:
+        for name, dec in m.declarations.items():
+            long_name = dec['long_name']
+            mod_link = ':ref:`{0}`'.format(m.__class__.__name__)
+            if default:
+                if 'write' not in dec.keys() or dec['write']:
+                    _vars.append((name, long_name, mod_link))
+            else:
+                if 'write' in dec.keys() and not dec['write']:
+                    _vars.append((name, long_name, mod_link))
 
+    for var in sorted(_vars, key=lambda x: x[0]):
+        output += f'    "{var[0]}", "{var[1]}", "{var[2]}"\n'
+    return output
+
+def get_dimensions():
+    mods = [i.test_instance() for i in pp_modules]
+    dimstr = ''
+    _dims = set()
+    for m in mods:
+        for name, dec in m.declarations.items():
+            _freq = dec['frequency']
+            if _freq == 1:
+                continue
+            _dims.add((f'sps{_freq:02d}', _freq))
+
+    _dims = sorted(list(_dims))
+    for dim in _dims:
+        dimstr += (f'* ``{dim[0]}`` - {dim[1]} samples per second. '
+                   f'A dimension of length {dim[1]}.\n')
+
+    return dimstr
+
+def get_variables_web(default=True):
+    mods = [i.test_instance() for i in pp_modules]
+    output = '.. csv-table:: Default Variables\n'
+    output += '    :header: "Name", "Long Name", "Standard Name", "Processing Module"\n'
+    output += '    :widths: 15, 40, 15, 30\n\n'
+    _vars = []
+    for m in mods:
+        for name, dec in m.declarations.items():
+            long_name = dec['long_name']
+            mod_link = ':ref:`{0}`'.format(m.__class__.__name__)
+            try:
+                standard_name = dec['standard_name']
+            except KeyError:
+                standard_name = ''
+            if standard_name is None:
+                standard_name = ''
+            if default:
+                if 'write' not in dec.keys() or dec['write']:
+                    _vars.append((name, long_name, standard_name, mod_link))
+            else:
+                if 'write' in dec.keys() and not dec['write']:
+                    _vars.append((name, long_name, standard_name, mod_link))
+
+    for var in sorted(_vars, key=lambda x: x[0]):
+        output += f'    "{var[0]}", "{var[1]}", "{var[2]}", "{var[3]}"\n'
+    return output
+
+if 'latex' in sys.argv[1]:
+    get_variables = get_variables_tex
+else:
+    get_variables = get_variables_web
 
 
 def replace_tag(path, tag, content):
@@ -167,6 +250,18 @@ replace_tag(
     core, 'TAG_OPTIONAL_GLOBAL_ATTRIBUTES', get_global_attrs_string(False)
 )
 
+replace_tag(
+    core, 'TAG_REQUIRED_VARIABLE_ATTRIBUTES', get_variable_attrs_string()
+)
+
+replace_tag(
+    core, 'TAG_OPTIONAL_VARIABLE_ATTRIBUTES', get_variable_attrs_string(False)
+)
+
+replace_tag(core, 'TAG_SPS_DIMENSIONS', get_dimensions())
+
+replace_tag(core, 'TAG_DEFAULT_VARIABLES', get_variables())
+replace_tag(core, 'TAG_OPTIONAL_VARIABLES', get_variables(False))
+
 for mod in pp_modules:
-    print(mod.__name__)
     append(modules, get_module_doc(mod))
