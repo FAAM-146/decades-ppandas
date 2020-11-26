@@ -41,7 +41,7 @@ class Rvsm(PPBase):
     .. math::
         q = P \left(\frac{M^2}{5} + 1\right)^{\frac{7}{2}} - 1,
 
-    with the Mach number, $M$, given by
+    with the Mach number, :math:`M`, given by
 
     .. math::
         M = \frac{V_{IAS}}{V_0 \sqrt{\frac{P}{P_0}}},

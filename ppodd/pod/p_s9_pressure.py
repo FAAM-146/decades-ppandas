@@ -16,7 +16,7 @@ class S9Pressure(PPBase):
     calulated by applying a polynomial transformation to the DLU signal. The
     coefficients, specified in the flight constants parameter ``CALS9SP``,
     combine both the DLU and pressure transducer calibrations. Additionally, a
-    Mach dependent `position error' correction term is applied, aimed at
+    Mach dependent 'position error' correction term is applied, aimed at
     accounting for the unknown position error associated with the S9 port,
     derived by minimising errors between the S9 and RVSM static pressure
     measurements. This correction is of the form
