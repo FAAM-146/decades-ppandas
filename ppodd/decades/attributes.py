@@ -31,6 +31,7 @@ class AttributesCollection(object):
         self._attributes = []
         self._data_attributes = {}
         self._compliance = False
+        self._definition = definition
         self._strict_mode = strict_mode
 
         for key in self.REQUIRED_ATTRIBUTES:

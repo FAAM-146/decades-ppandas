@@ -16,9 +16,9 @@ from scipy.stats import mode
 import ppodd
 
 from .backends import DefaultBackend
-from .attributes import AttributesCollection
+from .attributes import AttributesCollection, Attribute
 from .flags import DecadesClassicFlag
-from ..standard import faam_globals
+from ..standard import faam_globals, faam_attrs
 from ..utils import pd_freq, infer_freq
 
 
@@ -33,26 +33,26 @@ class DecadesFile(object):
 
 
 class DecadesVariable(object):
-    NC_ATTRS = [
-        'long_name', 'frequency', 'standard_name', 'units',
-        '_FillValue', 'valid_min', 'valid_max', 'comment', 'sensor_type',
-        'sensor_serial', 'instrument_serial'
-    ]
 
     def __init__(self, *args, **kwargs):
-        self.name = kwargs.pop('name', None)
-        self.write = kwargs.pop('write', True)
         _flag = kwargs.pop('flag', DecadesClassicFlag)
 
-        self.attrs = {
-            '_FillValue': -9999,
-            'units': 1
-        }
+        self.attrs = AttributesCollection(
+            dataset=self, definition=faam_attrs['VariableAttrs'], version=1.0
+        )
 
-        for _attr in self.NC_ATTRS:
-            _val = kwargs.pop(_attr, None)
+        self.name = kwargs.pop('name', None)
+        self.write = kwargs.pop('write', True)
+
+        _attrs = self.attrs.REQUIRED_ATTRIBUTES + self.attrs.OPTIONAL_ATTRIBUTES
+        for _attr in _attrs:
+            try:
+                _default = self.attrs._definition[_attr]['default']
+            except KeyError:
+                _default = None
+            _val = kwargs.pop(_attr, _default)
             if _val is not None:
-                self.attrs[_attr] = _val
+                self.attrs.add(Attribute(_attr, _val))
 
         _df = pd.DataFrame(*args, **kwargs)
         _freq = self._get_freq(df=_df)
@@ -90,16 +90,17 @@ class DecadesVariable(object):
     def __len__(self):
         return len(self.array)
 
-    def __getattr__(self, attr):
+    def __getattribute__(self, attr):
         try:
-            return self.__dict__[attr]
-        except KeyError:
+            return super().__getattribute__(attr)
+        except AttributeError:
             pass
 
-        try:
-            return self.attrs[attr]
-        except KeyError:
-            pass
+        if attr == 'attrs':
+            try:
+                return self.__dict__['attrs']
+            except KeyError:
+                pass
 
         if attr == 'index':
             return self().index
@@ -110,18 +111,30 @@ class DecadesVariable(object):
         if attr == 'flag':
             return self.flag
 
+        if attr in self.attrs.keys:
+            return self.attrs[attr]
+
         try:
+            # Dirty check that we have t0 and t1, or self() will recurse with
+            # __getattribute__()
+            self.__dict__['t0']
+            self.__dict__['t1']
             return getattr(self(), attr)
-        except AttributeError:
+        except (KeyError, AttributeError):
             pass
 
         raise AttributeError(f'Not a variable attribute: {attr}')
 
     def __setattr__(self, attr, value):
-        if attr in self.NC_ATTRS:
-            self.attrs[attr] = value
-        else:
+        if attr == 'attrs':
             super().__setattr__(attr, value)
+
+        if attr in (
+            self.attrs.REQUIRED_ATTRIBUTES + self.attrs.OPTIONAL_ATTRIBUTES
+        ):
+            self.attrs[attr] = value
+
+        super().__setattr__(attr, value)
 
     def __str__(self):
         return self.name
