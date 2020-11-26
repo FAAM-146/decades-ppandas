@@ -77,6 +77,7 @@ class DecadesVariable(object):
         self.t0 = _index[0]
         self.t1 = _index[-1]
         self.flag = _flag(self)
+        self.attrs.add(Attribute('ancillary_variables', f'{self.name}_FLAG'))
 
     def __call__(self):
         i = pd.date_range(
