@@ -20,6 +20,7 @@ from .attributes import AttributesCollection, Attribute
 from .flags import DecadesClassicFlag
 from ..standard import faam_globals, faam_attrs
 from ..utils import pd_freq, infer_freq
+from ..writers import NetCDFWriter
 
 
 class DecadesFile(object):
@@ -233,7 +234,8 @@ class DecadesVariable(object):
 
 
 class DecadesDataset(object):
-    def __init__(self, date=None, version=1.0, backend=DefaultBackend):
+    def __init__(self, date=None, version=1.0, backend=DefaultBackend,
+                 writer=NetCDFWriter, pp_plugins='ppodd.pod'):
 
         self._date = date
         self.readers = []
@@ -247,6 +249,9 @@ class DecadesDataset(object):
         self.globals = AttributesCollection(
             dataset=self, definition=faam_globals['Globals'], version=version
         )
+
+        self.writer = writer
+        self.pp_plugins = pp_plugins
 
         self._dataframes = {}
         self.lon = None
@@ -579,7 +584,6 @@ class DecadesDataset(object):
         Load all of the data from files associated with readers in this
         dataset.
         """
-        import ppodd.pod
         import ppodd.qa
         import ppodd.flags
 
@@ -598,7 +602,7 @@ class DecadesDataset(object):
 
         # Initialise postprocessing modules
         _pp_modules = []
-        for pp in ppodd.pod.pp_modules:
+        for pp in importlib.import_module(self.pp_plugins).pp_modules:
             try:
                 _pp_modules.append(pp(self))
             except Exception as e:
@@ -729,7 +733,6 @@ class DecadesDataset(object):
         """
         Run processing modules.
         """
-        import ppodd.pod
         import ppodd.qa
         import ppodd.flags
 
@@ -737,7 +740,7 @@ class DecadesDataset(object):
             self._trim_data()
 
         if modname is not None:
-            mods = ppodd.pod.pp_modules
+            mods = importlib.import_module(self.pp_plugins).pp_modules
             for mod in mods:
                 if mod.__name__ is modname:
                     _mod = mod(self)
@@ -757,7 +760,7 @@ class DecadesDataset(object):
 
         # Initialise postprocessing modules
         _pp_modules = []
-        for pp in ppodd.pod.pp_modules:
+        for pp in importlib.import_module(self.pp_plugins).pp_modules:
             try:
                 _pp_modules.append(pp(self))
             except Exception as e:
@@ -822,6 +825,9 @@ class DecadesDataset(object):
             if name in self._variable_mods:
                 for key, value in self._variable_mods[name].items():
                     setattr(var, key, value)
+
+    def write(self, *args, **kwargs):
+        self.writer(self).write(*args, **kwargs)
 
     def cleanup(self):
         self._backend.cleanup()
