@@ -11,6 +11,8 @@
     background-color: #252243;
     text-align: center;
     color: #252243;
+    border: 5px solid #0abbef;
+    border-radius: 30px;
 }
 
 .wy-nav-side {

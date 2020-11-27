@@ -54,9 +54,9 @@ def get_global_attrs_string(required=True):
 
     globals_str = ''
     for attr, details in filtered_globals:
-        versions = ', '.join([f'{i:0.1f}' for i in details['versions']])
-        globals_str += f'* **{attr}** - {details["description"]}'
-        globals_str += f' **Versions**: {versions}\n'
+        versions = ', '.join([f'``{i:0.1f}``' for i in details['versions']])
+        globals_str += f'* ``{attr}`` - {details["description"]}'
+        globals_str += f' *Versions*: {versions}\n'
     return globals_str
 
 def get_variable_attrs_string(required=True):
@@ -67,9 +67,9 @@ def get_variable_attrs_string(required=True):
 
     attrs_str = ''
     for attr, details in filtered_attrs:
-        versions = ', '.join([f'{i:0.1f}' for i in details['versions']])
-        attrs_str += f'* **{attr}** - {details["description"]}'
-        attrs_str += f' **Versions**: {versions}\n'
+        versions = ', '.join([f'``{i:0.1f}``' for i in details['versions']])
+        attrs_str += f'* ``{attr}`` - {details["description"]}'
+        attrs_str += f' *Versions*: {versions}\n'
     return attrs_str
 
 

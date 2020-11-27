@@ -63,6 +63,7 @@ Variables
 ---------
 
 Below is a list of all output variables which can be created during postprocessing, split into variables which will always be written to file if available, and those which are generally only used internally, but which can be written to file if requested.
+Note that some variables may be duplicated here. This indicates that the same output variable may be produced from two or more processing modules, depending on the fit of the aircraft. These will be mutually exclusive, so that variables will be unique in a dataset.
 
 Written if Available
 --------------------
@@ -145,7 +146,7 @@ In python, this can be achieved with the following code:
     # is guaranteed to be powers of 2 from 1 to 2^(n-1)
     unpacked = {}
     for i, meaning in enumerate(flag_var.flag_meanings.split()):
-        unpacked[meaning] = (a >> i) % 2
+        unpacked[meaning] = (flag_data >> i) % 2
 
 this would leave us with the following in ``unpacked``:
 
