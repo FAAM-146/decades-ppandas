@@ -153,7 +153,7 @@ class ThermistorV1Temperatures(PPBase):
                            'temperature sensor'),
                 standard_name='air_temperature',
                 sensor_type=self.dataset['DITSENS'][1],
-                sensor_serial=self.dataset['DITSENS'][0]
+                sensor_serial_number=self.dataset['DITSENS'][0]
             )
 
             self.declare(
@@ -163,7 +163,7 @@ class ThermistorV1Temperatures(PPBase):
                 long_name=('Indicated air temperature from the Rosemount deiced '
                            'temperature sensor'),
                 sensor_type=self.dataset['DITSENS'][1],
-                sensor_serial=self.dataset['DITSENS'][0],
+                sensor_serial_number=self.dataset['DITSENS'][0],
                 write=False
             )
 
@@ -176,7 +176,7 @@ class ThermistorV1Temperatures(PPBase):
                            'temperature sensor'),
                 standard_name='air_temperature',
                 sensor_type=self.dataset['NDTSENS'][1],
-                sensor_serial=self.dataset['NDTSENS'][0]
+                sensor_serial_number=self.dataset['NDTSENS'][0]
             )
 
             self.declare(
@@ -186,7 +186,7 @@ class ThermistorV1Temperatures(PPBase):
                 long_name=('Indicated air temperature from the Rosemount '
                            'non-deiced temperature sensor'),
                 sensor_type=self.dataset['NDTSENS'][1],
-                sensor_serial=self.dataset['NDTSENS'][0],
+                sensor_serial_number=self.dataset['NDTSENS'][0],
                 write=False
             )
 

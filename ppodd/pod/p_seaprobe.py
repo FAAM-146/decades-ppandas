@@ -673,7 +673,7 @@ class SeaProbe(PPBase):
             frequency=20,
             long_name=('Total water content from the SEA WCM-2000 probe, '
                        'element 021'),
-            instrument_serial=self.dataset['SEA_SN']
+            instrument_serial_number=self.dataset['SEA_SN']
         )
 
         self.declare(
@@ -682,7 +682,7 @@ class SeaProbe(PPBase):
             frequency=20,
             long_name=('Total water content from the SEA WCM-2000 probe, '
                        'element 083'),
-            instrument_serial=self.dataset['SEA_SN']
+            instrument_serial_number=self.dataset['SEA_SN']
         )
 
 
@@ -693,7 +693,7 @@ class SeaProbe(PPBase):
             long_name=('Liquid water content from the SEA WCM-2000 probe, '
                        'element 021'),
             standard_name='mass_concentration_of_liquid_water_in_air',
-            instrument_serial=self.dataset['SEA_SN']
+            instrument_serial_number=self.dataset['SEA_SN']
         )
 
         self.declare(
@@ -703,7 +703,7 @@ class SeaProbe(PPBase):
             long_name=('Liquid water content from the SEA WCM-2000 probe, '
                        'element 083'),
             standard_name='mass_concentration_of_liquid_water_in_air',
-            instrument_serial=self.dataset['SEA_SN']
+            instrument_serial_number=self.dataset['SEA_SN']
         )
 
     def process(self):

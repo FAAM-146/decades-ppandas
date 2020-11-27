@@ -45,7 +45,7 @@ class S10Pressure(PPBase):
             frequency=32,
             long_name='Static pressure from S10 fuselage ports',
             standard_name='air_pressure',
-            sensor_serial=self.dataset['S10SP_SN']
+            sensor_serial_number=self.dataset['S10SP_SN']
         )
 
     def bounds_flag(self):
