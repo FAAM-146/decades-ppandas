@@ -20,9 +20,9 @@ def setup(app):
 
 # -- Project information -----------------------------------------------------
 
-project = 'FAAM Core Data Product'
+project = 'DRAFT: FAAM Core Data Product'
 copyright = '2020, FAAM'
-author = 'Dave Sproson'
+author = 'FAAM'
 
 
 # -- General configuration ---------------------------------------------------
