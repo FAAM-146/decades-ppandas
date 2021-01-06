@@ -34,6 +34,7 @@ VariableAttrs:
             _FillValue for core data is -9999, however this can, if required, be set on a
             variable-by-variable basis.
         inherits_from: null  # Again NUG? Unidata? Essentially integral to the API
+        default: -9999
         aliases: []
         versions: [1.0]
 
@@ -61,7 +62,7 @@ VariableAttrs:
         aliases: []
         versions: [1.0]
 
-    sensor_serial:
+    sensor_serial_number:
         required: false
         description: >-
             The serial number of the sensor responsible for making this measurement. A sensor is
@@ -80,7 +81,7 @@ VariableAttrs:
         aliases: []
         versions: [1.0]
 
-    instrument_serial:
+    instrument_serial_number:
         required: false
         description: >-
             The serial number of the instrument responsible for making a measurement. Use in
@@ -96,6 +97,15 @@ VariableAttrs:
             variable it may be desirable to express this association by providing a link between
             the variables. All non flag variables should have at least one ancillary variable, 
             that of their flag, which should be named <variable_name>_FLAG.
+        inherits_from: CF16
+        aliases: []
+        versions: [1.0]
+
+    comment:
+        required: false
+        description: >-
+            A freeform text field which may be used to provide any additional information which
+            is deemed relevent but does not belong in any other variable attribute.
         inherits_from: CF16
         aliases: []
         versions: [1.0]
