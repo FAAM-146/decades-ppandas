@@ -246,6 +246,7 @@ class DecadesDataset(object):
         self.definitions = []
         self.constants = {}
         self._variable_mods = {}
+        self._flag_mods = {}
         self._mod_exclusions = []
         self.pp_modules = []
         self.qa_modules = []

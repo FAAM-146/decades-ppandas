@@ -71,11 +71,26 @@ class FlightConstantsReader(FileReader):
                 for key, value in mod_content.items():
                     _file.dataset.constants[key] = value
 
-            for key, val in consts['Modifications']['Variables'].items():
-                _file.dataset._variable_mods[key] = val
+            try:
+                for key, val in consts['Modifications']['Variables'].items():
+                    _file.dataset._variable_mods[key] = val
+            except KeyError:
+                # No variable modifications
+                pass
 
-            for pp_mod in consts['Modifications']['Exclude']:
-                _file.dataset._mod_exclusions.append(pp_mod)
+            try:
+                for pp_mod in consts['Modifications']['Exclude']:
+                    _file.dataset._mod_exclusions.append(pp_mod)
+            except KeyError:
+                # No module exclusions
+                pass
+
+            try:
+                for key, val in consts['Modifications']['Flags'].items():
+                    _file.dataset._flag_mods[key] = val
+            except KeyError:
+                # No flag additions from QA
+                pass
 
 
 @register(patterns=['.*\.json'])
