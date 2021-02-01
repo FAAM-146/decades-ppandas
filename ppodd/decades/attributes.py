@@ -1,4 +1,5 @@
 import collections
+import importlib
 import warnings
 
 STR_DERIVED_FROM_FILE = '<derived from file>'
@@ -16,6 +17,9 @@ class NonStandardAttributeError(Exception):
 class AttributesCollection(object):
 
     def __init__(self, dataset=None, definition=None, version=1.0, strict_mode=True):
+
+        _def_module, _def_var = definition.rsplit('.', 1)
+        definition = getattr(importlib.import_module(_def_module), _def_var)
 
         self.REQUIRED_ATTRIBUTES = [
             g for g in definition.keys() if definition[g]['required']

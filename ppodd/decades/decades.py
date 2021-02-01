@@ -37,9 +37,12 @@ class DecadesVariable(object):
 
     def __init__(self, *args, **kwargs):
         _flag = kwargs.pop('flag', DecadesClassicFlag)
+        _standard = kwargs.pop('standard', 'ppodd.standard.core')
+        _standard_version = kwargs.pop('standard_version', 1.0)
 
         self.attrs = AttributesCollection(
-            dataset=self, definition=faam_attrs['VariableAttrs'], version=1.0
+            dataset=self, definition='.'.join((_standard, 'variable_attrs')),
+            version=_standard_version
         )
 
         self.name = kwargs.pop('name', None)
@@ -234,8 +237,9 @@ class DecadesVariable(object):
 
 
 class DecadesDataset(object):
-    def __init__(self, date=None, version=1.0, backend=DefaultBackend,
-                 writer=NetCDFWriter, pp_plugins='ppodd.pod'):
+    def __init__(self, date=None, standard_version=1.0, backend=DefaultBackend,
+                 writer=NetCDFWriter, pp_plugins='ppodd.pod',
+                 standard='ppodd.standard.core'):
 
         self._date = date
         self.readers = []
@@ -247,7 +251,8 @@ class DecadesDataset(object):
         self.qa_modules = []
 
         self.globals = AttributesCollection(
-            dataset=self, definition=faam_globals['Globals'], version=version
+            dataset=self, definition='.'.join((standard, 'dataset_globals')),
+            version=standard_version
         )
 
         self.writer = writer
@@ -262,6 +267,7 @@ class DecadesDataset(object):
         self._landing_time = None
         self._decache = False
         self._trim = False
+        self._standard = standard
         self.allow_overwrite = False
         self._backend = backend()
 
