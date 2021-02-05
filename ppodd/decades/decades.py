@@ -18,7 +18,7 @@ import ppodd
 from .backends import DefaultBackend
 from .attributes import AttributesCollection, Attribute
 from .flags import DecadesClassicFlag
-from ..standard import faam_globals, faam_attrs
+#from ..standard import faam_globals, faam_attrs
 from ..utils import pd_freq, infer_freq
 from ..writers import NetCDFWriter
 
@@ -39,10 +39,11 @@ class DecadesVariable(object):
         _flag = kwargs.pop('flag', DecadesClassicFlag)
         _standard = kwargs.pop('standard', 'ppodd.standard.core')
         _standard_version = kwargs.pop('standard_version', 1.0)
+        _strict = kwargs.pop('strict', True)
 
         self.attrs = AttributesCollection(
             dataset=self, definition='.'.join((_standard, 'variable_attrs')),
-            version=_standard_version
+            version=_standard_version, strict=_strict
         )
 
         self.name = kwargs.pop('name', None)
@@ -239,7 +240,7 @@ class DecadesVariable(object):
 class DecadesDataset(object):
     def __init__(self, date=None, standard_version=1.0, backend=DefaultBackend,
                  writer=NetCDFWriter, pp_plugins='ppodd.pod',
-                 standard='ppodd.standard.core'):
+                 standard='ppodd.standard.core', strict=True):
 
         self._date = date
         self.readers = []
@@ -253,7 +254,7 @@ class DecadesDataset(object):
 
         self.globals = AttributesCollection(
             dataset=self, definition='.'.join((standard, 'dataset_globals')),
-            version=standard_version
+            version=standard_version, strict=strict
         )
 
         self.writer = writer
@@ -269,6 +270,7 @@ class DecadesDataset(object):
         self._decache = False
         self._trim = False
         self._standard = standard
+        self._strict_mode = strict
         self.allow_overwrite = False
         self._backend = backend()
 

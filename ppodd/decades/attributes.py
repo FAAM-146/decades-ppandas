@@ -16,7 +16,7 @@ class NonStandardAttributeError(Exception):
 
 class AttributesCollection(object):
 
-    def __init__(self, dataset=None, definition=None, version=1.0, strict_mode=True):
+    def __init__(self, dataset=None, definition=None, version=1.0, strict=True):
 
         _def_module, _def_var = definition.rsplit('.', 1)
         definition = getattr(importlib.import_module(_def_module), _def_var)
@@ -36,7 +36,7 @@ class AttributesCollection(object):
         self._data_attributes = {}
         self._compliance = False
         self._definition = definition
-        self._strict_mode = strict_mode
+        self._strict = strict
 
         for key in self.REQUIRED_ATTRIBUTES:
             self.add(Attribute(key, ATTRIBUTE_NOT_SET))
@@ -86,7 +86,7 @@ class AttributesCollection(object):
 
         if att.key not in self.REQUIRED_ATTRIBUTES + self.OPTIONAL_ATTRIBUTES:
             _message = f'Attribute \'{att.key}\' is not defined in standard'
-            if self.strict_mode:
+            if self.strict:
                 raise NonStandardAttributeError(_message)
             else:
                 warnings.warn(_message)
@@ -94,12 +94,12 @@ class AttributesCollection(object):
         self._attributes.append(att)
 
     @property
-    def strict_mode(self):
-        return self._strict_mode
+    def strict(self):
+        return self._strict
 
-    @strict_mode.setter
-    def strict_mode(self, strict):
-        self._strict_mode = bool(strict)
+    @strict.setter
+    def strict(self, strict):
+        self._strict = bool(strict)
 
     @property
     def is_compliant(self):
