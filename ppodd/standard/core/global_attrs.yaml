@@ -95,6 +95,31 @@ Globals:
             - project_acronym
         versions: [1.0]
 
+    project_principal_investigator:
+        required: false
+        description: >-
+            The name of the principal investigator of the project.
+        inherits_from: null
+        aliases: []
+        versions: [1.0]
+
+    project_principal_investigator_email:
+        required: false
+        description: >-
+            A (work) email address on which project_principal_investigator can be
+            contacted.
+        inherits_from: null
+        aliases: []
+        versions: [1.0]
+
+    project_principal_investigator_url:
+        required: false
+        description: >-
+            The ORCID URL of the project_principal_investigator, if it exists.
+        inherits_from: null
+        aliases: []
+        versions: [1.0]
+
     project_name:
         required: false
         description: >-
@@ -163,6 +188,14 @@ Globals:
             product. Canonically this should be FAAM BAe-146 Atmospheric Research Aircraft for
             data gathered on the FAAM aircraft.
         inherits_from: ACDD13
+        aliases: []
+        versions: [1.0]
+
+    license:
+        required: true
+        description: >-
+            The licence under which a dataset is issued
+        inherits_from: null
         aliases: []
         versions: [1.0]
 
