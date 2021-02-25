@@ -265,6 +265,8 @@ class NetCDFWriter(DecadesWriter):
         # that we're going to output.
         if self.write_freq is None:
             for _freq in sorted(self.output_freqs):
+                if _freq == 1:
+                    continue
                 nc.createDimension('sps{0:02d}'.format(_freq), _freq)
         else:
             if self.write_freq != 1:
