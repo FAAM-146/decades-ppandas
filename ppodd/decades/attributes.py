@@ -7,20 +7,45 @@ ATTRIBUTE_NOT_SET = 'ATTRIBUTE_NOT_SET'
 
 
 class AttributeNotSetError(Exception):
-    pass
+    """
+    An exception which should be raised if a required attribute is not set.
+    """
 
 
 class NonStandardAttributeError(Exception):
-    pass
+    """
+    An exception which may be raised if an attribute is added to an
+    AttributesCollection which is not defined in a standard.
+    """
 
 
 class AttributesCollection(object):
+    """
+    An attributes collection is a collection of metadata key-value pairs, which
+    nominally correspond to global and/or variable attributes in a netCDF file.
+    Each AttributesCollection is associated with a definition and version,
+    which defines which attributes are required or optional.
+    """
 
     def __init__(self, dataset=None, definition=None, version=1.0, strict=True):
+        """
+        Initialise an instance.
 
+        Kwargs:
+            dataset: a ppodd Dataset associated with this attributes
+                     collection.
+            definition: a string pointing to the classpath of an attributes
+                        definition.
+            version: the version of the definition to adhere to.
+            strict: if True do not allow attributes which are not defined in
+                    the definition to be added to the collection.
+        """
+
+        # Get the definition from the classpath
         _def_module, _def_var = definition.rsplit('.', 1)
         definition = getattr(importlib.import_module(_def_module), _def_var)
 
+        # Set REQUIRED and OPTIONAL attributes from the attributes definition
         self.REQUIRED_ATTRIBUTES = [
             g for g in definition.keys() if definition[g]['required']
             and version in definition[g]['versions']
@@ -31,6 +56,7 @@ class AttributesCollection(object):
             and version in definition[g]['versions']
         ]
 
+        # Init instance variables
         self._dataset = dataset
         self._attributes = []
         self._data_attributes = {}
@@ -38,10 +64,23 @@ class AttributesCollection(object):
         self._definition = definition
         self._strict = strict
 
+        # Create placeholders for all of the required attributes
         for key in self.REQUIRED_ATTRIBUTES:
             self.add(Attribute(key, ATTRIBUTE_NOT_SET))
 
     def __getitem__(self, key):
+        """
+        Implement [].
+
+        Args:
+            key: the get key to search for
+
+        Returns:
+            the value of key, if key is set
+
+        Raises:
+            KeyError: if key is not found in the attributes collection
+        """
         for g in self._attributes:
             if g.key == key:
                 return self._compliancify(g)
@@ -49,6 +88,13 @@ class AttributesCollection(object):
         raise KeyError('{} not an attribute'.format(key))
 
     def __setitem__(self, key, value):
+        """
+        Implement [x].
+
+        Args:
+            key: the key(name) of the attribute to set
+            value: the value to associate with key
+        """
         if type(value) is dict:
             for _k, _v in value.items():
                 __k = '_'.join((key, _k))
@@ -58,6 +104,13 @@ class AttributesCollection(object):
             self.add(Attribute(key, value))
 
     def __call__(self):
+        """
+        Implement (). Calling a class instance returns a dictionary of all of
+        the attributues.
+
+        Retuns:
+            a dict of all of the attributes in the AttributesCollection.
+        """
         return self.dict
 
     def _compliancify(self, att):
@@ -73,17 +126,39 @@ class AttributesCollection(object):
         return att.value
 
     def set_compliance_mode(self, comp):
+        """
+        Set compliance mode. TODO: why isn't this done with properties??
+
+        Args:
+            comp: compliance mode, expected as a boolean.
+        """
         self._compliance = comp
 
     def add(self, att):
+        """
+        Add an Attribute to the AttributesCollection.
+
+        Args:
+            att: The Attribute to add the the collection
+
+        Raises:
+            TypeError: if att is not of type Attribute.
+            NonStandardAttributeError: if strict mode is on and att not in
+                                       definition
+        """
+
+        # Type checking
         if not isinstance(att, Attribute):
             raise TypeError('attributes must be of type <Attribute>')
 
+        # Remove duplicate keys
         for i in self._attributes:
             if i.key == att.key:
                 self._attributes.remove(i)
                 break
 
+        # Raise error or warning if the attribute is not present in the
+        # definition
         if att.key not in self.REQUIRED_ATTRIBUTES + self.OPTIONAL_ATTRIBUTES:
             _message = f'Attribute \'{att.key}\' is not defined in standard'
             if self.strict:
@@ -91,30 +166,74 @@ class AttributesCollection(object):
             else:
                 warnings.warn(_message)
 
+        # Add the attribute
         self._attributes.append(att)
 
     @property
     def strict(self):
+        """
+        Get strict mode. If strict is truthy, attributes not defined in the
+        standard cannot be added to the collection.
+
+        Returns:
+            self._strict
+        """
         return self._strict
 
     @strict.setter
     def strict(self, strict):
+        """
+        Set the strict property.
+
+        Args:
+            strict: if truthy, set strict mode to on, otherwise off.
+        """
         self._strict = bool(strict)
 
     @property
     def is_compliant(self):
+        """
+        Return True if the AttributesCollection is compliant. In this context
+        this means that all REQUIRED_ATTRIBUTES are set.
+        """
         for required in self.REQUIRED_ATTRIBUTES:
             if self[required] == ATTRIBUTE_NOT_SET:
                 return False
         return True
 
     def add_data_attribute(self, param, attrs):
+        """
+        Add a data attribute - an attribute that is callable to return its
+        value.
+
+        Args:
+            param: the key of the data attribute.
+            attrs: the callable which yields the value of the attribute.
+        """
         self._data_attributes[param] = attrs
 
     def static_items(self):
+        """
+        Return a dict containing all of the attributes which are fixed at
+        definition time (i.e. those which do not provide their value via a
+        call.
+        """
         return self._as_dict(dynamic=False).items()
 
     def _as_dict(self, dynamic=True):
+        """
+        Return a dict of all of the attributes in the AttributesCollection,
+        optionally excluding those which provide their value through a
+        callable.
+
+        Kwargs:
+            dynamic: if True (default), include attributes which provide their
+                     value through a call. If False, exclude these
+
+        Returns:
+            a dictionary of attributes, optionally excluding those providing
+            their value through a call.
+        """
         _dict = {}
         for glo in self._attributes:
             _dict[glo.key] = self._compliancify(glo)
@@ -140,14 +259,24 @@ class AttributesCollection(object):
 
     @property
     def keys(self):
+        """
+        Return dict_keys of all of the keys in the AttributesCollection.
+        """
         return self.dict.keys()
 
     @property
     def values(self):
+        """
+        Return dict_values of all of the values in the AttributesCollection.
+        """
         return self.dict.values()
 
     @property
     def dict(self):
+        """
+        Return an OrderedDict of all attribures in the AttributesCollection,
+        ordered alphabetically by key.
+        """
         _dict = self._as_dict()
         _sorted = collections.OrderedDict()
         for key in sorted(_dict.keys()):
@@ -156,7 +285,19 @@ class AttributesCollection(object):
 
 
 class Attribute(object):
+    """
+    An Attribute is a simple wrapper containing a key/value pair, and is
+    essentially immutable once created.
+    """
+
     def __init__(self, key, value):
+        """
+        Initialize a class instance.
+
+        Args:
+            key: the attribute key
+            value: the attribute value.
+        """
         self._key = key
         self._value = value
 
@@ -165,8 +306,14 @@ class Attribute(object):
 
     @property
     def key(self):
+        """
+        Implement key as a property.
+        """
         return self._key
 
     @property
     def value(self):
+        """
+        Implement value as a property.
+        """
         return self._value
