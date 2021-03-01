@@ -194,7 +194,7 @@ class NetCDFWriter(DecadesWriter):
             setattr(ncflag, attr_key, attr_val)
 
         # Create a new DatetimeIndex to interpolate to, given frequency
-        if(self.end_time.microsecond == 0):
+        if self.end_time.microsecond == 0 and _freq != 1:
             _end = self.end_time - datetime.timedelta(seconds=1/_freq)
         else:
             _end = self.end_time
