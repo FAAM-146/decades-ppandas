@@ -108,7 +108,7 @@ class WVSS2(object):
         # Interpolate onto a 1 Hz time base. Do not allow gaps of more than 3
         # datapoints at this frequency
         start_index = self.d.index[0].round('1S')
-        end_index = self.d.index[-1].round('1S')
+        end_index = self.d.index[-2].round('1S')
         new_index = pd.date_range(start_index, end_index, freq='1S')
 
         interp_df = self.d.reindex(
