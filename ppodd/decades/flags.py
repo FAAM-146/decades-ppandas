@@ -1,3 +1,8 @@
+"""
+This module provides classes which are used to implement different strategies
+for QC flagging of data variables.
+"""
+# pylint: disable=useless-object-inheritance, invalid-name
 import numpy as np
 import pandas as pd
 
@@ -39,16 +44,22 @@ class DecadesFlagABC(object):
 
     @property
     def index(self):
+        """
+        Return the index associated with the flag data.
+        """
         return pd.date_range(
             start=self.t0, end=self.t1, freq=pd_freq[self.frequency]
         )
 
     @property
     def df(self):
+        """
+        Return a copy of a dataframe representing the internal state of the
+        flag.
+        """
         _df = self._df.copy()
         _df.index = self.index
         return _df
-
 
     def description(self, flag_name_or_val):
         """
@@ -60,7 +71,7 @@ class DecadesFlagABC(object):
                               value for classic type flags.
         """
         try:
-            return self.descriptions[flag_or_val]
+            return self.descriptions[flag_name_or_val]
         except KeyError:
             return None
 
@@ -83,6 +94,7 @@ class DecadesFlagABC(object):
         self.t0 = start
         self.t1 = end
 
+    @property
     def cfattrs(self):
         """
         Return a dict of flag attributes for cf compliant netCDF files.
@@ -103,7 +115,7 @@ class DecadesClassicFlag(DecadesFlagABC):
         Args:
             var: the DecadesVariable that this flag is associated with.
         """
-        super(DecadesClassicFlag, self).__init__(var)
+        super().__init__(var)
 
         # Initialize the flag to -128, a fill_value
         self._df['FLAG'] = np.int8(-128)
@@ -211,6 +223,13 @@ class DecadesClassicFlag(DecadesFlagABC):
 
     @classmethod
     def from_nc_variable(cls, var, decadesvar):
+        """
+        Generate a flag variable from a netcdf variable.
+
+        Args:
+            var: the netCDF variable
+            decadesvar: the correcponding decades variable.
+        """
         flag = cls(decadesvar)
 
         _standard_meanings = (
@@ -297,6 +316,14 @@ class DecadesBitmaskFlag(DecadesFlagABC):
 
     @classmethod
     def from_nc_variable(cls, ncvar, decadesvar):
+        """
+        Generate a flag variable from a netcdf variable.
+
+        Args:
+            var: the netCDF variable
+            decadesvar: the correcponding decades variable.
+        """
+
         flag = cls(decadesvar)
         masks = np.atleast_1d(ncvar.flag_masks)
         meanings = np.atleast_1d(ncvar.flag_meanings.split())
