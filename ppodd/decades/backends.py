@@ -1,10 +1,11 @@
+"""
+This module provides backends for use by DecadesDataset. Initially this was to
+allow for different memory optimization strategies, however a refactoring of
+the way variables are stored internally has negated the need for this. The only
+backend now provided is DefaultBackend.
+"""
+# pylint: disable=useless-object-inheritance
 import gc
-import glob
-import os
-import pickle
-import sqlite3 as sql
-import numpy as np
-import pandas as pd
 
 
 class DecadesBackend(object):
@@ -21,7 +22,8 @@ class DecadesBackend(object):
         self.inputs = []
         self.outputs = []
 
-    def _dlu_from_variable(self, variable):
+    @staticmethod
+    def _dlu_from_variable(variable):
         """
         Get the name of a DLU from a variable name. This is essentially the
         first token of a string, when split with an underscore delimiter.
@@ -60,13 +62,13 @@ class DecadesBackend(object):
         Trim any variables, removing any data before start or after end.
         """
 
-    def add_input(self, variable):
+    def add_input(self, var):
         """
         Add in input - a variable created from reading input data - to the
         backend.
 
         Args:
-            variable: the input variable to add.
+            var: the input variable to add.
         """
         raise NotImplementedError
 
