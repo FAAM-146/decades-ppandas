@@ -1,3 +1,9 @@
+"""
+This module provides the postprocessing module BBRSols, an intermediate
+processing stage for the broadband radiometers.
+"""
+# pylint: disable=invalid-name
+
 from .base import PPBase
 from .shortcuts import _o, _z
 from ..decades import DecadesVariable
@@ -42,6 +48,9 @@ class BBRSols(PPBase):
 
     @staticmethod
     def test():
+        """
+        Provide some dummy input for testing purposes.
+        """
         return {
             'CALUP1S': ('const', [6, .05, 128., -6e-3]),
             'CALUP2S': ('const', [1, .03, 128., -6e-3]),
