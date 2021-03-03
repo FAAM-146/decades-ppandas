@@ -1,10 +1,17 @@
+"""
+This module provides the postprocessing module AirSpeed, which calculates the
+aircraft airspeeds from the RVSM system. See the class docstring for further
+details.
+"""
+# pylint: disable=invalid-name
+
 import numpy as np
 
-from ..decades import DecadesVariable, DecadesBitmaskFlag
-from ..utils.calcs import sp_mach
-from ..utils.constants import SPEED_OF_SOUND, ICAO_STD_TEMP, ICAO_STD_PRESS
-from .base import PPBase
-from .shortcuts import _l, _o
+from ppodd.decades import DecadesVariable, DecadesBitmaskFlag
+from ppodd.utils.calcs import sp_mach
+from ppodd.utils.constants import SPEED_OF_SOUND, ICAO_STD_TEMP, ICAO_STD_PRESS
+from ppodd.pod.base import PPBase
+from ppodd.pod.shortcuts import _l, _o
 
 class AirSpeed(PPBase):
     r"""
@@ -46,6 +53,9 @@ class AirSpeed(PPBase):
 
     @staticmethod
     def test():
+        """
+        Return some dummy input data for testing usage.
+        """
         return {
             'TASCORR': ('const', 1.),
             'PS_RVSM': ('data', _l(1000, 300, 100)),
@@ -54,6 +64,10 @@ class AirSpeed(PPBase):
         }
 
     def declare_outputs(self):
+        """
+        Declare all of the output variables produced by this module, through
+        calls to self.declare.
+        """
 
         self.declare(
             'IAS_RVSM',
@@ -73,6 +87,10 @@ class AirSpeed(PPBase):
         )
 
     def calc_ias(self):
+        """
+        Calculate indicated airspeed from the RVSM system. Store this in the
+        instance dataframe.
+        """
         d = self.d
 
         ias = (SPEED_OF_SOUND * d['MACHNO'] *
@@ -81,6 +99,10 @@ class AirSpeed(PPBase):
         d['IAS_RVSM'] = ias
 
     def calc_tas(self):
+        """
+        Calculate true airspeed from the RVSM system and the deiced
+        temperature. Store this in the instance dataframe.
+        """
         d = self.d
 
         tas = (
@@ -93,6 +115,10 @@ class AirSpeed(PPBase):
         d['TAS_RVSM'] = tas
 
     def calc_mach(self):
+        """
+        Calculate the mach number from the RVSM air data computer. Store this
+        in the instance dataframe as MACHNO.
+        """
         d = self.d
 
         d['MACHNO'], d['MACHNO_FLAG'] = sp_mach(
@@ -100,15 +126,24 @@ class AirSpeed(PPBase):
         )
 
     def process(self):
+        """
+        Module entry hook.
+        """
+
+        # Get all of the required inputs.
         self.get_dataframe()
 
+        # Run required calculations in turn. These are stored in instance
+        # state.
         self.calc_mach()
         self.calc_ias()
         self.calc_tas()
 
+        # Create output variables for the indicated and true airspeeds.
         ias = DecadesVariable(self.d['IAS_RVSM'], flag=DecadesBitmaskFlag)
         tas = DecadesVariable(self.d['TAS_RVSM'], flag=DecadesBitmaskFlag)
 
+        # Flag the data wherever the mach number is out of range.
         for _var in (ias, tas):
             _var.flag.add_mask(
                 self.d['MACHNO_FLAG'],
