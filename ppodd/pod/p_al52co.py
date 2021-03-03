@@ -1,3 +1,8 @@
+"""
+This module provides a processing module for the AL5002 Carbon Monoxide
+instrument. See the class level docstring for further information.
+"""
+# pylint: disable=invalid-name
 import datetime
 import numpy as np
 import pandas as pd
@@ -31,7 +36,7 @@ class AL52CO(PPBase):
     sensitivity.
 
     After a calibration, data continue to be flagged for 5 seconds, to allow
-    for calibrations gasses to be flushed from the system. Where available, the
+    for calibration gasses to be flushed from the system. Where available, the
     state of the V1 valve on the Fast Greenhouse Gas Analyser (FGGA) is used to
     identify and flag span calibrations.
     """
@@ -47,6 +52,9 @@ class AL52CO(PPBase):
 
     @staticmethod
     def test():
+        """
+        Return some dummy input data for test usage.
+        """
         return {
             'AL52CO_sens': (
                 'data',  _c([45 * _o(25), 46 * _o(25), 47 * _o(25), 48 *
@@ -64,6 +72,9 @@ class AL52CO(PPBase):
         }
 
     def declare_outputs(self):
+        """
+        Declare all of the outputs that this modules produces.
+        """
         self.declare(
             'CO_AERO',
             units='ppb',
@@ -81,6 +92,7 @@ class AL52CO(PPBase):
             fdf: a pd.DataFrame with 6 boolean columns, each giving the state
                  of a mask flag.
         """
+        # pylint: disable=too-many-locals
 
         WOW_FLAG = 'aircraft on ground'
         CO_RANGE_FLAG = 'co out of range'
@@ -90,7 +102,7 @@ class AL52CO(PPBase):
 
         descriptions = {
             WOW_FLAG: ('The aircraft is on the ground, as indicated by '
-                       'WOW\_IND.'),
+                       r'WOW\_IND.'),
             CO_RANGE_FLAG: ('The derived CO concentration is considered out '
                             'of valid range.'),
             IN_CAL_FLAG: ('The instrument is currently, or has recently been, '
