@@ -1,3 +1,9 @@
+"""
+This module provides a postprocessing module for the Buck CR2 hygrometer,
+BuckCR2. See the class docstring for further information.
+"""
+# pylint: disable=invalid-name
+
 import warnings
 
 import numpy as np
@@ -28,6 +34,9 @@ class BuckCR2(PPBase):
 
     @staticmethod
     def test():
+        """
+        Provide some dummy input data for testing purposes.
+        """
         return {
             'BUCK': ('const', [0, 1]),
             'AERACK_buck_ppm': ('data', 2000 * _o(100)),
@@ -39,6 +48,9 @@ class BuckCR2(PPBase):
         }
 
     def declare_outputs(self):
+        """
+        Declare the outputs produced by this module.
+        """
 
         self.declare(
             'VMR_CR2',
@@ -80,8 +92,21 @@ class BuckCR2(PPBase):
             standard_name='dew_point_temperature'
         )
 
-    def calc_uncertainty(self, buck_mirr_temp, buck_pressure,
+    @staticmethod
+    def calc_uncertainty(buck_mirr_temp, buck_pressure,
                          buck_mirr_control):
+        """
+        Calculate and return the uncertainties from for the Buck parameters.
+
+        Args:
+            buck_mirr_temp: a timeseries of the buck mirror temperature
+            buck_pressure: a timeseries of the internal pressure of the buck
+            buck_mirr_control: a timeseries of the buck mirror control signal.
+
+        Returns:
+            buck_unc_k: the buck uncertainty.
+        """
+        # pylint: disable=too-many-locals, too-many-statements
 
         n = buck_mirr_temp.size
         buck_unc_c = np.zeros(n)
@@ -120,14 +145,14 @@ class BuckCR2(PPBase):
             else:
                 fwdUt, backUt = 0, 0
 
-            if (buck_pressure[i] > 0.0):
+            if buck_pressure[i] > 0.0:
                 Ut = np.max([fwdUt, backUt])
                 buck_unc_t[i] = Ut
                 buck_unc_temp[i] = Ut
             else:
                 Ut = 0.0
 
-            if(buck_mirr_temp[i] > 233.15):
+            if buck_mirr_temp[i] > 233.15:
                 Ui = 0.025
             else:
                 Ui = -0.0044 * buck_mirr_temp[i] + 1.051
@@ -166,7 +191,19 @@ class BuckCR2(PPBase):
 
         return buck_unc_k
 
-    def get_buck_mirror_ctl(self, buck_mirr_temp):
+    @staticmethod
+    def get_buck_mirror_ctl(buck_mirr_temp):
+        """
+        Calc the buck mirror control signal, given the mirror temperature.
+
+        Args:
+            buck_mirr_temp: a timeseries of the buck mirror temperature
+
+        Returns:
+            buck_mirror_control: the a derived mirror control signal.
+        """
+        # pylint: disable=too-many-branches, too-many-statements
+
         interval = 30
         recovery = 0
         mirrormin = 0
@@ -251,7 +288,20 @@ class BuckCR2(PPBase):
 
         return buck_mirror_control
 
-    def get_vp_coeff(self, buck_mirror_ctl):
+    @staticmethod
+    def get_vp_coeff(buck_mirror_ctl):
+        """
+        Get the correct vapour pressure coefficients, for water or ice, given
+        the derived mirror control signal.
+
+        Args:
+            buck_mirror_ctl: the derived buck mirror control signal
+
+        Returns:
+            result: coefficients for the calculation of vapour pressure with
+                respect to either ice or water, depending on the control
+                signal.
+        """
         rows = buck_mirror_ctl.size
         result = np.zeros((rows, 11), dtype=np.float32)
 
@@ -271,7 +321,21 @@ class BuckCR2(PPBase):
 
         return result
 
-    def get_enhance_coeff(self, buck_mirror_ctl):
+    @staticmethod
+    def get_enhance_coeff(buck_mirror_ctl):
+        """
+        Get the correct enhance coefficients, for water or ice, given
+        the derived mirror control signal.
+
+        Args:
+            buck_mirror_ctl: the derived buck mirror control signal
+
+        Returns:
+            result: coefficients for the calculation of enhance with
+                respect to either ice or water, depending on the control
+                signal.
+        """
+
         result = np.zeros((buck_mirror_ctl.size, 8), dtype=np.float32)
 
         ice_coeff = [
@@ -298,6 +362,19 @@ class BuckCR2(PPBase):
         return result
 
     def calc_vp(self, buck_mirr_temp, buck_mirror_ctl, buck_unc_k=None):
+        """
+        Calculate vapour pressure.
+
+        Args:
+            buck_mirr_temp: a timeseries of te buck mirror temperature
+            buck_mirror_ctl: the derived mirror control signal
+
+        Kwargs:
+            buck_unc_k: buck uncertainty estimate.
+
+        Returns:
+            result: vapour pressure, calculated by ???
+        """
         if not hasattr(buck_unc_k, 'size'):
             n = buck_mirr_temp.size
             buck_unc_k = np.zeros(n, dtype=np.float32)
@@ -318,13 +395,37 @@ class BuckCR2(PPBase):
 
         return result
 
-    def calc_vmr(self, vp, enhance, buck_pressure):
+    @staticmethod
+    def calc_vmr(vp, enhance, buck_pressure):
+        """
+        Calculate volume mixing ration
+
+        Args:
+            vp: a timeseries of vapour pressure
+            enhance: timeseries of enhancement factor
+            buck_pressure: the internal pressure of the buck instrument.
+
+        Returns:
+            vmr: the volume mixing ratio of water in air.
+        """
         vmr = vp / (buck_pressure * 100 - vp * enhance) * enhance * 10E5
         vmr[vmr < 0] = np.nan
         return vmr
 
     def calc_enhance_factor(self, vp_buck, buck_mirror_t, buck_pressure,
                             buck_mirror_ctl):
+        """
+        Calculate enhancement factors.
+
+        Args:
+            vp_buck: a timeseries of vapour pressure from the buck
+            buck_mirror_t: a timeseries of mirror temperature from the buck
+            buck_pressure: a timeseries of internal from the buck
+            buck_mirror_ctl: the derived mirror control signal for the buck
+
+        Returns:
+            result: the enhancement factor.
+        """
 
         c = self.get_enhance_coeff(buck_mirror_ctl)
         result = (np.exp(
@@ -340,14 +441,39 @@ class BuckCR2(PPBase):
 
         return result
 
-    def get_flag(self, buck_mirr_flag, buck_dewpoint_flag):
+    @staticmethod
+    def get_flag(buck_mirr_flag, buck_dewpoint_flag):
+        """
+        Return flagging information of buck parameters.
+
+        Args:
+            buck_mirr_flag: a flag based on the state of the mirror
+            buck_dewpoint_flag: a flag based on the dewpoint.
+
+        Returns:
+            flag: a composite flag built from the two inputs.
+        """
         flag = np.zeros(buck_mirr_flag.size, dtype=np.int)
         flag[buck_dewpoint_flag == 0] = 1
         flag[buck_mirr_flag == 1] = 2
         flag[buck_dewpoint_flag == 2] = 3
         return flag
 
-    def calc_tdew_corrected(self, buck_mirr_control, vmr_buck, ps_rvsm, enhance):
+    @staticmethod
+    def calc_tdew_corrected(buck_mirr_control, vmr_buck, ps_rvsm, enhance):
+        """
+        Calculate a corrected dewpoint temperature.
+
+        Args:
+            buck_mirr_control: the derived mirror control signal
+            vmr_buck: volume mixing ratio from the buck
+            ps_rvsm: static pressure.
+            enhance: enhancement factors
+
+        Returns:
+            A dewpoint temperature corrected for pressure.
+        """
+
         n = vmr_buck.size
         tfrost_corrected = np.zeros(n)
         result = np.zeros(n)
@@ -357,6 +483,7 @@ class BuckCR2(PPBase):
         )
 
         def tdew_function(tdew):
+            """Dewpoint function."""
             return (
                 54.842763 - 6763.22 / tdew - 4.210 * np.log(tdew)
                 + 0.000367 * tdew + np.tanh(0.0415 * (tdew - 218.8))
@@ -390,6 +517,11 @@ class BuckCR2(PPBase):
         return result
 
     def process(self):
+        """
+        Processing entry hook.
+        """
+        # pylint: disable=too-many-locals
+
         self.get_dataframe(
             method='onto', index=self.dataset['AERACK_buck_ppm'].index
         )
