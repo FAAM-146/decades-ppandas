@@ -1,11 +1,16 @@
+"""
+This module provides the post processing module BBRFlux, which takes signals
+from the Broadband Radiometers, calculated in upsteam modules, and calculates
+radiative fluxes from these. See the class docstring for mor information.
+"""
+# pylint: disable=invalid-name
 import numpy as np
 
 from .base import PPBase
 from .shortcuts import _l, _o, _z, _c
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 
-import matplotlib.pyplot as plt
-
+# Limits for flagging
 ROLL_LIMIT = 7.
 SUN_ANGLE_MAX = 80.
 
@@ -100,6 +105,9 @@ class BBRFlux(PPBase):
 
     @staticmethod
     def test():
+        """
+        Return some dummy input data for testing purposes.
+        """
         return {
             'CALCUCF': ('const', [0, 0, 0, -3, 0, 1]),
             'CALCURF': ('const', [0, 0, 0, -3, 0, 1]),
@@ -133,6 +141,9 @@ class BBRFlux(PPBase):
         }
 
     def declare_outputs(self):
+        """
+        Declare the output variables that this modules produces.
+        """
 
         self.declare(
             'SW_DN_C',
@@ -164,7 +175,8 @@ class BBRFlux(PPBase):
             long_name='Corrected upward short wave irradiance, red dome'
         )
 
-    def corr_thm(self, therm):
+    @staticmethod
+    def corr_thm(therm):
         """
         Correct thermistors for linearity. TODO: find a reference for this
         """
@@ -185,18 +197,26 @@ class BBRFlux(PPBase):
         return therm_c
 
     def process(self):
+        """
+        Processing entry hook.
+        """
+        # pylint: disable=too-many-statements, too-many-locals
 
+        # Collect the required inputs
         self.get_dataframe(method='onto', index=self.dataset['UP1S'].index,
                            circular='HDG_GIN')
         d = self.d
 
         deg2rad = 360. / (2 * np.pi)
 
+        # Convert angular info to radians
         d['ZENRAD'] = d.SOL_ZEN / deg2rad
         d['AZMRAD'] = d.SOL_AZIM / deg2rad
         d['HDGRAD'] = d.HDG_GIN / deg2rad
         d['SUNHDG'] = d.AZMRAD - d.HDGRAD
 
+        # The critical value to distinguish between direct and diffuse
+        # radiation
         d['FCRIT'] = 920. * (np.cos(d.ZENRAD))**1.28
 
         ceff = np.array(
@@ -269,7 +289,7 @@ class BBRFlux(PPBase):
                 fcritval = d.FCRIT.copy(deep=True)
 
                 # Red dome has half the critical value
-                if dome is 'P2':
+                if dome == 'P2':
                     fcritval /= 2
 
                 # This is a horrible way to do this, essentially ripped
@@ -284,7 +304,10 @@ class BBRFlux(PPBase):
 
                 # For the upper BBRs, apply the pitch and roll corrections when
                 # in direct sunlight (flux >= fcrit)
-                if pos is 'U':
+                # Note that the underscores here aren't really private
+                # attributes, just badly named DataFrame columns
+                # pylint: disable=protected-access
+                if pos == 'U':
                     _above_crit = d[_flux] / (
                         1. - (d._fdir * (1. - d._ceff * (cos_beta / np.cos(d.ZENRAD))))
                     )
