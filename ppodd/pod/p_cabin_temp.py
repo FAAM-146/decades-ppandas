@@ -1,3 +1,8 @@
+"""
+This module provides a postprocessing module which provides an in-cabin
+temperature measurement at the core console. See class docstring for more info.
+"""
+# pylint: disable=invalid-name
 import numpy as np
 
 from .base import PPBase
@@ -22,6 +27,9 @@ class CabinTemp(PPBase):
 
     @staticmethod
     def test():
+        """
+        Return dummy input data for testing.
+        """
         return {
             'CALCABT': ('const', [-263, 1.5e-4]),
             'CORCON_cabin_t': (
@@ -30,6 +38,9 @@ class CabinTemp(PPBase):
         }
 
     def declare_outputs(self):
+        """
+        Declare the outputs produced by this module.
+        """
         self.declare(
             'CAB_TEMP',
             units='degC',
