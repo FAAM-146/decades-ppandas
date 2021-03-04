@@ -1,11 +1,16 @@
+"""
+This module provides a postprocessing module for the rosemount temperature
+probes, when fitted with a platinum resistance thermometer. See class docstring
+for more information.
+"""
+# pylint: disable=invalid-name
 import numpy as np
-import pandas as pd
 
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..utils.calcs import sp_mach, true_air_temp
 from ..utils.conversions import celsius_to_kelvin
 from .base import PPBase
-from .shortcuts import *
+from .shortcuts import _a, _o, _c, _z
 
 MACH_VALID_MIN = 0.05
 
@@ -63,6 +68,9 @@ class PRTTemperatures(PPBase):
 
     @staticmethod
     def test():
+        """
+        Return some dummy input data for testing.
+        """
         return {
             'RM_RECFAC': ('const', {'DI': 1., 'ND': 1.}),
             'CALDIT': ('const', [0, 0, 0]),
@@ -129,6 +137,10 @@ class PRTTemperatures(PPBase):
             )
 
     def calc_mach(self):
+        """
+        Calculate Mach number, from RVSM derived static and dynamic pressures,
+        which are assumed to be in the instance dataframe.
+        """
         d = self.d
 
         d['MACHNO'], d['MACHNO_FLAG'] = sp_mach(
@@ -239,31 +251,31 @@ class PRTTemperatures(PPBase):
         Entry point for postprocessing.
         """
 
-        self.proc_ndt = self.dataset['NDTSENS'][1] != 'thermistor'
-        self.proc_dit = self.dataset['DITSENS'][1] != 'thermistor'
+        proc_ndt = self.dataset['NDTSENS'][1] != 'thermistor'
+        proc_dit = self.dataset['DITSENS'][1] != 'thermistor'
 
         self.get_dataframe()
         self.calc_mach()
 
-        if self.proc_dit:
+        if proc_dit:
             self.calc_heating_correction()
             self.calc_di_iat()
             self.calc_di_tat()
 
-        if self.proc_ndt:
+        if proc_ndt:
             self.calc_ndi_iat()
             self.calc_ndi_tat()
 
         tats = []
         iats = []
 
-        if self.proc_ndt:
+        if proc_ndt:
             tat_nd = DecadesVariable(self.d['TAT_ND_R'], flag=DecadesBitmaskFlag)
             iat_nd = DecadesVariable(self.d['IAT_ND_R'], flag=DecadesBitmaskFlag)
             tats.append(tat_nd)
             iats.append(iat_nd)
 
-        if self.proc_dit:
+        if proc_dit:
             tat_di = DecadesVariable(self.d['TAT_DI_R'], flag=DecadesBitmaskFlag)
             iat_di = DecadesVariable(self.d['IAT_DI_R'], flag=DecadesBitmaskFlag)
             tats.append(tat_di)

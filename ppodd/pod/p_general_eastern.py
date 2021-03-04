@@ -1,3 +1,8 @@
+"""
+This module provides a prosprocessing module for the General Eastern chilled
+mirror hygrometer. See class docstring for more information.
+"""
+# pylint: disable=invalid-name
 import numpy as np
 
 from ..decades import DecadesVariable, DecadesBitmaskFlag
@@ -30,6 +35,9 @@ class GeneralEastern(PPBase):
 
     @staticmethod
     def test():
+        """
+        Return dummy input data for testing.
+        """
         return {
             'GELIMS': ('const', [7000, 5000]),
             'CALGE': ('const', [-80, 4e-3, -2.5e-10]),

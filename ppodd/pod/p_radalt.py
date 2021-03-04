@@ -1,4 +1,9 @@
-import numpy as np
+"""
+Provides a processing module for the radar altimeter (nominally radalt2)
+receivec on the PRTAFR dlu, from the arinc 429 bus. See class docstring for
+more info.
+"""
+# pylint: disable=invalid-name
 
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..decades import flags
@@ -28,11 +33,17 @@ class RadAlt(PPBase):
 
     @staticmethod
     def test():
+        """
+        Provide dummy input data for testing.
+        """
         return {
             'PRTAFT_rad_alt': ('data', _l(0, 32000, 100))
         }
 
     def declare_outputs(self):
+        """
+        Declare outputs created by this module.
+        """
         self.declare(
             'HGT_RADR',
             units='m',
@@ -42,6 +53,9 @@ class RadAlt(PPBase):
         )
 
     def flag(self):
+        """
+        Create flagging info.
+        """
         d = self.d
         d['RANGE_FLAG'] = 0
 
@@ -49,6 +63,9 @@ class RadAlt(PPBase):
         d.loc[d['HGT_RADR'] <= RADALT_MIN, 'RANGE_FLAG'] = 3
 
     def process(self):
+        """
+        Processing entry hook.
+        """
         self.get_dataframe()
         d = self.d
 

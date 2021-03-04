@@ -1,9 +1,14 @@
+"""
+This module provides a postprocessing module which calculates static pressure
+from the S9 fuselage port. See class docstring for more info.
+"""
+
 import numpy as np
 
+from ..utils.calcs import sp_mach
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..decades import flags
 from .base import PPBase
-from ppodd.utils.calcs import sp_mach
 from .shortcuts import _o
 
 S9_VALID_MIN = 100
@@ -40,6 +45,9 @@ class S9Pressure(PPBase):
 
     @staticmethod
     def test():
+        """
+        Return dummy input data for testing.
+        """
         return {
             'CALS9SP': ('const', [-130, .035, 1.85e-9]),
             'S9_PE_C': ('const', [1, 1]),

@@ -1,3 +1,9 @@
+"""
+This module provides a postprocessing module for the SEA WCM-2000 bulk water
+content. See class docstring for more info.
+"""
+# pylint: disable=invalid-name, too-many-arguments, too-many-return-statements
+# pylint: disable=too-many-locals
 import numpy as np
 import pandas as pd
 
@@ -8,9 +14,6 @@ from ..decades import flags
 from ..utils import slrs
 from .base import PPBase
 from .shortcuts import _o, _r, _z
-
-import matplotlib.pyplot as plt
-
 
 # Conversion from calories to joules [Woan00]_.
 cal_to_J = 4.1868
@@ -139,7 +142,7 @@ def dryair_calc(p_sense, T, ts, ps, tas, cloud_mask=None, rtn_func=False,
                 Psense. Will return None if the fitting routine fails.
     """
 
-    if (cloud_mask is None) or np.all(cloud_mask == False):
+    if (cloud_mask is None) or np.all(cloud_mask == False): # pylint: disable=singleton-comparison
         cloud = np.zeros_like(p_sense).astype(bool)
     else:
         cloud = np.ma.make_mask(cloud_mask)
@@ -163,6 +166,7 @@ def dryair_calc(p_sense, T, ts, ps, tas, cloud_mask=None, rtn_func=False,
     func3 = lambda a, b: a * (T - ts) * (ps * tas)**b
 
     try:
+        # pylint: disable=unbalanced-tuple-unpacking
         popt, pcov = curve_fit(
             func1, _p_sense, np.zeros_like(_p_sense), p0=(2.5e-3, 0.5),
             method='trf'
@@ -176,8 +180,7 @@ def dryair_calc(p_sense, T, ts, ps, tas, cloud_mask=None, rtn_func=False,
         # TODO: This should RAISE an error instead?
         if rtn_goodness:
             return None, -np.inf
-        else:
-            return None
+        return None
 
     # Calculate standard deviation of fitting parameters
     perr = np.sqrt(np.diag(pcov))
@@ -244,7 +247,7 @@ def dryair_calc_comp(p_sense, p_comp, cloud_mask=None, rtn_func=False,
     # Create mask based on cloud_mask
     # This step is to cope with different types of binary elements
     # np.all statement so that cloud does not become False in make_mask step
-    if cloud_mask is None or np.all(cloud_mask == False):
+    if cloud_mask is None or np.all(cloud_mask == False): # pylint: disable=singleton-comparison
         cloud = np.array([False] * len(p_comp))
     else:
         cloud = np.ma.make_mask(cloud_mask, shrink=False)
@@ -259,6 +262,7 @@ def dryair_calc_comp(p_sense, p_comp, cloud_mask=None, rtn_func=False,
 
     # Fit compensation power to sense power
     # Interpolations don't accept masked arrays so delete masked elements
+    # pylint: disable=unbalanced-tuple-unpacking
     try:
         popt, pcov = curve_fit(func, p_comp[~mask], p_sense[~mask])
     except (TypeError, ValueError, RuntimeError):
@@ -575,6 +579,9 @@ def calc_wc(W_twc, W_lwc, k, e_liqT=1, e_iceT=1, e_liqL=1, beta_iceL=0):
 
 
 class SeaProbe(PPBase):
+    """
+    Calculates bulk water contents from the SEA WCM-2000 sensor.
+    """
 
     inputs = [
         'WOW_IND',
@@ -620,6 +627,9 @@ class SeaProbe(PPBase):
 
     @staticmethod
     def test():
+        """
+        Provide some dummy input data for testing.
+        """
         n = 9000
         _d = {
             'SEA_EFF_TWC': ('const', [1, 1]),
@@ -649,20 +659,20 @@ class SeaProbe(PPBase):
                 _d[f'SEAPROBE_d0_{ele}_T'] = ('data', 120 * _o(n) + .2 * _r(n))
                 _d[f'SEAPROBE_d0_{ele}_V'] = ('data', .4 * _o(n) + .02 * _r(n))
 
-        _d[f'SEAPROBE_d0_CMP_A'] = ('data', 4.5 * _o(n) + .1 * _r(n))
-        _d[f'SEAPROBE_d0_DCE_A'] = ('data', 9 * _o(n) + .2 * _r(n))
-        _d[f'SEAPROBE_d0_021_A'] = ('data', 12 * _o(n) + .2 * _r(n))
-        _d[f'SEAPROBE_d0_083_A'] = ('data', 20 * _o(n) + .2 * _r(n))
-        _d[f'SEAPROBE_d0_TWC_A'] = ('data', 17 * _o(n) + .2 * _r(n))
+        _d['SEAPROBE_d0_CMP_A'] = ('data', 4.5 * _o(n) + .1 * _r(n))
+        _d['SEAPROBE_d0_DCE_A'] = ('data', 9 * _o(n) + .2 * _r(n))
+        _d['SEAPROBE_d0_021_A'] = ('data', 12 * _o(n) + .2 * _r(n))
+        _d['SEAPROBE_d0_083_A'] = ('data', 20 * _o(n) + .2 * _r(n))
+        _d['SEAPROBE_d0_TWC_A'] = ('data', 17 * _o(n) + .2 * _r(n))
 
-        _d[f'SEAPROBE_c0_TWC_l'] = ('data', 23.139 * _o(n))
-        _d[f'SEAPROBE_c0_TWC_w'] = ('data', 2.108 * _o(n))
-        _d[f'SEAPROBE_c0_083_l'] = ('data', 22.555 * _o(n))
-        _d[f'SEAPROBE_c0_083_w'] = ('data', 2.108 * _o(n))
-        _d[f'SEAPROBE_c0_021_l'] = ('data', 21.184 * _o(n))
-        _d[f'SEAPROBE_c0_021_w'] = ('data', 0.533 * _o(n))
-        _d[f'SEAPROBE_c0_CMP_l'] = ('data', 16.764 * _o(n))
-        _d[f'SEAPROBE_c0_CMP_w'] = ('data', 0.2794 * _o(n))
+        _d['SEAPROBE_c0_TWC_l'] = ('data', 23.139 * _o(n))
+        _d['SEAPROBE_c0_TWC_w'] = ('data', 2.108 * _o(n))
+        _d['SEAPROBE_c0_083_l'] = ('data', 22.555 * _o(n))
+        _d['SEAPROBE_c0_083_w'] = ('data', 2.108 * _o(n))
+        _d['SEAPROBE_c0_021_l'] = ('data', 21.184 * _o(n))
+        _d['SEAPROBE_c0_021_w'] = ('data', 0.533 * _o(n))
+        _d['SEAPROBE_c0_CMP_l'] = ('data', 16.764 * _o(n))
+        _d['SEAPROBE_c0_CMP_w'] = ('data', 0.2794 * _o(n))
 
         return _d
 

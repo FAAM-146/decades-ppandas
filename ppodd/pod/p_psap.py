@@ -1,3 +1,8 @@
+"""
+This module provides a postprocessing module for the PSAP instrument on the
+aerosol rack. See class docstring for more information.
+"""
+# pylint: disable=invalid-name
 import numpy as np
 
 from ..decades import DecadesVariable, DecadesBitmaskFlag
@@ -42,6 +47,9 @@ class PSAP(PPBase):
 
     @staticmethod
     def test():
+        """
+        Return dummy input data for testing.
+        """
         return {
             'AERACK_psap_flow': ('data', 2 * _o(100)),
             'AERACK_psap_lin': ('data', 1e5 * _o(100)),
@@ -50,6 +58,9 @@ class PSAP(PPBase):
         }
 
     def declare_outputs(self):
+        """
+        Declare module outputs.
+        """
         self.declare(
             'PSAP_LIN',
             units='m-1',
@@ -81,6 +92,9 @@ class PSAP(PPBase):
         )
 
     def flag(self):
+        """
+        Provide flagging info.
+        """
         d = self.d
         d['TRA_FLAG'] = 0
         d['FLO_FLAG'] = 0
@@ -96,6 +110,9 @@ class PSAP(PPBase):
         pump_off = np.where(np.diff(d['FLO_FLAG']) == -1)
 
     def process(self):
+        """
+        Processing entry hook.
+        """
         self.get_dataframe()
         d = self.d
 
@@ -123,4 +140,3 @@ class PSAP(PPBase):
                  'the PSAP interrupt is active, to prevent water ingress')
             )
             self.add_output(dv)
-

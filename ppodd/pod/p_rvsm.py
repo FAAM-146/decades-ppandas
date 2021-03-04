@@ -1,3 +1,10 @@
+"""
+Provides a post processing module for data from the RVSM (air data computer)
+system, recorded on the rear core console via the ARINC 429 data bus. See the
+class docstring for more information.
+"""
+# pylint: disable=invalid-name
+
 import pandas as pd
 import numpy as np
 
@@ -57,12 +64,18 @@ class Rvsm(PPBase):
 
     @staticmethod
     def test():
+        """
+        Return dummy input data for testing.
+        """
         return {
             'PRTAFT_pressure_alt': ('data', _l(0, 3000, 100)),
             'PRTAFT_ind_air_speed': ('data', 150 * _o(100))
         }
 
     def declare_outputs(self):
+        """
+        Declare the outputs produced by this module.
+        """
         self.declare(
             'PS_RVSM',
             units='hPa',
@@ -91,6 +104,10 @@ class Rvsm(PPBase):
         )
 
     def calc_altitude(self):
+        """
+        Calculate the pressure altitude from the pressure altitude signal
+        recorded on the rear core console from the ARINC 429 data bus.
+        """
         d = self.d
 
         d['PALT_FEET'] = d['PRTAFT_pressure_alt'] * 4
@@ -102,6 +119,10 @@ class Rvsm(PPBase):
         d['PALT_METRES'] = d['PALT_FEET'] / 3.28084
 
     def calc_pressure(self):
+        """
+        Calculate pressure from pressure altitude, assuming a standard
+        atmosphere.
+        """
         d = self.d
 
         high = self.d['PALT_METRES'] > 11000
@@ -128,6 +149,10 @@ class Rvsm(PPBase):
         )
 
     def calc_ias(self):
+        """
+        Calculate indicated air speed from the indicated air speed signal
+        recorded on the rear core console from the ARINC-429 data bus.
+        """
         d = self.d
         d['IAS'] = d['PRTAFT_ind_air_speed'] * 0.514444 / 32.0
         d['IAS_FLAG'] = 0
@@ -135,14 +160,28 @@ class Rvsm(PPBase):
         d.loc[d['IAS'] > IAS_MAX, 'IAS_FLAG'] = 1
 
     def calc_mach(self):
+        """
+        Calculate mach number from the indicated air speed and pressure,
+        assuming a standard atmosphere.
+        """
         d = self.d
         d['MACH'] = d['IAS'] / (340.294 * np.sqrt(d['P'] / 1013.25))
 
     def calc_pitot(self):
+        """
+        Calculate pitot-static pressure from static pressure and Mach number.
+        """
         d = self.d
         d['PITOT'] = d['P'] * ((((d['MACH']**2) / 5 + 1)**3.5) - 1)
 
     def calc_ps_rvsm(self):
+        """
+        Produces the PS_RVSM output.
+
+        Returns:
+            ps_rvsm: a DecadesVariable containing PS_RVSM, the static air
+                pressure from the RVSM air-data system.
+        """
         d = self.d
 
         ps_rvsm = d['P']
@@ -159,6 +198,13 @@ class Rvsm(PPBase):
         return ps_rvsm
 
     def calc_palt_rvs(self):
+        """
+        Produces the PALT_RVS output.
+
+        Returns:
+            palt_rvs: a DecadesVariable containing PALT_RVS, the pressure
+                altitude from the RVSM air-data system.
+        """
         d = self.d
 
         palt_rvs = d['PALT_METRES']
@@ -175,6 +221,13 @@ class Rvsm(PPBase):
         return palt_rvs
 
     def calc_q_rvsm(self):
+        """
+        Returns the Q_RVSM output.
+
+        Returns:
+            q_rvsm: a DecadesVariable containing Q_RVSM, the dynamic pressure
+                derived from the RVSM air-data system.
+        """
         d = self.d
         q_rvsm = d['PITOT']
 
@@ -195,6 +248,9 @@ class Rvsm(PPBase):
         return q_rvsm
 
     def process(self):
+        """
+        Processing entry hook.
+        """
 
         _start, _end = self.dataset[self.inputs[0]].time_bounds()
         _index = pd.date_range(start=_start, end=_end, freq=pd_freq[32])

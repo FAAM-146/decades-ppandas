@@ -1,3 +1,8 @@
+"""
+This module provides a postprocessing module for the Kipp and Zonen CR4
+pyrgeometers.
+"""
+# pylint: disable=invalid-name, too-many-locals
 import numpy as np
 
 from ..decades import DecadesVariable, DecadesBitmaskFlag
@@ -95,6 +100,9 @@ class KippZonenPyrgeometer(PPBase):
 
     @staticmethod
     def test():
+        """
+        Return dummy input data for testing.
+        """
         return {
             'LOWBBR_radiometer_3_sig': ('data', 5e3 * _o(100)),
             'LOWBBR_radiometer_3_temp': ('data', 2e2 * _o(100)),
@@ -125,6 +133,9 @@ class KippZonenPyrgeometer(PPBase):
         )
 
     def process(self):
+        """
+        Processing entry hook.
+        """
         self.get_dataframe()
         d = self.d
 

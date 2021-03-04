@@ -1,9 +1,12 @@
+"""
+Provides a postprocessing module for the S10 pressure transducer. See class
+docstring for more info.
+"""
 import numpy as np
 
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..decades import flags
 from .base import PPBase
-from ppodd.utils.calcs import sp_mach
 from .shortcuts import _o
 
 S10_VALID_MIN = 100
@@ -28,6 +31,9 @@ class S10Pressure(PPBase):
 
     @staticmethod
     def test():
+        """
+        Return dummy inputs for testing.
+        """
         return {
             'CALS10SP': ('const', [-130, .035, 1.85e-9]),
             'S10SP_SN': ('const', 'xxxx'),

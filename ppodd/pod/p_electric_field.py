@@ -1,3 +1,7 @@
+"""
+Provides a processing module for the static mill on the core console.
+"""
+# pylint: disable=invalid-name
 import numpy as np
 
 from ..decades import DecadesVariable
@@ -15,11 +19,17 @@ class ElectricFieldJci140(PPBase):
 
     @staticmethod
     def test():
+        """
+        Return dummy input data for test usage.
+        """
         return {
             'PRTAFT_jci140_signal': ('data', 50 * _o(100))
         }
 
     def declare_outputs(self):
+        """
+        Declare the outputs produced by this module.
+        """
         self.declare(
             'EXX_JCI',
             units='1',
@@ -30,6 +40,9 @@ class ElectricFieldJci140(PPBase):
         )
 
     def process(self):
+        """
+        Processing entry hook.
+        """
         self.get_dataframe()
         df = self.d.asfreq('1S')
 

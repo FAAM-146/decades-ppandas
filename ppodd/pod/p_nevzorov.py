@@ -1,3 +1,10 @@
+"""
+This module provides a postprocessing module for the Nevzorov vane in both the
+'old' (1T1L2R) and 'new' (1T2L1R) configurations. See class docstring for more
+info.
+"""
+# pylint: disable=invalid-name, too-many-arguments, too-many-locals
+# pylint: disable=too-many-statements
 import numpy as np
 import pandas as pd
 
@@ -114,7 +121,10 @@ def get_fitted_k(col_p, ref_p, ias, ps, no_cloud_mask, k):
         ps.loc[mask].values
     ])
 
-    popt, pcov = curve_fit(fit_func, xdata, xdata[0, :] * 0.0)
+    # linter complains that this may be an unbalances unpacking, however the
+    # docs indicate that this isn't the case.
+    # pylint: disable=unbalanced-tuple-unpacking
+    popt, _ = curve_fit(fit_func, xdata, xdata[0, :] * 0.0)
 
     return (k + (popt[0] * (1. / ias) + popt[1] * np.log10(ps)), popt)
 
@@ -189,6 +199,9 @@ class Nevzorov(PPBase):
 
     @staticmethod
     def test():
+        """
+        Return dummy input data for testing.
+        """
         return {
             'VANETYPE': ('const', '1t2l1r'),
             'CLWCIREF': ('const', [-5.8e-2, 3.3e-4, 5e-1]),
@@ -509,13 +522,13 @@ class Nevzorov(PPBase):
             col_p = self.d[_col_i_name] * self.d[_col_v_name]
             ref_p = self.d[_ref_i_name] * self.d[_ref_v_name]
 
-            if ins is 'twc':
+            if ins == 'twc':
                 # Cloud mask is based on variance of power from the total water
                 # sensor.
                 clear_air = get_no_cloud_mask(col_p, self.d.WOW_IND)
 
             try:
-                fitted_K, params = get_fitted_k(
+                fitted_K, _ = get_fitted_k(
                     col_p, ref_p, self.d.IAS_RVSM, self.d.PS_RVSM, clear_air, K
                 )
 
@@ -567,7 +580,7 @@ class Nevzorov(PPBase):
                 )
                 self.add_output(_var)
 
-            elif ins is 'twc':
+            elif ins == 'twc':
                 _var = DecadesVariable(
                    ref_p, name='NV_REF_P', flag=DecadesBitmaskFlag
                 )

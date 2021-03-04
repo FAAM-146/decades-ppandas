@@ -1,3 +1,7 @@
+"""
+Provides a processing module for the Nephelometer.
+"""
+# pylint: disable=invalid-name
 import numpy as np
 
 from ..decades import DecadesVariable
@@ -27,6 +31,9 @@ class Nephelometer(PPBase):
 
     @staticmethod
     def test():
+        """
+        Provide dummy input data for testing.
+        """
 
         # Instrument U/S, no thought put into test data
         return {
@@ -44,9 +51,13 @@ class Nephelometer(PPBase):
         }
 
     def declare_outputs(self):
+        """
+        Declare output variables.
+        """
 
         # Instrument is perm U/S, but we're going to hold on the the code until
         # we get a new one
+        # pylint: disable=unreachable
         return
 
         self.declare(
@@ -120,6 +131,9 @@ class Nephelometer(PPBase):
 
 
     def flag(self):
+        """
+        Provide flagging information from the Neph status string.
+        """
         d = self.d
         d['RH_FLAG'] = 0
         d['SC_FLAG'] = 0
@@ -183,8 +197,12 @@ class Nephelometer(PPBase):
 
 
     def process(self):
+        """
+        Processing entry hook.
+        """
         # Instrument is perm U/S, but we're going to hold on the the code until
         # we get a new one
+        # pylint: disable=unreachable
         return
 
         self.get_dataframe()

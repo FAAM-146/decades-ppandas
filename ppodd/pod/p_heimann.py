@@ -1,3 +1,8 @@
+"""
+Provides a postprocessing module for the Heimann radiometer. See the class
+docstring for more information.
+"""
+
 import numpy as np
 
 from ..decades import DecadesVariable, DecadesBitmaskFlag
@@ -33,6 +38,9 @@ class Heimann(PPBase):
 
     @staticmethod
     def test():
+        """
+        Return some dummy input data for testing.
+        """
         return {
             'PRTCCAL': ('const', [-20, 2e-3, 0]),
             'HEIMCAL': ('const', [-45, 3e-3, 0]),
@@ -43,6 +51,9 @@ class Heimann(PPBase):
         }
 
     def declare_outputs(self):
+        """
+        Declare module output variables.
+        """
         self.declare(
             'BTHEIM_U',
             units='K',
@@ -51,7 +62,8 @@ class Heimann(PPBase):
                        'radiometer')
         )
 
-    def temperature(self, cals, series):
+    @staticmethod
+    def temperature(cals, series):
         """
         Conversion from Heimann is simply a quadratic fit.
 

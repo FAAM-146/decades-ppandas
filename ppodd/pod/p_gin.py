@@ -1,3 +1,8 @@
+"""
+This module provides a postprocessing module for the Applanix GIN. See the
+class docstring for more info.
+"""
+# pylint: disable=invalid-name
 import numpy as np
 import pandas as pd
 
@@ -37,6 +42,9 @@ class Gin(PPBase):
 
     @staticmethod
     def test():
+        """
+        Return some dummy input data for testing.
+        """
         return {
             'GINDAT_lat': ('data', _l(60, 60.1, 100)),
             'GINDAT_lon': ('data', _l(0, .1, 100)),
@@ -60,6 +68,9 @@ class Gin(PPBase):
         }
 
     def declare_outputs(self):
+        """
+        Declare module outputs.
+        """
         gin_name = 'POS AV 510 GPS-aided Inertial Navigation unit'
 
         self.declare(
@@ -220,6 +231,9 @@ class Gin(PPBase):
         )
 
     def process(self):
+        """
+        Processing entry hook.
+        """
         start = self.dataset[self.inputs[0]].index[0].round('1S')
         end = self.dataset[self.inputs[0]].index[-1].round('1S')
 
