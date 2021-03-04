@@ -1,3 +1,8 @@
+"""
+Provides a processing modules for the TSI3786 condensation particle counter.
+See the class doc-string for more info.
+"""
+# pylint: disable=invalid-name
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 from .base import PPBase
 from .shortcuts import _c, _l, _o, _z
@@ -32,6 +37,9 @@ class CPC(PPBase):
 
     @staticmethod
     def test():
+        """
+        Return some dummy input data for testing purposes.
+        """
         return {
             'CPC378_counts': (
                 'data', _c([_z(30), _l(0, 2e4, 15), _l(2e4, 0, 15), _z(40)])
@@ -44,6 +52,9 @@ class CPC(PPBase):
         }
 
     def declare_outputs(self):
+        """
+        Declare output variables.
+        """
 
         self.declare(
             'CPC_CNTS',
@@ -53,6 +64,11 @@ class CPC(PPBase):
         )
 
     def flag(self):
+        """
+        Provide flagging information. All flags here are based on simple bound
+        limits.
+        """
+
         d = self.d
         d['SATURATOR_TEMP_FLAG'] = 0
         d['GROWTH_TUBE_FLAG'] = 0
@@ -91,6 +107,10 @@ class CPC(PPBase):
         d.loc[d['CPC378_counts'] >= COUNTER_SATURATION, 'SATURATED_FLAG'] = 1
 
     def process(self):
+        """
+        Module entry hook.
+        """
+
         self.get_dataframe()
         d = self.d
 
