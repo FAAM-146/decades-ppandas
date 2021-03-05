@@ -60,7 +60,12 @@ class CPC(PPBase):
             'CPC_CNTS',
             units='1',
             frequency=10,
-            long_name='Condensation Particle Counts measured by the TSI 3786'
+            long_name='Condensation Particle Counts measured by the TSI 3786',
+            instrument_manufacturer='TSI Incorporated',
+            instrument_model=('Modified Water Filled 3786 Condensation '
+                              'Particle Counter'),
+            comment=('Sampled through a modified Rosemount Aerospace Inc. '
+                     'Type 102 Total Temperature Housing.')
         )
 
     def flag(self):

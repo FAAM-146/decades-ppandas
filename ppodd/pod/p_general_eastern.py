@@ -55,7 +55,10 @@ class GeneralEastern(PPBase):
             units='degK',
             frequency=4,
             long_name='Dew Point from the General Eastern instrument',
-            standard_name='dew_point_temperature'
+            standard_name='dew_point_temperature',
+            instrument_manufacturer='General Eastern Instruments',
+            instrument_model='1011B Chilled Mirror Hygrometer',
+            instrument_serial_number=self.dataset['GE_SN']
         )
 
     def flag_control(self):

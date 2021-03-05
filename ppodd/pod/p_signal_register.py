@@ -11,7 +11,8 @@ class SignalRegister(PPBase):
     The DECADES signal register is a packed representation of some boolean
     state variables, which is used internally in DECADES. Here we reproduce
     part of the register from flag variables reported in the TCP data, for use
-    in other processing modules.
+    in other processing modules. No outputs defined here are expected to ever
+    be written to file.
     """
 
     inputs = [

@@ -677,12 +677,17 @@ class SeaProbe(PPBase):
         return _d
 
     def declare_outputs(self):
+        manufacturer = 'Science Engineering Associates, Inc.'
+        model = 'WCM-2000'
+
         self.declare(
             'SEA_TWC_021',
             units='g m-3',
             frequency=20,
             long_name=('Total water content from the SEA WCM-2000 probe, '
                        'element 021'),
+            instrument_manufacturer=manufacturer,
+            instrument_model=model,
             instrument_serial_number=self.dataset['SEA_SN']
         )
 
@@ -692,6 +697,8 @@ class SeaProbe(PPBase):
             frequency=20,
             long_name=('Total water content from the SEA WCM-2000 probe, '
                        'element 083'),
+            instrument_manufacturer=manufacturer,
+            instrument_model=model,
             instrument_serial_number=self.dataset['SEA_SN']
         )
 
@@ -703,6 +710,8 @@ class SeaProbe(PPBase):
             long_name=('Liquid water content from the SEA WCM-2000 probe, '
                        'element 021'),
             standard_name='mass_concentration_of_liquid_water_in_air',
+            instrument_manufacturer=manufacturer,
+            instrument_model=model,
             instrument_serial_number=self.dataset['SEA_SN']
         )
 
@@ -713,6 +722,8 @@ class SeaProbe(PPBase):
             long_name=('Liquid water content from the SEA WCM-2000 probe, '
                        'element 083'),
             standard_name='mass_concentration_of_liquid_water_in_air',
+            instrument_manufacturer=manufacturer,
+            instrument_model=model,
             instrument_serial_number=self.dataset['SEA_SN']
         )
 

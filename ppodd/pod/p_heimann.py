@@ -59,7 +59,10 @@ class Heimann(PPBase):
             units='K',
             frequency=4,
             long_name=('Uncorrected brightness temperature from the Heimann '
-                       'radiometer')
+                       'radiometer'),
+            instrument_manufacturer='Heitronics',
+            instrument_model='KT19.82',
+            instrument_serial_number=self.dataset['HEIM_SN']
         )
 
     @staticmethod

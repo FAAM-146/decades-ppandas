@@ -49,7 +49,9 @@ class RadAlt(PPBase):
             units='m',
             frequency=2,
             long_name='Radar height from the aircraft radar altimeter',
-            standard_name='height'
+            standard_name='height',
+            instrument_manufacturer='Thales',
+            instrument_model='AVH16 Radar Altimeter'
         )
 
     def flag(self):

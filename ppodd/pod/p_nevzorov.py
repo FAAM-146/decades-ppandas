@@ -243,7 +243,10 @@ class Nevzorov(PPBase):
             units='gram m-3',
             frequency=64,
             long_name=('Uncorrected total condensed water content from the '
-                       'Nevzorov probe')
+                       'Nevzorov probe'),
+            instrument_manufacturer='Sky Phys Tech Inc.',
+            instrument_model=self.dataset['VANETYPE'],
+            instrument_serial_number=self.dataset['VANE_SN']
         )
 
         self.declare(
@@ -252,7 +255,10 @@ class Nevzorov(PPBase):
             frequency=64,
             long_name=('Corrected total condensed water content from the '
                        'Nevzorov probe'),
-            comment='Automatically baselined. May require further processing.'
+            comment='Automatically baselined. May require further processing.',
+            instrument_manufacturer='Sky Phys Tech Inc.',
+            instrument_model=self.dataset['VANETYPE'],
+            instrument_serial_number=self.dataset['VANE_SN']
         )
 
         self.declare(
@@ -260,6 +266,9 @@ class Nevzorov(PPBase):
             units='W',
             frequency=64,
             long_name='TWC collector power',
+            instrument_manufacturer='Sky Phys Tech Inc.',
+            instrument_model=self.dataset['VANETYPE'],
+            instrument_serial_number=self.dataset['VANE_SN'],
             write=False
         )
 
@@ -269,6 +278,9 @@ class Nevzorov(PPBase):
             frequency=64,
             long_name=('Clear air mask based on Nevzorov Total Water power '
                        'variance'),
+            instrument_manufacturer='Sky Phys Tech Inc.',
+            instrument_model=self.dataset['VANETYPE'],
+            instrument_serial_number=self.dataset['VANE_SN'],
             write=False
 
         )
@@ -284,6 +296,9 @@ class Nevzorov(PPBase):
             frequency=64,
             long_name=('Uncorrected liquid water content from the Nevzorov '
                        'probe'),
+            instrument_manufacturer='Sky Phys Tech Inc.',
+            instrument_model=self.dataset['VANETYPE'],
+            instrument_serial_number=self.dataset['VANE_SN']
         )
 
         self.declare(
@@ -292,7 +307,10 @@ class Nevzorov(PPBase):
             frequency=64,
             long_name='Corrected liquid water content from the Nevzorov probe',
             standard_name='mass_concentration_of_liquid_water_in_air',
-            comment='Automatically baselined. May require further processing.'
+            comment='Automatically baselined. May require further processing.',
+            instrument_manufacturer='Sky Phys Tech Inc.',
+            instrument_model=self.dataset['VANETYPE'],
+            instrument_serial_number=self.dataset['VANE_SN']
         )
 
         self.declare(
@@ -300,6 +318,9 @@ class Nevzorov(PPBase):
             units='W',
             frequency=64,
             long_name='TWC reference power',
+            instrument_manufacturer='Sky Phys Tech Inc.',
+            instrument_model=self.dataset['VANETYPE'],
+            instrument_serial_number=self.dataset['VANE_SN'],
             write=False
         )
 
@@ -308,6 +329,9 @@ class Nevzorov(PPBase):
             units='W',
             frequency=64,
             long_name='LWC collector power',
+            instrument_manufacturer='Sky Phys Tech Inc.',
+            instrument_model=self.dataset['VANETYPE'],
+            instrument_serial_number=self.dataset['VANE_SN'],
             write=False
         )
 
@@ -316,6 +340,9 @@ class Nevzorov(PPBase):
             units='W',
             frequency=64,
             long_name='LWC reference power',
+            instrument_manufacturer='Sky Phys Tech Inc.',
+            instrument_model=self.dataset['VANETYPE'],
+            instrument_serial_number=self.dataset['VANE_SN'],
             write=False
         )
 
@@ -330,6 +357,9 @@ class Nevzorov(PPBase):
             frequency=64,
             long_name=('Uncorrected liquid water content from the Nevzorov '
                        'probe (1st collector)'),
+            instrument_manufacturer='Sky Phys Tech Inc.',
+            instrument_model=self.dataset['VANETYPE'],
+            instrument_serial_number=self.dataset['VANE_SN']
         )
 
         self.declare(
@@ -339,7 +369,10 @@ class Nevzorov(PPBase):
             long_name=('Corrected liquid water content from the Nevzorov probe'
                        ' (1st collector)'),
             standard_name='mass_concentration_of_liquid_water_in_air',
-            comment='Automatically baselined. May require further processing.'
+            comment='Automatically baselined. May require further processing.',
+            instrument_manufacturer='Sky Phys Tech Inc.',
+            instrument_model=self.dataset['VANETYPE'],
+            instrument_serial_number=self.dataset['VANE_SN']
         )
 
         self.declare(
@@ -348,6 +381,9 @@ class Nevzorov(PPBase):
             frequency=64,
             long_name=('Uncorrected liquid water content from the Nevzorov '
                        'probe (2nd collector)'),
+            instrument_manufacturer='Sky Phys Tech Inc.',
+            instrument_model=self.dataset['VANETYPE'],
+            instrument_serial_number=self.dataset['VANE_SN']
         )
 
         self.declare(
@@ -357,7 +393,10 @@ class Nevzorov(PPBase):
             long_name=('Corrected liquid water content from the Nevzorov probe'
                        ' (2nd collector)'),
             standard_name='mass_concentration_of_liquid_water_in_air',
-            comment='Automatically baselined. May require further processing.'
+            comment='Automatically baselined. May require further processing.',
+            instrument_manufacturer='Sky Phys Tech Inc.',
+            instrument_model=self.dataset['VANETYPE'],
+            instrument_serial_number=self.dataset['VANE_SN']
         )
 
         self.declare(
@@ -365,6 +404,9 @@ class Nevzorov(PPBase):
             units='W',
             frequency=64,
             long_name='Reference power',
+            instrument_manufacturer='Sky Phys Tech Inc.',
+            instrument_model=self.dataset['VANETYPE'],
+            instrument_serial_number=self.dataset['VANE_SN'],
             write=False
         )
 
@@ -373,6 +415,9 @@ class Nevzorov(PPBase):
             units='W',
             frequency=64,
             long_name='LWC1 collector power',
+            instrument_manufacturer='Sky Phys Tech Inc.',
+            instrument_model=self.dataset['VANETYPE'],
+            instrument_serial_number=self.dataset['VANE_SN'],
             write=False
         )
 
@@ -381,6 +426,9 @@ class Nevzorov(PPBase):
             units='W',
             frequency=64,
             long_name='LWC2 collector power',
+            instrument_manufacturer='Sky Phys Tech Inc.',
+            instrument_model=self.dataset['VANETYPE'],
+            instrument_serial_number=self.dataset['VANE_SN'],
             write=False
         )
 

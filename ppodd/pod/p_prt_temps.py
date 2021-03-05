@@ -89,6 +89,9 @@ class PRTTemperatures(PPBase):
         Declare the outputs that are going to be written by this module.
         """
 
+        sampling = ('Sensor housed in Rosemount Aerospace Inc. Type 102 '
+                    '{nddi} Total Temperature Housing')
+
         if self.dataset['DITSENS'][1].lower() != 'thermistor':
             self.declare(
                 'TAT_DI_R',
@@ -98,7 +101,8 @@ class PRTTemperatures(PPBase):
                            'temperature sensor'),
                 standard_name='air_temperature',
                 sensor_type=self.dataset['DITSENS'][1],
-                sensor_serial_number=self.dataset['DITSENS'][0]
+                sensor_serial_number=self.dataset['DITSENS'][0],
+                comment=sampling.format(nddi='deiced')
 
             )
 
@@ -110,6 +114,7 @@ class PRTTemperatures(PPBase):
                            'temperature sensor'),
                 sensor_type=self.dataset['DITSENS'][1],
                 sensor_serial_number=self.dataset['DITSENS'][0],
+                comment=sampling.format(nddi='deiced')
                 write=False
             )
 
@@ -122,7 +127,8 @@ class PRTTemperatures(PPBase):
                            'temperature sensor'),
                 standard_name='air_temperature',
                 sensor_type=self.dataset['NDTSENS'][1],
-                sensor_serial_number=self.dataset['NDTSENS'][0]
+                sensor_serial_number=self.dataset['NDTSENS'][0],
+                comment=sampling.format(nddi='non-deiced')
             )
 
             self.declare(
@@ -133,6 +139,7 @@ class PRTTemperatures(PPBase):
                            'non-deiced temperature sensor'),
                 sensor_type=self.dataset['NDTSENS'][1],
                 sensor_serial_number=self.dataset['NDTSENS'][0],
+                comment=sampling.format(nddi='non-deiced')
                 write=False
             )
 

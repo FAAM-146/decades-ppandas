@@ -60,7 +60,9 @@ class TecoSO2(PPBase):
             frequency=1,
             long_name=('Mole fraction of Sulphur Dioxide in air from TECO 43 '
                        'instrument'),
-            standard_name='mole_fraction_of_sulfur_dioxide_in_air'
+            standard_name='mole_fraction_of_sulfur_dioxide_in_air',
+            instrument_manufacturer='Thermo Fisher Scientific, Inc.',
+            instrument_model='43i TLE pulsed fluorescence SO2 spectrometer'
         )
 
     def flag(self):

@@ -66,7 +66,10 @@ class S9Pressure(PPBase):
             units='hPa',
             frequency=32,
             long_name='Static pressure from S9 fuselage ports',
-            standard_name='air_pressure'
+            standard_name='air_pressure',
+            sensor_manufacturer='Rosemount Aerospace Inc.',
+            sensor_model='1201F2',
+            sensor_serial_number=self.dataset['S9SP_SN']
         )
 
         self.declare(
@@ -75,6 +78,9 @@ class S9Pressure(PPBase):
             frequency=32,
             long_name='Static pressure from S9 fuselage ports, uncorrected',
             standard_name='air_pressure',
+            sensor_manufacturer='Rosemount Aerospace Inc.',
+            sensor_model='1201F2',
+            sensor_serial_number=self.dataset['S9SP_SN'],
             write=False
         )
 

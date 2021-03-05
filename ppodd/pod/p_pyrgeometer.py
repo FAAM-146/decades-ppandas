@@ -121,6 +121,9 @@ class KippZonenPyrgeometer(PPBase):
             units='W m-2',
             frequency=1,
             long_name='Corrected downward longwave irradiance',
+            instrument_manufacturer='Kipp and Zonen',
+            instrument_model='CR4',
+            instrument_serial_number=self.dataset['BBRUIR_SN'],
             write=False
         )
 
@@ -129,6 +132,9 @@ class KippZonenPyrgeometer(PPBase):
             units='W m-2',
             frequency=1,
             long_name='Corrected upward longwave irradiance',
+            instrument_manufacturer='Kipp and Zonen',
+            instrument_model='CR4',
+            instrument_serial_number=self.dataset['BBRLIR_SN'],
             write=False
         )
 

@@ -82,7 +82,8 @@ class Rvsm(PPBase):
             frequency=32,
             standard_name='air_pressure',
             long_name=('Static pressure from the aircraft RVSM (air data) '
-                       'system')
+                       'system'),
+            instrument_manufacturer='BAE Systems'
         )
 
         self.declare(
@@ -91,7 +92,8 @@ class Rvsm(PPBase):
             frequency=32,
             standard_name=None,
             long_name=('Pitot static pressure inverted from RVSM (air data) '
-                       'system indicated airspeed')
+                       'system indicated airspeed'),
+            instrument_manufacturer='BAE Systems'
         )
 
         self.declare(
@@ -100,7 +102,8 @@ class Rvsm(PPBase):
             frequency=32,
             standard_name='barometric_altitude',
             long_name=('Pressure altitude from the aircraft RVSM (air data) '
-                       'system')
+                       'system'),
+            instrument_manufacturer='BAE Systems'
         )
 
     def calc_altitude(self):

@@ -46,7 +46,10 @@ class CabinPressure(PPBase):
             'CAB_PRES',
             units='hPa',
             frequency=1,
-            long_name='Cabin Pressure'
+            long_name='Cabin Pressure',
+            sensor_manufacturer='Rosemount Aerospace Inc.',
+            sensor_model='1201F2',
+            sensor_serial_number=self.dataset['CABP_SN']
         )
 
     def bounds_flag(self):

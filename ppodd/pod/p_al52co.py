@@ -81,7 +81,9 @@ class AL52CO(PPBase):
             frequency=1,
             long_name=('Mole fraction of Carbon Monoxide in air from the AERO '
                        'AL5002 instrument'),
-            standard_name='mole_fraction_of_carbon_monoxide_in_air'
+            standard_name='mole_fraction_of_carbon_monoxide_in_air',
+            instrument_manufacturer='Aero-Laser GmbH',
+            instrument_model='AL5002'
         )
 
     def flag(self):

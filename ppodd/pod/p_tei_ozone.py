@@ -43,7 +43,9 @@ class TeiOzone(PPBase):
             frequency=1,
             long_name=('Mole fraction of Ozone in air from the TECO 49 '
                        'instrument'),
-            standard_name='mole_fraction_of_ozone_in_air'
+            standard_name='mole_fraction_of_ozone_in_air',
+            instrument_manufacturer='Thermo Fisher Scientific, Inc.',
+            instrument_model='49i IV absorption ozone photometer'
         )
 
     def flag(self):

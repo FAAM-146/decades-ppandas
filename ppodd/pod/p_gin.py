@@ -72,13 +72,17 @@ class Gin(PPBase):
         Declare module outputs.
         """
         gin_name = 'POS AV 510 GPS-aided Inertial Navigation unit'
+        gin_manufacturer = 'Applanix'
+        gin_model = 'POS AV 510'
 
         self.declare(
             'LAT_GIN',
             units='degree_north',
             frequency=32,
             long_name=f'Latitude from {gin_name}',
-            standard_name='latitude'
+            standard_name='latitude',
+            instrument_manufacturer=gin_manufacturer,
+            instrument_model=gin_model
         )
 
         self.declare(
@@ -86,7 +90,9 @@ class Gin(PPBase):
             units='degree_east',
             frequency=32,
             long_name=f'Longitude from {gin_name}',
-            standard_name='longitude'
+            standard_name='longitude',
+            instrument_manufacturer=gin_manufacturer,
+            instrument_model=gin_model
         )
 
         self.declare(
@@ -94,7 +100,9 @@ class Gin(PPBase):
             units='m',
             frequency=32,
             long_name=f'Altitude from {gin_name}',
-            standard_name='altitude'
+            standard_name='altitude',
+            instrument_manufacturer=gin_manufacturer,
+            instrument_model=gin_model
         )
 
         self.declare(
@@ -102,7 +110,9 @@ class Gin(PPBase):
             units='m s-1',
             frequency=32,
             long_name=f'Aircraft velocity north from {gin_name}',
-            standard_name=None
+            standard_name=None,
+            instrument_manufacturer=gin_manufacturer,
+            instrument_model=gin_model
         )
 
         self.declare(
@@ -110,7 +120,9 @@ class Gin(PPBase):
             units='m s-1',
             frequency=32,
             long_name=f'Aircraft velocity east from {gin_name}',
-            standard_name=None
+            standard_name=None,
+            instrument_manufacturer=gin_manufacturer,
+            instrument_model=gin_model
         )
 
         self.declare(
@@ -118,7 +130,9 @@ class Gin(PPBase):
             units='m s-1',
             frequency=32,
             long_name=f'Aircraft velocity down from {gin_name}',
-            standard_name=None
+            standard_name=None,
+            instrument_manufacturer=gin_manufacturer,
+            instrument_model=gin_model
         )
 
         self.declare(
@@ -126,7 +140,9 @@ class Gin(PPBase):
             units='degree',
             frequency=32,
             long_name=f'Roll angle from {gin_name}',
-            standard_name='platform_roll_angle'
+            standard_name='platform_roll_angle',
+            instrument_manufacturer=gin_manufacturer,
+            instrument_model=gin_model
         )
 
         self.declare(
@@ -134,7 +150,9 @@ class Gin(PPBase):
             units='degree',
             frequency=32,
             long_name=f'Pitch angle from {gin_name}',
-            standard_name='platform_pitch_angle'
+            standard_name='platform_pitch_angle',
+            instrument_manufacturer=gin_manufacturer,
+            instrument_model=gin_model
         )
 
         self.declare(
@@ -143,6 +161,8 @@ class Gin(PPBase):
             frequency=32,
             long_name=f'Heading from {gin_name}',
             standard_name='platform_yaw_angle',
+            instrument_manufacturer=gin_manufacturer,
+            instrument_model=gin_model,
             circular=True
         )
 
@@ -152,6 +172,8 @@ class Gin(PPBase):
             frequency=32,
             long_name=f'Wander angle from {gin_name}',
             standard_name=None,
+            instrument_manufacturer=gin_manufacturer,
+            instrument_model=gin_model,
             circular=True
         )
 
@@ -161,6 +183,8 @@ class Gin(PPBase):
             frequency=32,
             long_name=f'Aircraft track angle from {gin_name}',
             standard_name='platform_course',
+            instrument_manufacturer=gin_manufacturer,
+            instrument_model=gin_model,
             circular=True
         )
 
@@ -169,7 +193,9 @@ class Gin(PPBase):
             units='m s-1',
             frequency=32,
             long_name=f'Groundspeed from {gin_name}',
-            standard_name='platform_speed_wrt_ground'
+            standard_name='platform_speed_wrt_ground',
+            instrument_manufacturer=gin_manufacturer,
+            instrument_model=gin_model
         )
 
         self.declare(
@@ -177,7 +203,9 @@ class Gin(PPBase):
             units='degree s-1',
             frequency=32,
             long_name=f'Rate-of-change of roll angle from {gin_name}',
-            standard_name='platform_roll_rate'
+            standard_name='platform_roll_rate',
+            instrument_manufacturer=gin_manufacturer,
+            instrument_model=gin_model
         )
 
         self.declare(
@@ -185,7 +213,9 @@ class Gin(PPBase):
             units='degree s-1',
             frequency=32,
             long_name=f'Rate-of-change of pitch angle from {gin_name}',
-            standard_name='platform_pitch_rate'
+            standard_name='platform_pitch_rate',
+            instrument_manufacturer=gin_manufacturer,
+            instrument_model=gin_model
         )
 
         self.declare(
@@ -193,7 +223,9 @@ class Gin(PPBase):
             units='degree s-1',
             frequency=32,
             long_name=f'Rate-of-change of heading from {gin_name}',
-            standard_name='platform_yaw_rate'
+            standard_name='platform_yaw_rate',
+            instrument_manufacturer=gin_manufacturer,
+            instrument_model=gin_model
         )
 
         self.declare(
@@ -202,7 +234,9 @@ class Gin(PPBase):
             frequency=32,
             long_name=('Acceleration along the aircraft longitudinal axis '
                        f'from {gin_name} (positive forward)'),
-            standard_name=None
+            standard_name=None,
+            instrument_manufacturer=gin_manufacturer,
+            instrument_model=gin_model
         )
 
         self.declare(
@@ -211,7 +245,9 @@ class Gin(PPBase):
             frequency=32,
             long_name=('Acceleration along the aircraft transverse axis from '
                        f'{gin_name} (positive starboard)'),
-            standard_name=None
+            standard_name=None,
+            instrument_manufacturer=gin_manufacturer,
+            instrument_model=gin_model
         )
 
         self.declare(
@@ -220,14 +256,18 @@ class Gin(PPBase):
             frequency=32,
             long_name=('Acceleration along the aircraft vertical axis from '
                        f'{gin_name} (positive down)'),
-            standard_name=None
+            standard_name=None,
+            instrument_manufacturer=gin_manufacturer,
+            instrument_model=gin_model
         )
 
         self.declare(
             'STATUS_GIN',
             frequency=32,
             long_name=f'Solution status from {gin_name}',
-            standard_name=None
+            standard_name=None,
+            instrument_manufacturer=gin_manufacturer,
+            instrument_model=gin_model
         )
 
     def process(self):

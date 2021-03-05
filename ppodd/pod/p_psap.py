@@ -66,7 +66,8 @@ class PSAP(PPBase):
             units='m-1',
             frequency=1,
             long_name=('Uncorrected absorbtion coefficient at 565nm, linear, '
-                       'from PSAP')
+                       'from PSAP'),
+            instrument_manufacturer='Radiance Research'
         )
 
         self.declare(
@@ -74,21 +75,24 @@ class PSAP(PPBase):
             units='1',
             frequency=1,
             long_name=('Uncorrected absorption coefficient at 565nm, log, '
-                       'from PSAP')
+                       'from PSAP'),
+            instrument_manufacturer='Radiance Research'
         )
 
         self.declare(
             'PSAP_FLO',
             units='l min-1',
             frequency=1,
-            long_name='PSAP Flow'
+            long_name='PSAP Flow',
+            instrument_manufacturer='Radiance Research'
         )
 
         self.declare(
             'PSAP_TRA',
             units='percent',
             frequency=1,
-            long_name='PSAP Transmittance'
+            long_name='PSAP Transmittance',
+            instrument_manufacturer='Radiance Research'
         )
 
     def flag(self):

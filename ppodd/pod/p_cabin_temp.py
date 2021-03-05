@@ -45,7 +45,10 @@ class CabinTemp(PPBase):
             'CAB_TEMP',
             units='degC',
             frequency=1,
-            long_name='Cabin temperature at the core consoles'
+            long_name='Cabin temperature at the core consoles',
+            comment=('Should be considered a qualitative measure only, due '
+                     'to lack of calibration and proximity to the core '
+                     'console')
         )
 
     def process(self):
@@ -67,7 +70,7 @@ class CabinTemp(PPBase):
         temp.flag.add_meaning(
             1, 'sensor uncalibrated', ('Indicates that the sensor is considered '
                                       'to be poorly calibrated. Temperatures are '
-                                      'to be considered indicative')
+                                      'to be considered qualitative.')
         )
         temp.flag.add_meaning(
             2, flags.DATA_MISSING, 'Data are expected, but are missing'

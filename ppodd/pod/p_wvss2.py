@@ -69,6 +69,7 @@ class WVSS2(object):
                 comment=('WVSS-II measurements rely on manufacturer '
                          'calibrations, and are not tracable to national '
                          'standards'),
+                instrument_manufacturer='SpectraSensors',
                 **attrs
             )
 
