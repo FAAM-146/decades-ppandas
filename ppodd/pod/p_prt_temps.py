@@ -114,7 +114,7 @@ class PRTTemperatures(PPBase):
                            'temperature sensor'),
                 sensor_type=self.dataset['DITSENS'][1],
                 sensor_serial_number=self.dataset['DITSENS'][0],
-                comment=sampling.format(nddi='deiced')
+                comment=sampling.format(nddi='deiced'),
                 write=False
             )
 
@@ -139,7 +139,7 @@ class PRTTemperatures(PPBase):
                            'non-deiced temperature sensor'),
                 sensor_type=self.dataset['NDTSENS'][1],
                 sensor_serial_number=self.dataset['NDTSENS'][0],
-                comment=sampling.format(nddi='non-deiced')
+                comment=sampling.format(nddi='non-deiced'),
                 write=False
             )
 

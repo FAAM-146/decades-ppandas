@@ -160,7 +160,7 @@ class BBRFlux(PPBase):
             'RED_DN_C',
             units='W m-2',
             frequency=1,
-            long_name='Corrected downward short wave irradiance, red dome'
+            long_name='Corrected downward short wave irradiance, red dome',
             instrument_manufacturer=manufacturer,
             instrument_serial_number=self.dataset['BBRUP2_SN']
         )
@@ -170,7 +170,7 @@ class BBRFlux(PPBase):
             units='W m-2',
             frequency=1,
             standard_name='upwelling_shortwave_flux_in_air',
-            long_name='Corrected upward short wave irradiance, clear dome'
+            long_name='Corrected upward short wave irradiance, clear dome',
             instrument_manufacturer=manufacturer,
             instrument_serial_number=self.dataset['BBRLP1_SN']
         )
@@ -179,7 +179,7 @@ class BBRFlux(PPBase):
             'RED_UP_C',
             units='W m-2',
             frequency=1,
-            long_name='Corrected upward short wave irradiance, red dome'
+            long_name='Corrected upward short wave irradiance, red dome',
             instrument_manufacturer=manufacturer,
             instrument_serial_number=self.dataset['BBRLP2_SN']
         )
