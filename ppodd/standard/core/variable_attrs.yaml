@@ -62,6 +62,22 @@ VariableAttrs:
         aliases: []
         versions: [1.0]
 
+    sensor_manufacturer:
+        required: false
+        description: >-
+            The entity responsible for manufacturing a sensor
+        inherits_from: null
+        aliases: []
+        versions: [1.0]
+
+    sensor_model:
+        required: false
+        description: >-
+            The sensor model name or number
+        inherits_from: null
+        aliases: []
+        versions: [1.0]
+
     sensor_serial_number:
         required: false
         description: >-
@@ -77,6 +93,22 @@ VariableAttrs:
             The type of the sensor responsible for making a measurement, where more than one type
             of sensor may make the same measurement. A canonical example of this is for temperature
             sensors, which may be of type 'plate', 'loom', or 'thermistor'.
+        inherits_from: null
+        aliases: []
+        versions: [1.0]
+
+    instrument_manufacturer:
+        required: false
+        description: >-
+            The entity responsible for manufacturing an instrument.
+        inherits_from: null
+        aliases: []
+        versions: [1.0]
+
+    instrument_model:
+        required: false
+        description: >-
+            The instrument model name or number
         inherits_from: null
         aliases: []
         versions: [1.0]
