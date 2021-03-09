@@ -1,12 +1,24 @@
 import contextlib
 import os
 import inspect
+import logging
 import subprocess
 
 import ppodd
 
 __version__ = '0.10.0'
 URL = 'https://github.com/faam-146/decades-ppandas'
+
+formatter = logging.Formatter(
+    '[%(asctime)s] %(levelname)-8s %(name)s (%(funcName)s) - %(message)s'
+)
+handler = logging.StreamHandler()
+handler.setFormatter(formatter)
+handler.setLevel(logging.DEBUG)
+
+package_logger = logging.getLogger(__name__.split('.')[0])
+package_logger.setLevel(logging.DEBUG)
+package_logger.addHandler(handler)
 
 def version():
     return __version__

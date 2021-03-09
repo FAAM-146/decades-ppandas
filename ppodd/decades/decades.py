@@ -17,6 +17,7 @@ import datetime
 import gc
 import glob
 import importlib
+import logging
 import re
 import os
 import traceback
@@ -33,6 +34,8 @@ from ppodd.decades.attributes import AttributesCollection, Attribute
 from ppodd.decades.flags import DecadesClassicFlag
 from ppodd.utils import pd_freq, infer_freq
 from ppodd.writers import NetCDFWriter
+
+logger = logging.getLogger(__name__)
 
 
 class Lazy(object):
@@ -447,7 +450,7 @@ class DecadesDataset(object):
 
     def __init__(self, date=None, standard_version=1.0, backend=DefaultBackend,
                  writer=NetCDFWriter, pp_plugins='ppodd.pod',
-                 standard='ppodd.standard.core', strict=True):
+                 standard='ppodd.standard.core', strict=True, logfile=None):
         """
         Create a class instance.
 
@@ -498,6 +501,7 @@ class DecadesDataset(object):
         self._strict_mode = strict
         self.allow_overwrite = False
         self._backend = backend()
+
 
     def __getitem__(self, item):
         """
@@ -749,7 +753,7 @@ class DecadesDataset(object):
             if re.fullmatch(pattern, _filename):
                 return reader_patterns[pattern]
 
-        print('No reader found for {}'.format(dfile))
+        logger.warning('No reader found for {}'.format(dfile))
         return None
 
     def add_definition(self, definition):
@@ -897,11 +901,11 @@ class DecadesDataset(object):
         kwargs:
             file_type: the file type to pass to DecadesFile
         """
-        print('adding {}'.format(filename))
+        logger.info('Adding {}'.format(filename))
         try:
             self.add_decades_file(DecadesFile(filename))
         except ValueError:
-            print('failed to add {}'.format(filename))
+            logger.error('failed to add {}'.format(filename))
 
     def load(self):
         """
@@ -914,8 +918,8 @@ class DecadesDataset(object):
             try:
                 reader.read()
             except Exception as err: # pylint: disable=broad-except
-                print(f'Error in reading module {reader}')
-                print(str(err))
+                logger.error(f'Error in reading module {reader}')
+                logger.error(str(err))
             del reader
 
         self.readers = None
@@ -929,7 +933,7 @@ class DecadesDataset(object):
             try:
                 _pp_modules.append(pp(self))
             except Exception as err: # pylint: disable=broad-except
-                print('Couldn\'t init {}: {}'.format(pp, str(err)))
+                logger.warning('Couldn\'t init {}: {}'.format(pp, str(err)))
         self.pp_modules = collections.deque(_pp_modules)
 
         self.flag_modules = [flag(self) for flag in ppodd.flags.flag_modules]
@@ -1053,7 +1057,7 @@ class DecadesDataset(object):
                 _mod.run()
                 del _mod
             except Exception as err: # pylint: disable=broad-except
-                print(' ** Error in {}: {}'.format(_mod, err))
+                logger.error('Error in {}: {}'.format(_mod, err))
 
     def run_flagging(self):
         """
@@ -1065,11 +1069,11 @@ class DecadesDataset(object):
         while self.flag_modules:
             _flag = self.flag_modules.pop()
             try:
-                print('running {}'.format(_flag))
+                logger.info('Running {}'.format(_flag))
                 _flag.flag()
                 del _flag
             except Exception as err: # pylint: disable=broad-except
-                print(' ** Error in {}: {}'.format(_flag, err))
+                logger.error('Error in {}: {}'.format(_flag, err))
 
     def _trim_data(self):
         """
@@ -1079,7 +1083,7 @@ class DecadesDataset(object):
         if self.takeoff_time and self.landing_time:
             start_cutoff = self.takeoff_time - datetime.timedelta(hours=2)
             end_cutoff = self.landing_time + datetime.timedelta(minutes=30)
-            print(f'trimming: {start_cutoff} -- {end_cutoff}')
+            logger.debug(f'trimming: {start_cutoff} -- {end_cutoff}')
             self._backend.trim(start_cutoff, end_cutoff)
 
 
@@ -1112,7 +1116,7 @@ class DecadesDataset(object):
                         _mod.finalize()
                     else:
                         # The module  could not be run, due to lacking inputs.
-                        print(
+                        logger.debug(
                             ('Module {} not ready: '
                              'inputs not available {}').format(
                                  mod.__name__, ','.join(_missing))
@@ -1130,7 +1134,7 @@ class DecadesDataset(object):
             try:
                 _pp_modules.append(pp(self))
             except Exception as err: # pylint: disable=broad-except
-                print('Couldn\'t init {}: {}'.format(pp, str(err)))
+                logger.warning('Couldn\'t init {}: {}'.format(pp, str(err)))
         self.pp_modules = collections.deque(_pp_modules)
 
         # Initialize flagging modules
@@ -1153,7 +1157,7 @@ class DecadesDataset(object):
 
             _mod_ready, _missing = pp_module.ready()
             if not _mod_ready:
-                print('{} not ready (missing {})'.format(
+                logger.debug('{} not ready (missing {})'.format(
                     pp_module, ', '.join(_missing)
                 ))
                 temp_modules.append(pp_module)
@@ -1161,16 +1165,16 @@ class DecadesDataset(object):
                 del pp_module
                 continue
             if str(pp_module) in self._mod_exclusions:
-                print('Skipping {} (excluded)'.format(pp_module))
+                logger.info('Skipping {} (excluded)'.format(pp_module))
                 module_ran = True
                 del pp_module
                 continue
             try:
-                print('Running {}'.format(pp_module))
+                logger.info('Running {}'.format(pp_module))
                 pp_module.process()
                 pp_module.finalize()
             except Exception as err: # pylint: disable=broad-except
-                print(' ** Error in {}: {}'.format(pp_module, err))
+                logger.error('Error in {}: {}'.format(pp_module, err))
                 traceback.print_exc()
                 self.failed_modules.append(pp_module)
             else:
