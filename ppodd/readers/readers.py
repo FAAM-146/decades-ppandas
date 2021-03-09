@@ -167,7 +167,11 @@ class CoreNetCDFReader(FileReader):
             print(f'Reading {_file}...')
             with netCDF4.Dataset(_file.filepath) as nc:
                 time = pd.DatetimeIndex(
-                    netCDF4.num2date(nc['Time'][:], units=nc['Time'].units)
+                    netCDF4.num2date(
+                        nc['Time'][:], units=nc['Time'].units,
+                        only_use_cftime_datetimes=False,
+                        only_use_python_datetimes=True
+                    )
                 )
 
                 for var in nc.variables:
