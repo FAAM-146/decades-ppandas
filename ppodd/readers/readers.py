@@ -517,12 +517,17 @@ class DefinitionReader(FileReader):
             endian = '<'
         typestr = typestr.replace('>', '').replace('<', '')
 
-        typestr = '{endian}{num_points}{kind}{size}'.format(
-            endian=endian,
-            kind=type_dict[typestr],
-            size=size,
-            num_points=num_points
-        )
+        if num_points > 1:
+            typestr = '{endian}{num_points}{kind}{size}'.format(
+                endian=endian,
+                kind=type_dict[typestr],
+                size=size,
+                num_points=num_points
+            )
+        else:
+            typestr = '{endian}{kind}{size}'.format(
+                kind=type_dict[typestr], size=size, endian=endian
+            )
 
         return typestr
 
