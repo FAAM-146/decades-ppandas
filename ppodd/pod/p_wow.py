@@ -19,6 +19,7 @@ class WeightOnWheels(PPBase):
         self.declare(
             'WOW_IND',
             frequency=1,
+            units=1,
             long_name='Weight on wheels indicator',
             standard_name=None
         )
