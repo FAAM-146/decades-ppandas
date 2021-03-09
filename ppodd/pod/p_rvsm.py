@@ -4,7 +4,7 @@ system, recorded on the rear core console via the ARINC 429 data bus. See the
 class docstring for more information.
 """
 # pylint: disable=invalid-name
-
+import datetime
 import pandas as pd
 import numpy as np
 
@@ -256,6 +256,14 @@ class Rvsm(PPBase):
         """
 
         _start, _end = self.dataset[self.inputs[0]].time_bounds()
+
+        # This is a bit hacky, but it ensures we have a correct end point when
+        # interpolating from 20 Hz to 32 Hz.
+        _end += datetime.timedelta(
+            seconds=(1/self.dataset[self.inputs[0]].frequency)*.99
+        )
+
+        # Generate the index we want, and build the dataframe
         _index = pd.date_range(start=_start, end=_end, freq=pd_freq[32])
         self.get_dataframe(method='onto', index=_index, limit=2)
 
