@@ -137,6 +137,7 @@ class DecadesVariable(object):
         _standard = kwargs.pop('standard', 'ppodd.standard.core')
         _standard_version = kwargs.pop('standard_version', 1.0)
         _strict = kwargs.pop('strict', True)
+        _tolerance = kwargs.pop('tolerance', '2L')
 
         self.attrs = AttributesCollection(
             dataset=self, definition='.'.join((_standard, 'variable_attrs')),
@@ -187,7 +188,7 @@ class DecadesVariable(object):
         # don't have to have a 64-bit index associated with every variable.
         self.array = self._downcast(np.array(
             _df.reindex(
-                _index, tolerance=0, method='nearest', limit=1
+                _index, tolerance=_tolerance, method='nearest', limit=1
             ).values.flatten()
         ))
 

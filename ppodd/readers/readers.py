@@ -220,6 +220,7 @@ class ZipFileReader(FileReader):
 class TcpFileReader(FileReader):
     level = 2
     time_variable = 'utc_time'
+    tolerance = 0
 
     def scan(self, dfile, definition):
         print('Scanning {}...'.format(dfile))
@@ -440,6 +441,7 @@ class TcpFileReader(FileReader):
                     long_name=definition.get_field(_name).long_name,
                     units='RAW',
                     frequency=frequency,
+                    tolerance=self.tolerance,
                     write=False
                 )
 
@@ -454,6 +456,7 @@ class CrioFileReader(TcpFileReader):
 class GinFileReader(TcpFileReader):
     time_variable = 'time1'
     frequency = 50
+    tolerance = '10L'
 
     def _get_definition(self, _file):
         for _definition in _file.dataset.definitions:
