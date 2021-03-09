@@ -131,6 +131,7 @@ class DecadesVariable(object):
                               1.0
             strict: whether the <standard> should be strictly enforced. Default
                     is True.
+            tolerance: tolerance to use when reindexing onto a regular index.
         """
 
         _flag = kwargs.pop('flag', DecadesClassicFlag)
