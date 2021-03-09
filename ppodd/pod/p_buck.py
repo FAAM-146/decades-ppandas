@@ -63,7 +63,7 @@ class BuckCR2(PPBase):
                        'CR2'),
             instrument_manufacturer=manufacturer,
             instrument_model=model,
-            instrument_serial_number=self.dataset['BUCK_SN']
+            instrument_serial_number=self.dataset.lazy['BUCK_SN']
         )
 
         self.declare(
@@ -74,7 +74,7 @@ class BuckCR2(PPBase):
                        'ratio measured by the Buck CR2'),
             instrument_manufacturer=manufacturer,
             instrument_model=model,
-            instrument_serial_number=self.dataset['BUCK_SN']
+            instrument_serial_number=self.dataset.lazy['BUCK_SN']
         )
 
         self.declare(
@@ -85,7 +85,7 @@ class BuckCR2(PPBase):
             standard_name='dew_point_temperature',
             instrument_manufacturer=manufacturer,
             instrument_model=model,
-            instrument_serial_number=self.dataset['BUCK_SN']
+            instrument_serial_number=self.dataset.lazy['BUCK_SN']
         )
 
         self.declare(
@@ -95,7 +95,7 @@ class BuckCR2(PPBase):
             long_name='Uncertainty estimate for Buck CR2 Mirror Temperature',
             instrument_manufacturer=manufacturer,
             instrument_model=model,
-            instrument_serial_number=self.dataset['BUCK_SN']
+            instrument_serial_number=self.dataset.lazy['BUCK_SN']
         )
 
         self.declare(
@@ -107,7 +107,7 @@ class BuckCR2(PPBase):
             standard_name='dew_point_temperature',
             instrument_manufacturer=manufacturer,
             instrument_model=model,
-            instrument_serial_number=self.dataset['BUCK_SN']
+            instrument_serial_number=self.dataset.lazy['BUCK_SN']
         )
 
     @staticmethod

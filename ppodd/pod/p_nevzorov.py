@@ -5,6 +5,8 @@ info.
 """
 # pylint: disable=invalid-name, too-many-arguments, too-many-locals
 # pylint: disable=too-many-statements
+import warnings
+
 import numpy as np
 import pandas as pd
 
@@ -245,8 +247,8 @@ class Nevzorov(PPBase):
             long_name=('Uncorrected total condensed water content from the '
                        'Nevzorov probe'),
             instrument_manufacturer='Sky Phys Tech Inc.',
-            instrument_model=self.dataset['VANETYPE'],
-            instrument_serial_number=self.dataset['VANE_SN']
+            instrument_model=self.dataset.lazy['VANETYPE'],
+            instrument_serial_number=self.dataset.lazy['VANE_SN']
         )
 
         self.declare(
@@ -257,8 +259,8 @@ class Nevzorov(PPBase):
                        'Nevzorov probe'),
             comment='Automatically baselined. May require further processing.',
             instrument_manufacturer='Sky Phys Tech Inc.',
-            instrument_model=self.dataset['VANETYPE'],
-            instrument_serial_number=self.dataset['VANE_SN']
+            instrument_model=self.dataset.lazy['VANETYPE'],
+            instrument_serial_number=self.dataset.lazy['VANE_SN']
         )
 
         self.declare(
@@ -267,8 +269,8 @@ class Nevzorov(PPBase):
             frequency=64,
             long_name='TWC collector power',
             instrument_manufacturer='Sky Phys Tech Inc.',
-            instrument_model=self.dataset['VANETYPE'],
-            instrument_serial_number=self.dataset['VANE_SN'],
+            instrument_model=self.dataset.lazy['VANETYPE'],
+            instrument_serial_number=self.dataset.lazy['VANE_SN'],
             write=False
         )
 
@@ -279,8 +281,8 @@ class Nevzorov(PPBase):
             long_name=('Clear air mask based on Nevzorov Total Water power '
                        'variance'),
             instrument_manufacturer='Sky Phys Tech Inc.',
-            instrument_model=self.dataset['VANETYPE'],
-            instrument_serial_number=self.dataset['VANE_SN'],
+            instrument_model=self.dataset.lazy['VANETYPE'],
+            instrument_serial_number=self.dataset.lazy['VANE_SN'],
             write=False
 
         )
@@ -297,8 +299,8 @@ class Nevzorov(PPBase):
             long_name=('Uncorrected liquid water content from the Nevzorov '
                        'probe'),
             instrument_manufacturer='Sky Phys Tech Inc.',
-            instrument_model=self.dataset['VANETYPE'],
-            instrument_serial_number=self.dataset['VANE_SN']
+            instrument_model=self.dataset.lazy['VANETYPE'],
+            instrument_serial_number=self.dataset.lazy['VANE_SN']
         )
 
         self.declare(
@@ -309,8 +311,8 @@ class Nevzorov(PPBase):
             standard_name='mass_concentration_of_liquid_water_in_air',
             comment='Automatically baselined. May require further processing.',
             instrument_manufacturer='Sky Phys Tech Inc.',
-            instrument_model=self.dataset['VANETYPE'],
-            instrument_serial_number=self.dataset['VANE_SN']
+            instrument_model=self.dataset.lazy['VANETYPE'],
+            instrument_serial_number=self.dataset.lazy['VANE_SN']
         )
 
         self.declare(
@@ -319,8 +321,8 @@ class Nevzorov(PPBase):
             frequency=64,
             long_name='TWC reference power',
             instrument_manufacturer='Sky Phys Tech Inc.',
-            instrument_model=self.dataset['VANETYPE'],
-            instrument_serial_number=self.dataset['VANE_SN'],
+            instrument_model=self.dataset.lazy['VANETYPE'],
+            instrument_serial_number=self.dataset.lazy['VANE_SN'],
             write=False
         )
 
@@ -330,8 +332,8 @@ class Nevzorov(PPBase):
             frequency=64,
             long_name='LWC collector power',
             instrument_manufacturer='Sky Phys Tech Inc.',
-            instrument_model=self.dataset['VANETYPE'],
-            instrument_serial_number=self.dataset['VANE_SN'],
+            instrument_model=self.dataset.lazy['VANETYPE'],
+            instrument_serial_number=self.dataset.lazy['VANE_SN'],
             write=False
         )
 
@@ -341,8 +343,8 @@ class Nevzorov(PPBase):
             frequency=64,
             long_name='LWC reference power',
             instrument_manufacturer='Sky Phys Tech Inc.',
-            instrument_model=self.dataset['VANETYPE'],
-            instrument_serial_number=self.dataset['VANE_SN'],
+            instrument_model=self.dataset.lazy['VANETYPE'],
+            instrument_serial_number=self.dataset.lazy['VANE_SN'],
             write=False
         )
 
@@ -358,8 +360,8 @@ class Nevzorov(PPBase):
             long_name=('Uncorrected liquid water content from the Nevzorov '
                        'probe (1st collector)'),
             instrument_manufacturer='Sky Phys Tech Inc.',
-            instrument_model=self.dataset['VANETYPE'],
-            instrument_serial_number=self.dataset['VANE_SN']
+            instrument_model=self.dataset.lazy['VANETYPE'],
+            instrument_serial_number=self.dataset.lazy['VANE_SN']
         )
 
         self.declare(
@@ -371,8 +373,8 @@ class Nevzorov(PPBase):
             standard_name='mass_concentration_of_liquid_water_in_air',
             comment='Automatically baselined. May require further processing.',
             instrument_manufacturer='Sky Phys Tech Inc.',
-            instrument_model=self.dataset['VANETYPE'],
-            instrument_serial_number=self.dataset['VANE_SN']
+            instrument_model=self.dataset.lazy['VANETYPE'],
+            instrument_serial_number=self.dataset.lazy['VANE_SN']
         )
 
         self.declare(
@@ -382,8 +384,8 @@ class Nevzorov(PPBase):
             long_name=('Uncorrected liquid water content from the Nevzorov '
                        'probe (2nd collector)'),
             instrument_manufacturer='Sky Phys Tech Inc.',
-            instrument_model=self.dataset['VANETYPE'],
-            instrument_serial_number=self.dataset['VANE_SN']
+            instrument_model=self.dataset.lazy['VANETYPE'],
+            instrument_serial_number=self.dataset.lazy['VANE_SN']
         )
 
         self.declare(
@@ -395,8 +397,8 @@ class Nevzorov(PPBase):
             standard_name='mass_concentration_of_liquid_water_in_air',
             comment='Automatically baselined. May require further processing.',
             instrument_manufacturer='Sky Phys Tech Inc.',
-            instrument_model=self.dataset['VANETYPE'],
-            instrument_serial_number=self.dataset['VANE_SN']
+            instrument_model=self.dataset.lazy['VANETYPE'],
+            instrument_serial_number=self.dataset.lazy['VANE_SN']
         )
 
         self.declare(
@@ -405,8 +407,8 @@ class Nevzorov(PPBase):
             frequency=64,
             long_name='Reference power',
             instrument_manufacturer='Sky Phys Tech Inc.',
-            instrument_model=self.dataset['VANETYPE'],
-            instrument_serial_number=self.dataset['VANE_SN'],
+            instrument_model=self.dataset.lazy['VANETYPE'],
+            instrument_serial_number=self.dataset.lazy['VANE_SN'],
             write=False
         )
 
@@ -416,8 +418,8 @@ class Nevzorov(PPBase):
             frequency=64,
             long_name='LWC1 collector power',
             instrument_manufacturer='Sky Phys Tech Inc.',
-            instrument_model=self.dataset['VANETYPE'],
-            instrument_serial_number=self.dataset['VANE_SN'],
+            instrument_model=self.dataset.lazy['VANETYPE'],
+            instrument_serial_number=self.dataset.lazy['VANE_SN'],
             write=False
         )
 
@@ -427,8 +429,8 @@ class Nevzorov(PPBase):
             frequency=64,
             long_name='LWC2 collector power',
             instrument_manufacturer='Sky Phys Tech Inc.',
-            instrument_model=self.dataset['VANETYPE'],
-            instrument_serial_number=self.dataset['VANE_SN'],
+            instrument_model=self.dataset.lazy['VANETYPE'],
+            instrument_serial_number=self.dataset.lazy['VANE_SN'],
             write=False
         )
 
@@ -443,6 +445,8 @@ class Nevzorov(PPBase):
         try:
             _vanetype = self.dataset['VANETYPE'].lower()
         except KeyError:
+            warnings.warn('VANETYPE not given, setting to default 1t2l1r')
+            self.dataset.constants['VANETYPE'] = '1t2l1r'
             _vanetype = '1t2l1r'
 
         if _vanetype in ('1t1l2r', 'all'):

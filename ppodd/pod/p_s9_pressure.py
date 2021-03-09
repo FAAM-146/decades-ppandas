@@ -69,7 +69,7 @@ class S9Pressure(PPBase):
             standard_name='air_pressure',
             sensor_manufacturer='Rosemount Aerospace Inc.',
             sensor_model='1201F2',
-            sensor_serial_number=self.dataset['S9SP_SN']
+            sensor_serial_number=self.dataset.lazy['S9SP_SN']
         )
 
         self.declare(
@@ -80,7 +80,7 @@ class S9Pressure(PPBase):
             standard_name='air_pressure',
             sensor_manufacturer='Rosemount Aerospace Inc.',
             sensor_model='1201F2',
-            sensor_serial_number=self.dataset['S9SP_SN'],
+            sensor_serial_number=self.dataset.lazy['S9SP_SN'],
             write=False
         )
 

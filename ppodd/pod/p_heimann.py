@@ -62,7 +62,7 @@ class Heimann(PPBase):
                        'radiometer'),
             instrument_manufacturer='Heitronics',
             instrument_model='KT19.82',
-            instrument_serial_number=self.dataset['HEIM_SN']
+            instrument_serial_number=self.dataset.lazy['HEIM_SN']
         )
 
     @staticmethod

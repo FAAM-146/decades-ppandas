@@ -53,7 +53,7 @@ class S10Pressure(PPBase):
             standard_name='air_pressure',
             sensor_manufacturer='Rosemount Aerospace Inc.',
             sensor_model='1201F2',
-            sensor_serial_number=self.dataset['S10SP_SN']
+            sensor_serial_number=self.dataset.lazy['S10SP_SN']
         )
 
     def bounds_flag(self):

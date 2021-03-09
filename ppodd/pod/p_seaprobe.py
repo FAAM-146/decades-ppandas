@@ -688,7 +688,7 @@ class SeaProbe(PPBase):
                        'element 021'),
             instrument_manufacturer=manufacturer,
             instrument_model=model,
-            instrument_serial_number=self.dataset['SEA_SN']
+            instrument_serial_number=self.dataset.lazy['SEA_SN']
         )
 
         self.declare(
@@ -699,7 +699,7 @@ class SeaProbe(PPBase):
                        'element 083'),
             instrument_manufacturer=manufacturer,
             instrument_model=model,
-            instrument_serial_number=self.dataset['SEA_SN']
+            instrument_serial_number=self.dataset.lazy['SEA_SN']
         )
 
 
@@ -712,7 +712,7 @@ class SeaProbe(PPBase):
             standard_name='mass_concentration_of_liquid_water_in_air',
             instrument_manufacturer=manufacturer,
             instrument_model=model,
-            instrument_serial_number=self.dataset['SEA_SN']
+            instrument_serial_number=self.dataset.lazy['SEA_SN']
         )
 
         self.declare(
@@ -724,7 +724,7 @@ class SeaProbe(PPBase):
             standard_name='mass_concentration_of_liquid_water_in_air',
             instrument_manufacturer=manufacturer,
             instrument_model=model,
-            instrument_serial_number=self.dataset['SEA_SN']
+            instrument_serial_number=self.dataset.lazy['SEA_SN']
         )
 
     def process(self):

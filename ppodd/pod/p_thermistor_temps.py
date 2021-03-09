@@ -5,6 +5,7 @@ from scipy import interpolate
 from scipy.interpolate import CubicSpline
 
 from ..decades import DecadesVariable, DecadesBitmaskFlag
+from ..exceptions import EM_CANNOT_INIT_MODULE
 from ..utils.calcs import sp_mach, true_air_temp
 from ..utils.conversions import celsius_to_kelvin
 from .base import PPBase
@@ -147,6 +148,15 @@ class ThermistorV1Temperatures(PPBase):
         sampling = ('Sensor housed in Rosemount Aerospace Inc. Type 102 '
                     '{nddi} Total Temperature Housing')
 
+        try:
+            _ = self.dataset['DITSENS']
+            _ = self.dataset['NDTSENS']
+        except KeyError as err:
+            raise RuntimeError(EM_CANNOT_INIT_MODULE.format(
+                module_name=self.__class__.__name__,
+                constants='DITSENS, NDTSENS'
+            )) from err
+
         if self.dataset['DITSENS'][1].lower() == 'thermistor':
             self.declare(
                 'TAT_DI_R',
@@ -155,8 +165,8 @@ class ThermistorV1Temperatures(PPBase):
                 long_name=('True air temperature from the Rosemount deiced '
                            'temperature sensor'),
                 standard_name='air_temperature',
-                sensor_type=self.dataset['DITSENS'][1],
-                sensor_serial_number=self.dataset['DITSENS'][0],
+                sensor_type=self.dataset.lazy['DITSENS'][1],
+                sensor_serial_number=self.dataset.lazy['DITSENS'][0],
                 comment=sampling.format(nddi='deiced')
             )
 
@@ -166,8 +176,8 @@ class ThermistorV1Temperatures(PPBase):
                 frequency=32,
                 long_name=('Indicated air temperature from the Rosemount deiced '
                            'temperature sensor'),
-                sensor_type=self.dataset['DITSENS'][1],
-                sensor_serial_number=self.dataset['DITSENS'][0],
+                sensor_type=self.dataset.lazy['DITSENS'][1],
+                sensor_serial_number=self.dataset.lazy['DITSENS'][0],
                 comment=sampling.format(nddi='deiced'),
                 write=False
             )
@@ -180,8 +190,8 @@ class ThermistorV1Temperatures(PPBase):
                 long_name=('True air temperature from the Rosemount non-deiced '
                            'temperature sensor'),
                 standard_name='air_temperature',
-                sensor_type=self.dataset['NDTSENS'][1],
-                sensor_serial_number=self.dataset['NDTSENS'][0],
+                sensor_type=self.dataset.lazy['NDTSENS'][1],
+                sensor_serial_number=self.dataset.lazy['NDTSENS'][0],
                 comment=sampling.format(nddi='non-deiced')
             )
 
@@ -191,8 +201,8 @@ class ThermistorV1Temperatures(PPBase):
                 frequency=32,
                 long_name=('Indicated air temperature from the Rosemount '
                            'non-deiced temperature sensor'),
-                sensor_type=self.dataset['NDTSENS'][1],
-                sensor_serial_number=self.dataset['NDTSENS'][0],
+                sensor_type=self.dataset.lazy['NDTSENS'][1],
+                sensor_serial_number=self.dataset.lazy['NDTSENS'][0],
                 comment=sampling.format(nddi='non-deiced'),
                 write=False
             )

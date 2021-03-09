@@ -153,7 +153,7 @@ class BBRFlux(PPBase):
             standard_name='downwelling_shortwave_flux_in_air',
             long_name='Corrected downward short wave irradiance, clear dome',
             instrument_manufacturer=manufacturer,
-            instrument_serial_number=self.dataset['BBRUP1_SN']
+            instrument_serial_number=self.dataset.lazy['BBRUP1_SN']
         )
 
         self.declare(
@@ -162,7 +162,7 @@ class BBRFlux(PPBase):
             frequency=1,
             long_name='Corrected downward short wave irradiance, red dome',
             instrument_manufacturer=manufacturer,
-            instrument_serial_number=self.dataset['BBRUP2_SN']
+            instrument_serial_number=self.dataset.lazy['BBRUP2_SN']
         )
 
         self.declare(
@@ -172,7 +172,7 @@ class BBRFlux(PPBase):
             standard_name='upwelling_shortwave_flux_in_air',
             long_name='Corrected upward short wave irradiance, clear dome',
             instrument_manufacturer=manufacturer,
-            instrument_serial_number=self.dataset['BBRLP1_SN']
+            instrument_serial_number=self.dataset.lazy['BBRLP1_SN']
         )
 
         self.declare(
@@ -181,7 +181,7 @@ class BBRFlux(PPBase):
             frequency=1,
             long_name='Corrected upward short wave irradiance, red dome',
             instrument_manufacturer=manufacturer,
-            instrument_serial_number=self.dataset['BBRLP2_SN']
+            instrument_serial_number=self.dataset.lazy['BBRLP2_SN']
         )
 
     @staticmethod

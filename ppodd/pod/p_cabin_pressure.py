@@ -49,7 +49,7 @@ class CabinPressure(PPBase):
             long_name='Cabin Pressure',
             sensor_manufacturer='Rosemount Aerospace Inc.',
             sensor_model='1201F2',
-            sensor_serial_number=self.dataset['CABP_SN']
+            sensor_serial_number=self.dataset.lazy['CABP_SN']
         )
 
     def bounds_flag(self):
