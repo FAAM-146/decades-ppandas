@@ -141,7 +141,7 @@ class DecadesVariable(object):
         _standard = kwargs.pop('standard', 'ppodd.standard.core')
         _standard_version = kwargs.pop('standard_version', 1.0)
         _strict = kwargs.pop('strict', True)
-        _tolerance = kwargs.pop('tolerance', '2L')
+        _tolerance = kwargs.pop('tolerance', 0)
 
         self.attrs = AttributesCollection(
             dataset=self, definition='.'.join((_standard, 'variable_attrs')),
