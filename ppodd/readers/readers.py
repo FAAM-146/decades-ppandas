@@ -3,6 +3,7 @@ import csv
 import datetime
 import glob
 import json
+import logging
 import os
 import re
 import sys
@@ -23,6 +24,9 @@ from ppodd.decades.flags import (DecadesBitmaskFlag, DecadesClassicFlag)
 from ..utils import pd_freq
 
 C_BAD_TIME_DEV = 43200
+
+logger = logging.getLogger(__name__)
+
 
 class FileReader(abc.ABC):
     """
@@ -53,7 +57,7 @@ class FlightConstantsReader(FileReader):
 
     def read(self):
         for _file in self.files:
-            print('Reading {}'.format(_file.filepath))
+            logger.info('Reading {}'.format(_file.filepath))
             consts = self._load(_file)
 
             for key, value in consts['Globals'].items():
@@ -164,7 +168,7 @@ class CoreNetCDFReader(FileReader):
 
     def read(self):
         for _file in self.files:
-            print(f'Reading {_file}...')
+            logger.info(f'Reading {_file}...')
             with netCDF4.Dataset(_file.filepath) as nc:
                 time = pd.DatetimeIndex(
                     netCDF4.num2date(
@@ -208,16 +212,15 @@ class ZipFileReader(FileReader):
         Reads a Zip file.
         """
         _tempdir = tempfile.mkdtemp()
-        print('Working in {}'.format(_tempdir))
+        logger.debug('Working in {}'.format(_tempdir))
 
         for _file in self.files:
             _dataset = _file.dataset
-            print('Reading {}...'.format(_file))
+            logger.info('Reading {}...'.format(_file))
             _zipfile = zipfile.ZipFile(_file.filepath)
             _zipfile.extractall(_tempdir)
 
         for _file in glob.glob(os.path.join(_tempdir, '*')):
-            print(_file)
             _dataset.add_file(_file)
 
 @register(patterns=['(^SEAPROBE|.{8})_.+_\w\d{3}'])
@@ -227,7 +230,7 @@ class TcpFileReader(FileReader):
     tolerance = 0
 
     def scan(self, dfile, definition):
-        print('Scanning {}...'.format(dfile))
+        logger.info('Scanning {}...'.format(dfile))
 
         filename = dfile.filepath
 
@@ -366,7 +369,7 @@ class TcpFileReader(FileReader):
 
             dtypes = definition.dtypes
 
-            print('Reading {}...'.format(_file))
+            logger.info('Reading {}...'.format(_file))
             _data = np.fromfile(_file.filepath, dtype=dtypes)
 
             _read_fail = False
@@ -433,8 +436,8 @@ class TcpFileReader(FileReader):
 
                 max_var_len = len(self._index_dict[frequency])
                 if max_var_len != len(_var.ravel()):
-                    print('WARN: index & variable len differ')
-                    print('      ({})'.format(variable_name))
+                    logger.warning('index & variable len differ')
+                    logger.warning(' -> ({})'.format(variable_name))
 
                 _var = _var.ravel()[:max_var_len]
 
@@ -536,7 +539,7 @@ class CrioDefinitionReader(DefinitionReader):
 
     def read(self):
         for _file in self.files:
-            print('Reading {}'.format(_file))
+            logger.info('Reading {}'.format(_file))
             tcp_def = CrioTcpDefintion()
             is_header = True
             with open(_file.filepath, 'r') as _csv:

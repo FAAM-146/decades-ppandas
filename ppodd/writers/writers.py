@@ -1,6 +1,7 @@
 import abc
 import datetime
 import json
+import logging
 import os
 
 import numpy as np
@@ -12,6 +13,9 @@ import sqlite3
 from ..utils import pd_freq, try_to_call, unwrap_array
 
 __all__ = ['SQLiteWriter', 'NetCDFWriter']
+
+logger = logging.getLogger(__name__)
+
 
 class DecadesWriter(abc.ABC):
     """
@@ -239,7 +243,7 @@ class NetCDFWriter(DecadesWriter):
             _flag = _flag.values
 
         # Finally write the data
-        print('Writing {}...'.format(var.attrs['long_name']))
+        logger.info('Writing {}...'.format(var.attrs['long_name']))
         ncvar[:] = _data
         ncflag[:] = _flag
 

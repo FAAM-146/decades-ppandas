@@ -1,3 +1,5 @@
+import logging
+
 import numpy as np
 
 from ppodd.readers import FileReader, register
@@ -6,11 +8,14 @@ from ppodd.decades import DecadesVariable
 from .utils import to_dataframe
 from .parser import parser_f
 
+logger = logging.getLogger(__name__)
+
+
 @register(patterns=['.*\.wcm'])
 class WcmFileReader(FileReader):
     def read(self):
         for _file in self.files:
-            print(f'Reading {_file}')
+            logger.info(f'Reading {_file}')
             dfs, metadata = to_dataframe(_file.filepath)
 
 
