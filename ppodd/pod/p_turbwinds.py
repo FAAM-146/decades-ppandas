@@ -344,6 +344,8 @@ class TurbulentWinds(PPBase):
         _in_roll = d.ROLL_GIN.abs() > 10
 
         for i in range(2):
+            if self.test_mode:
+                continue
             ws = []
             alphas = [-2, 2]
 
