@@ -315,21 +315,38 @@ class PPBase(abc.ABC):
             _test = cls.test
 
         for key, val in _test.items():
-            _type, _values = val
+            _type, *_values = val
 
             if _type == 'const':
                 d.constants[key] = _values
 
             elif _type == 'data':
+
+                _values, _freq = _values
+                _dt = datetime.timedelta(seconds=1/_freq)
+                freq = '{}N'.format((1/_freq) * 1e9)
+
+                start_time = d.date
+                end_time = (
+                    start_time + datetime.timedelta(seconds=len(_values)) - _dt
+                )
+
+                hz1_index = pd.date_range(
+                    start=start_time, periods=len(_values), freq='S'
+                )
+                full_index = pd.date_range(
+                    start=start_time, end=end_time, freq=freq
+                )
+
+                data = pd.Series(
+                    _values, hz1_index
+                ).reindex(full_index).interpolate()
+
+                print(data)
                 var = DecadesVariable(
-                    pd.Series(
-                        _values,
-                        index=pd.date_range(
-                            start=d.date, freq='S', periods=len(_values)
-                        )
-                    ),
+                    data,
                     name=key,
-                    frequency=1
+                    frequency=_freq
                 )
 
                 d.add_input(var)
