@@ -46,25 +46,25 @@ class Gin(PPBase):
         Return some dummy input data for testing.
         """
         return {
-            'GINDAT_lat': ('data', _l(60, 60.1, 100)),
-            'GINDAT_lon': ('data', _l(0, .1, 100)),
-            'GINDAT_alt': ('data', _l(0, 1000, 100)),
-            'GINDAT_veln': ('data', 100 * _o(100)),
-            'GINDAT_vele': ('data', 100 * _o(100)),
-            'GINDAT_veld': ('data', _z(100)),
-            'GINDAT_roll': ('data', _z(100)),
-            'GINDAT_ptch': ('data', 6 * _o(100)),
-            'GINDAT_hdg': ('data', 45 * _o(100)),
-            'GINDAT_wand': ('data', -150 * _o(100)),
-            'GINDAT_trck': ('data', 45 * _o(100)),
-            'GINDAT_gspd': ('data', 120 * _o(100)),
-            'GINDAT_rolr': ('data', _z(100)),
-            'GINDAT_pitr': ('data', _z(100)),
-            'GINDAT_hdgr': ('data', _z(100)),
-            'GINDAT_aclf': ('data', _z(100)),
-            'GINDAT_acls': ('data', _z(100)),
-            'GINDAT_acld': ('data', _z(100)),
-            'GINDAT_status': ('data', _o(100))
+            'GINDAT_lat': ('data', _l(60, 60.1, 100), 50),
+            'GINDAT_lon': ('data', _l(0, .1, 100), 50),
+            'GINDAT_alt': ('data', _l(0, 1000, 100), 50),
+            'GINDAT_veln': ('data', 100 * _o(100), 50),
+            'GINDAT_vele': ('data', 100 * _o(100), 50),
+            'GINDAT_veld': ('data', _z(100), 50),
+            'GINDAT_roll': ('data', _z(100), 50),
+            'GINDAT_ptch': ('data', 6 * _o(100), 50),
+            'GINDAT_hdg': ('data', 45 * _o(100), 50),
+            'GINDAT_wand': ('data', -150 * _o(100), 50),
+            'GINDAT_trck': ('data', 45 * _o(100), 50),
+            'GINDAT_gspd': ('data', 120 * _o(100), 50),
+            'GINDAT_rolr': ('data', _z(100), 50),
+            'GINDAT_pitr': ('data', _z(100), 50),
+            'GINDAT_hdgr': ('data', _z(100), 50),
+            'GINDAT_aclf': ('data', _z(100), 50),
+            'GINDAT_acls': ('data', _z(100), 50),
+            'GINDAT_acld': ('data', _z(100), 50),
+            'GINDAT_status': ('data', _o(100), 50)
         }
 
     def declare_outputs(self):

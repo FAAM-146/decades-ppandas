@@ -12,7 +12,7 @@ class WeightOnWheels(PPBase):
     @staticmethod
     def test():
         return {
-            'PRTAFT_wow_flag': ('data', _c([_o(20), _z(60), _o(20)]))
+            'PRTAFT_wow_flag': ('data', _c([_o(20), _z(60), _o(20)]), 1)
         }
 
     def declare_outputs(self):
