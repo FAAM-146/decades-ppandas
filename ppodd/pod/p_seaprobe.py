@@ -4,6 +4,8 @@ content. See class docstring for more info.
 """
 # pylint: disable=invalid-name, too-many-arguments, too-many-return-statements
 # pylint: disable=too-many-locals
+import warnings
+
 import numpy as np
 import pandas as pd
 
@@ -500,11 +502,14 @@ def calc_lwc(W_twc, W_lwc, k, e_liqT=1, e_iceT=1, e_liqL=1, beta_iceL=0):
         lwc: The calculated liquid water content (g/m**3).
     """
 
-    lwc = np.divide(
-        np.asfarray(beta_iceL) * W_twc - k * np.asfarray(e_iceT) * W_lwc,
-        np.asfarray(beta_iceL) * np.asfarray(e_liqT)
-        - np.asfarray(e_liqL) * k * np.asfarray(e_iceT)
-    )
+    with warnings.catch_warnings():
+        # Often get RuntimeWarning for invalid values for nans etc.
+        warnings.simplefilter('ignore')
+        lwc = np.divide(
+            np.asfarray(beta_iceL) * W_twc - k * np.asfarray(e_iceT) * W_lwc,
+            np.asfarray(beta_iceL) * np.asfarray(e_liqT)
+            - np.asfarray(e_liqL) * k * np.asfarray(e_iceT)
+        )
 
     return lwc
 
