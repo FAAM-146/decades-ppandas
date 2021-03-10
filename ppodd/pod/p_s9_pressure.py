@@ -51,9 +51,9 @@ class S9Pressure(PPBase):
         return {
             'CALS9SP': ('const', [-130, .035, 1.85e-9]),
             'S9_PE_C': ('const', [1, 1]),
-            'CORCON_s9_press': ('data', 850 * _o(100)),
-            'PS_RVSM': ('data', 850 * _o(100)),
-            'Q_RVSM': ('data', 150 * _o(100))
+            'CORCON_s9_press': ('data', 850 * _o(100), 32),
+            'PS_RVSM': ('data', 850 * _o(100), 32),
+            'Q_RVSM': ('data', 150 * _o(100), 32)
         }
 
     def declare_outputs(self):

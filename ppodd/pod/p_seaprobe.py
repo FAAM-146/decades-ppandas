@@ -635,7 +635,7 @@ class SeaProbe(PPBase):
         """
         Provide some dummy input data for testing.
         """
-        n = 9000
+        n = 900
         _d = {
             'SEA_EFF_TWC': ('const', [1, 1]),
             'SEA_EFF_021': ('const', [1, 0]),
@@ -643,41 +643,41 @@ class SeaProbe(PPBase):
             'SEA_SETPOINT_TEMP': ('const', 120),
             'SEA_TEMP_LIMS': ('const', [100, 180]),
             'SEA_SN': ('const', 'XXXX'),
-            'WOW_IND': ('data', _z(n)),
-            'PS_RVSM': ('data', 800 * _o(n)),
-            'TAS_RVSM': ('data', 200 * _o(n)),
-            'ROLL_GIN': ('data', _z(n)),
-            'TAT_DI_R': ('data', 200 * _o(n))
+            'WOW_IND': ('data', _z(n), 1),
+            'PS_RVSM': ('data', 800 * _o(n), 32),
+            'TAS_RVSM': ('data', 200 * _o(n), 32),
+            'ROLL_GIN': ('data', _z(n), 32),
+            'TAT_DI_R': ('data', 200 * _o(n), 32)
         }
 
         _all_ele = ('021', '083', 'CMP', 'DCE', 'TWC')
         for ele in _all_ele:
             try:
-                _d[f'SEAPROBE_d0_{ele}'] = ('data', int(ele) * _o(n))
+                _d[f'SEAPROBE_d0_{ele}'] = ('data', int(ele) * _o(n), 20)
             except ValueError:
-                _d[f'SEAPROBE_d0_{ele}'] = ('data', n * [ele])
+                _d[f'SEAPROBE_d0_{ele}'] = ('data', n * [ele], 20)
 
             if ele == 'DCE':
-                _d[f'SEAPROBE_d0_{ele}_T'] = ('data', 50 * _o(n) + .2 * _r(n))
-                _d[f'SEAPROBE_d0_{ele}_V'] = ('data', 25 * _o(n) + .2 * _r(n))
+                _d[f'SEAPROBE_d0_{ele}_T'] = ('data', 50 * _o(n) + .2 * _r(n), 20)
+                _d[f'SEAPROBE_d0_{ele}_V'] = ('data', 25 * _o(n) + .2 * _r(n), 20)
             else:
-                _d[f'SEAPROBE_d0_{ele}_T'] = ('data', 120 * _o(n) + .2 * _r(n))
-                _d[f'SEAPROBE_d0_{ele}_V'] = ('data', .4 * _o(n) + .02 * _r(n))
+                _d[f'SEAPROBE_d0_{ele}_T'] = ('data', 120 * _o(n) + .2 * _r(n), 20)
+                _d[f'SEAPROBE_d0_{ele}_V'] = ('data', .4 * _o(n) + .02 * _r(n), 20)
 
-        _d['SEAPROBE_d0_CMP_A'] = ('data', 4.5 * _o(n) + .1 * _r(n))
-        _d['SEAPROBE_d0_DCE_A'] = ('data', 9 * _o(n) + .2 * _r(n))
-        _d['SEAPROBE_d0_021_A'] = ('data', 12 * _o(n) + .2 * _r(n))
-        _d['SEAPROBE_d0_083_A'] = ('data', 20 * _o(n) + .2 * _r(n))
-        _d['SEAPROBE_d0_TWC_A'] = ('data', 17 * _o(n) + .2 * _r(n))
+        _d['SEAPROBE_d0_CMP_A'] = ('data', 4.5 * _o(n) + .1 * _r(n), 20)
+        _d['SEAPROBE_d0_DCE_A'] = ('data', 9 * _o(n) + .2 * _r(n), 20)
+        _d['SEAPROBE_d0_021_A'] = ('data', 12 * _o(n) + .2 * _r(n), 20)
+        _d['SEAPROBE_d0_083_A'] = ('data', 20 * _o(n) + .2 * _r(n), 20)
+        _d['SEAPROBE_d0_TWC_A'] = ('data', 17 * _o(n) + .2 * _r(n), 20)
 
-        _d['SEAPROBE_c0_TWC_l'] = ('data', 23.139 * _o(n))
-        _d['SEAPROBE_c0_TWC_w'] = ('data', 2.108 * _o(n))
-        _d['SEAPROBE_c0_083_l'] = ('data', 22.555 * _o(n))
-        _d['SEAPROBE_c0_083_w'] = ('data', 2.108 * _o(n))
-        _d['SEAPROBE_c0_021_l'] = ('data', 21.184 * _o(n))
-        _d['SEAPROBE_c0_021_w'] = ('data', 0.533 * _o(n))
-        _d['SEAPROBE_c0_CMP_l'] = ('data', 16.764 * _o(n))
-        _d['SEAPROBE_c0_CMP_w'] = ('data', 0.2794 * _o(n))
+        _d['SEAPROBE_c0_TWC_l'] = ('data', 23.139 * _o(n), 20)
+        _d['SEAPROBE_c0_TWC_w'] = ('data', 2.108 * _o(n), 20)
+        _d['SEAPROBE_c0_083_l'] = ('data', 22.555 * _o(n), 20)
+        _d['SEAPROBE_c0_083_w'] = ('data', 2.108 * _o(n), 20)
+        _d['SEAPROBE_c0_021_l'] = ('data', 21.184 * _o(n), 20)
+        _d['SEAPROBE_c0_021_w'] = ('data', 0.533 * _o(n), 20)
+        _d['SEAPROBE_c0_CMP_l'] = ('data', 16.764 * _o(n), 20)
+        _d['SEAPROBE_c0_CMP_w'] = ('data', 0.2794 * _o(n), 20)
 
         return _d
 

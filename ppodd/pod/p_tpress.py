@@ -23,9 +23,9 @@ class TPress(PPBase):
             'CALTP1': ('const', [.88, 5.5e-3, 2e-9, -3.6e-14]),
             'CALTP2': ('const', [-.14, 2.1e-5, 2e-15, -5.64e-23]),
             'CALTP3': ('const', [-.73, 2.1e-5, 1.5e-15, 5.57e-22]),
-            'CORCON_tp_p0_s10': ('data', 15e3 * _o(100)),
-            'CORCON_tp_up_down': ('data', 15e4 * _o(100)),
-            'CORCON_tp_left_right': ('data', _z(100)),
+            'CORCON_tp_p0_s10': ('data', 15e3 * _o(100), 32),
+            'CORCON_tp_up_down': ('data', 15e4 * _o(100), 32),
+            'CORCON_tp_left_right': ('data', _z(100), 32),
         }
 
     def declare_outputs(self):

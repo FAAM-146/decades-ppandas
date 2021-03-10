@@ -28,11 +28,11 @@ class TeiOzone(PPBase):
     @staticmethod
     def test():
         return {
-            'TEIOZO_conc': ('data', 50 * _o(100)),
-            'TEIOZO_flag': ('data', [b'0C100000'] * 100),
-            'TEIOZO_FlowA': ('data', .7 * _o(100)),
-            'TEIOZO_FlowB': ('data', .7 * _o(100)),
-            'WOW_IND': ('data', _c([_o(20), _z(60), _o(20)]))
+            'TEIOZO_conc': ('data', 50 * _o(100), 1),
+            'TEIOZO_flag': ('data', [b'0C100000'] * 100, 1),
+            'TEIOZO_FlowA': ('data', .7 * _o(100), 1),
+            'TEIOZO_FlowB': ('data', .7 * _o(100), 1),
+            'WOW_IND': ('data', _c([_o(20), _z(60), _o(20)]), 1)
         }
 
     def declare_outputs(self):

@@ -168,12 +168,14 @@ class WVSS2A(WVSS2, PPBase):
     @staticmethod
     def test():
         return {
-            'WVSS2A_ident': ('data', [b'F'] * 100),
-            'WVSS2A_utc_time_msec': ('data', _z(100)),
+            'WVSS2A_ident': ('data', [b'F'] * 100, 1),
+            'WVSS2A_utc_time_msec': ('data', _z(100), 1),
             'WVSS2A_serial_data':  (
-                'data', b'14500  990  35  12000 20000 260 72 50 50 1 1\n'
+                'data',
+                [b'14500  990  35  12000 20000 260 72 50 50 1 1\n'] * 100,
+                1
             ),
-            'WOW_IND': ('data', _z(100))
+            'WOW_IND': ('data', _z(100), 1)
         }
 
 
@@ -183,10 +185,12 @@ class WVSS2B(WVSS2, PPBase):
     @staticmethod
     def test():
         return {
-            'WVSS2B_ident': ('data', [b'R'] * 100),
-            'WVSS2B_utc_time_msec': ('data', _z(100)),
+            'WVSS2B_ident': ('data', [b'R'] * 100, 1),
+            'WVSS2B_utc_time_msec': ('data', _z(100), 1),
             'WVSS2B_serial_data':  (
-                'data', b'14500  990  35  12000 20000 260 72 50 50 1 1\n'
+                'data',
+                [b'14500  990  35  12000 20000 260 72 50 50 1 1\n'] * 100,
+                1
             ),
-            'WOW_IND': ('data', _z(100))
+            'WOW_IND': ('data', _z(100), 1)
         }

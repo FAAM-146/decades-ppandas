@@ -317,12 +317,12 @@ class PPBase(abc.ABC):
         for key, val in _test.items():
             _type, *_values = val
 
-            if _type == 'const':
-                d.constants[key] = _values
+            if val[0] == 'const':
+                d.constants[key] = val[1]
 
-            elif _type == 'data':
+            elif val[0] == 'data':
 
-                _values, _freq = _values
+                _values, _freq = val[1:]
                 _dt = datetime.timedelta(seconds=1/_freq)
                 freq = '{}N'.format((1/_freq) * 1e9)
 
@@ -342,13 +342,7 @@ class PPBase(abc.ABC):
                     _values, hz1_index
                 ).reindex(full_index).interpolate()
 
-                print(data)
-                var = DecadesVariable(
-                    data,
-                    name=key,
-                    frequency=_freq
-                )
-
+                var = DecadesVariable(data, name=key, frequency=_freq)
                 d.add_input(var)
 
         return cls(d, test_mode=True)

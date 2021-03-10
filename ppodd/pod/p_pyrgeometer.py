@@ -104,11 +104,11 @@ class KippZonenPyrgeometer(PPBase):
         Return dummy input data for testing.
         """
         return {
-            'LOWBBR_radiometer_3_sig': ('data', 5e3 * _o(100)),
-            'LOWBBR_radiometer_3_temp': ('data', 2e2 * _o(100)),
-            'UPPBBR_radiometer_3_sig': ('data', 5e3 * _o(100)),
-            'UPPBBR_radiometer_3_temp': ('data', 2e2 * _o(100)),
-            'WOW_IND': ('data', _c([_o(30), _z(50), _o(20)]))
+            'LOWBBR_radiometer_3_sig': ('data', 5e3 * _o(100), 1),
+            'LOWBBR_radiometer_3_temp': ('data', 2e2 * _o(100), 1),
+            'UPPBBR_radiometer_3_sig': ('data', 5e3 * _o(100), 1),
+            'UPPBBR_radiometer_3_temp': ('data', 2e2 * _o(100), 1),
+            'WOW_IND': ('data', _c([_o(30), _z(50), _o(20)]), 1)
         }
 
     def declare_outputs(self):

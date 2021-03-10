@@ -78,11 +78,13 @@ class PRTTemperatures(PPBase):
             'CALNDT': ('const', [0, 0, 0]),
             'NDTSENS': ('const', ['xxxxxx', 'plate or loom']),
             'DITSENS': ('const', ['xxxxxx', 'plate or loom']),
-            'PS_RVSM': ('data', _a(1000, 300, -1)),
-            'Q_RVSM': ('data', 250*(_o(700))),
-            'CORCON_di_temp': ('data', _a(225, 245, .0286)*1000),
-            'CORCON_ndi_temp': ('data', _a(225, 245, .0286)*1000),
-            'PRTAFT_deiced_temp_flag': ('data', _c([_z(200), _o(300), _z(200)]))
+            'PS_RVSM': ('data', _a(1000, 300, -1), 32),
+            'Q_RVSM': ('data', 250*(_o(700)), 32),
+            'CORCON_di_temp': ('data', _a(225, 245, .0286)*1000, 32),
+            'CORCON_ndi_temp': ('data', _a(225, 245, .0286)*1000, 32),
+            'PRTAFT_deiced_temp_flag': (
+                'data', _c([_z(200), _o(300), _z(200)]), 32
+            )
         }
 
     def declare_outputs(self):

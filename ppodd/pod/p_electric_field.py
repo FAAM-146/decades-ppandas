@@ -23,7 +23,7 @@ class ElectricFieldJci140(PPBase):
         Return dummy input data for test usage.
         """
         return {
-            'PRTAFT_jci140_signal': ('data', 50 * _o(100))
+            'PRTAFT_jci140_signal': ('data', 50 * _o(100), 1)
         }
 
     def declare_outputs(self):

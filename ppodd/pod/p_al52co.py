@@ -58,17 +58,17 @@ class AL52CO(PPBase):
         return {
             'AL52CO_sens': (
                 'data',  _c([45 * _o(25), 46 * _o(25), 47 * _o(25), 48 *
-                             _o(25)] *2)
+                             _o(25)] *2), 1
             ),
             'AL52CO_zero': (
                 'data', _c(
                     [45 * _o(25), 46 * _o(25), 47 * _o(25), 48 * _o(25)] * 2
-                ) * 1000
+                ) * 1000, 1
             ),
-            'AL52CO_counts': ('data', 38000 * _o(200)),
-            'AL52CO_calpress': ('data', _c([1.5 * _o(20), 3*_o(5)] * 8)),
-            'AL52CO_cal_status': ('data', _c([_z(20), _o(5)] * 7 + [_z(25)])),
-            'WOW_IND': ('data', _c([_o(110), _z(80), _o(10)]))
+            'AL52CO_counts': ('data', 38000 * _o(200), 1),
+            'AL52CO_calpress': ('data', _c([1.5 * _o(20), 3*_o(5)] * 8), 1),
+            'AL52CO_cal_status': ('data', _c([_z(20), _o(5)] * 7 + [_z(25)]), 1),
+            'WOW_IND': ('data', _c([_o(110), _z(80), _o(10)]), 1)
         }
 
     def declare_outputs(self):

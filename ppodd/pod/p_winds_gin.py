@@ -24,12 +24,12 @@ class GINWinds(PPBase):
     def test():
         return {
             'GIN_HDG_OFFSET': ('const', 0),
-            'VELE_GIN': ('data', 100 * _o(100)),
-            'VELN_GIN': ('data', 100 * _o(100)),
-            'HDG_GIN': ('data', _z(100)),
-            'TAS_RVSM': ('data', 130 * _o(100)),
-            'ROLL_GIN': ('data', _z(100)),
-            'TAT_DI_R': ('data', 250 * _o(100))
+            'VELE_GIN': ('data', 100 * _o(100), 32),
+            'VELN_GIN': ('data', 100 * _o(100), 32),
+            'HDG_GIN': ('data', _z(100), 32),
+            'TAS_RVSM': ('data', 130 * _o(100), 32),
+            'ROLL_GIN': ('data', _z(100), 32),
+            'TAT_DI_R': ('data', 250 * _o(100), 32)
         }
 
     def declare_outputs(self):

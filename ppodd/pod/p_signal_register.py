@@ -23,8 +23,8 @@ class SignalRegister(PPBase):
     @staticmethod
     def test():
         return {
-            'PRTAFT_heimann_calib_flag': ('data', _c([_o(10), _z(90)])),
-            'PRTAFT_deiced_temp_flag': ('data', _c([_z(30), _o(30), _z(40)]))
+            'PRTAFT_heimann_calib_flag': ('data', _c([_o(10), _z(90)]), 1),
+            'PRTAFT_deiced_temp_flag': ('data', _c([_z(30), _o(30), _z(40)]), 1)
         }
 
     def declare_outputs(self):

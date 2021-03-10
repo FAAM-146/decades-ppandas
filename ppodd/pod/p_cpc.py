@@ -42,13 +42,14 @@ class CPC(PPBase):
         """
         return {
             'CPC378_counts': (
-                'data', _c([_z(30), _l(0, 2e4, 15), _l(2e4, 0, 15), _z(40)])
+                'data', _c([_z(30), _l(0, 2e4, 15), _l(2e4, 0, 15), _z(40)]),
+                10
             ),
-            'CPC378_sample_flow': ('data', 300 * _o(100)),
-            'CPC378_sheath_flow': ('data', 300 * _o(100)),
-            'CPC378_saturator_temp': ('data', 2 * _o(100)),
-            'CPC378_growth_tube_temp': ('data', 45 * _o(100)),
-            'CPC378_optics_temp': ('data', 45 * _o(100))
+            'CPC378_sample_flow': ('data', 300 * _o(100), 10),
+            'CPC378_sheath_flow': ('data', 300 * _o(100), 10),
+            'CPC378_saturator_temp': ('data', 2 * _o(100), 10),
+            'CPC378_growth_tube_temp': ('data', 45 * _o(100), 10),
+            'CPC378_optics_temp': ('data', 45 * _o(100), 10)
         }
 
     def declare_outputs(self):

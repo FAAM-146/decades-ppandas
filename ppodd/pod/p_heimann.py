@@ -44,10 +44,10 @@ class Heimann(PPBase):
         return {
             'PRTCCAL': ('const', [-20, 2e-3, 0]),
             'HEIMCAL': ('const', [-45, 3e-3, 0]),
-            'SREG': ('data', _z(100)),
-            'CORCON_heim_t': ('data', 2e5 * _o(100)),
-            'CORCON_heim_c': ('data', 185e2 * _o(100)),
-            'WOW_IND': ('data', _c([_o(20), _z(80)]))
+            'SREG': ('data', _z(100), 1),
+            'CORCON_heim_t': ('data', 2e5 * _o(100), 4),
+            'CORCON_heim_c': ('data', 185e2 * _o(100), 4),
+            'WOW_IND': ('data', _c([_o(20), _z(80)]), 1)
         }
 
     def declare_outputs(self):

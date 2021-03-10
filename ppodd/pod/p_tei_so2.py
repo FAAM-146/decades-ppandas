@@ -45,12 +45,12 @@ class TecoSO2(PPBase):
     def test():
         #TODO: These values require more thought
         return {
-            'CHTSOO_conc': ('data', _o(100)),
-            'CHTSOO_flags': ('data', [b'cc0000'] * 100),
-            'CHTSOO_V6': ('data', _c([_z(40), _o(20), _z(40)])),
-            'CHTSOO_V8': ('data', _z(100)),
-            'CHTSOO_sensitivity': ('data', _o(100)),
-            'WOW_IND': ('data', _c([_o(10), _z(80), _o(10)]))
+            'CHTSOO_conc': ('data', _o(100), 1),
+            'CHTSOO_flags': ('data', [b'cc0000'] * 100, 1),
+            'CHTSOO_V6': ('data', _c([_z(40), _o(20), _z(40)]), 1),
+            'CHTSOO_V8': ('data', _z(100), 1),
+            'CHTSOO_sensitivity': ('data', _o(100), 1),
+            'WOW_IND': ('data', _c([_o(10), _z(80), _o(10)]), 1)
         }
 
     def declare_outputs(self):

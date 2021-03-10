@@ -39,12 +39,12 @@ class BuckCR2(PPBase):
         """
         return {
             'BUCK': ('const', [0, 1]),
-            'AERACK_buck_ppm': ('data', 2000 * _o(100)),
-            'AERACK_buck_mirr_temp': ('data', -10 * _o(100)),
-            'AERACK_buck_pressure': ('data', 800 * _o(100)),
-            'AERACK_buck_dewpoint_flag': ('data', _o(100)),
-            'AERACK_buck_mirr_cln_flag': ('data', _z(100)),
-            'PS_RVSM': ('data', 800 * _o(100))
+            'AERACK_buck_ppm': ('data', 2000 * _o(100), 1),
+            'AERACK_buck_mirr_temp': ('data', -10 * _o(100), 1),
+            'AERACK_buck_pressure': ('data', 800 * _o(100), 1),
+            'AERACK_buck_dewpoint_flag': ('data', _o(100), 1),
+            'AERACK_buck_mirr_cln_flag': ('data', _z(100), 1),
+            'PS_RVSM': ('data', 800 * _o(100), 32)
         }
 
     def declare_outputs(self):

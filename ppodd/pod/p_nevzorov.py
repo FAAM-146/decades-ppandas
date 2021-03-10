@@ -221,18 +221,18 @@ class Nevzorov(PPBase):
             'CALNVL': ('const', 2589.0),
             'CALRSL': ('const', [0.75E-4, 110]),
             'CALRST': ('const', [1.2E-4, 110]),
-            'CORCON_nv_lwc_vcol': ('data', 7500 * _o(100)),
-            'CORCON_nv_lwc_icol': ('data', 1e4 * _o(100)),
-            'CORCON_nv_lwc_vref': ('data', 6e4 * _o(100)),
-            'CORCON_nv_lwc_iref': ('data', 9e3 * _o(100)),
-            'CORCON_nv_twc_vcol': ('data', 5e3 * _o(100)),
-            'CORCON_nv_twc_icol': ('data', 8e3 * _o(100)),
-            'CORCON_nv_twc_vref': ('data', 8e3 * _o(100)),
-            'CORCON_nv_twc_iref': ('data', 12e3 * _o(100)),
-            'TAS_RVSM': ('data', 250 * _o(100)),
-            'IAS_RVSM': ('data', 200 * _o(100)),
-            'PS_RVSM': ('data', 500 * _o(100)),
-            'WOW_IND': ('data', _z(100))
+            'CORCON_nv_lwc_vcol': ('data', 7500 * _o(100), 64),
+            'CORCON_nv_lwc_icol': ('data', 1e4 * _o(100), 64),
+            'CORCON_nv_lwc_vref': ('data', 6e4 * _o(100), 64),
+            'CORCON_nv_lwc_iref': ('data', 9e3 * _o(100), 64),
+            'CORCON_nv_twc_vcol': ('data', 5e3 * _o(100), 64),
+            'CORCON_nv_twc_icol': ('data', 8e3 * _o(100), 64),
+            'CORCON_nv_twc_vref': ('data', 8e3 * _o(100), 64),
+            'CORCON_nv_twc_iref': ('data', 12e3 * _o(100), 64),
+            'TAS_RVSM': ('data', 250 * _o(100), 32),
+            'IAS_RVSM': ('data', 200 * _o(100), 32),
+            'PS_RVSM': ('data', 500 * _o(100), 32),
+            'WOW_IND': ('data', _z(100), 1)
         }
 
     def _declare_outputs_common(self):

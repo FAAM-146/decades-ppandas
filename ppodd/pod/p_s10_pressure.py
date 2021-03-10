@@ -37,7 +37,7 @@ class S10Pressure(PPBase):
         return {
             'CALS10SP': ('const', [-130, .035, 1.85e-9]),
             'S10SP_SN': ('const', 'xxxx'),
-            'CORCON_s10_press': ('data', 850 * _o(100)),
+            'CORCON_s10_press': ('data', 850 * _o(100), 32),
         }
 
     def declare_outputs(self):

@@ -231,8 +231,8 @@ class TurbulentWinds(PPBase):
 
     @staticmethod
     def test():
-        n = 9000
-        n3 = 3000
+        n = 900
+        n3 = 300
         return {
             'AOA_A0': ('const', [.25, .5, -.75]),
             'AOA_A1': ('const', [-.05, -.1, .1]),
@@ -243,23 +243,23 @@ class TurbulentWinds(PPBase):
             'ALPHA_COR': ('const', [0, 1]),
             'BETA_COR': ('const', [0, 1]),
             'INSPOSN': ('const', [16, -1, -.5]),
-            'IAS_RVSM': ('data', 100 * _o(n)),
-            'TAT_DI_R': ('data', 290 * _o(n)),
-            'PS_RVSM': ('data', 800 * _o(n)),
-            'Q_RVSM': ('data', 100 * _o(n)),
-            'P0_S10': ('data', 100 * _o(n)),
-            'PA_TURB': ('data', .5 * _o(n)),
-            'PB_TURB': ('data', .01 * _o(n)),
-            'VELN_GIN': ('data', 100 * _o(n) + _r(n)),
-            'VELE_GIN': ('data', _o(n)),
-            'VELD_GIN': ('data', _z(n)),
-            'ROLL_GIN': ('data', _c([_z(n3), 15*_o(n3), _z(n3)])),
-            'PTCH_GIN': ('data', 5 * _o(n)),
-            'HDG_GIN': ('data', _z(n)),
-            'ROLR_GIN': ('data', _z(n)),
-            'PITR_GIN': ('data', _z(n)),
-            'HDGR_GIN': ('data', _z(n)),
-            'WOW_IND': ('data', _z(n))
+            'IAS_RVSM': ('data', 100 * _o(n), 32),
+            'TAT_DI_R': ('data', 290 * _o(n), 32),
+            'PS_RVSM': ('data', 800 * _o(n), 32),
+            'Q_RVSM': ('data', 100 * _o(n), 32),
+            'P0_S10': ('data', 100 * _o(n), 32),
+            'PA_TURB': ('data', .5 * _o(n), 32),
+            'PB_TURB': ('data', .01 * _o(n), 32),
+            'VELN_GIN': ('data', 100 * _o(n) + _r(n), 32),
+            'VELE_GIN': ('data', _o(n), 32),
+            'VELD_GIN': ('data', _z(n), 32),
+            'ROLL_GIN': ('data', _c([_z(n3), 15*_o(n3), _z(n3)]), 32),
+            'PTCH_GIN': ('data', 5 * _o(n), 32),
+            'HDG_GIN': ('data', _z(n), 32),
+            'ROLR_GIN': ('data', _z(n), 32),
+            'PITR_GIN': ('data', _z(n), 32),
+            'HDGR_GIN': ('data', _z(n), 32),
+            'WOW_IND': ('data', _z(n), 32)
         }
 
     def declare_outputs(self):

@@ -22,8 +22,8 @@ class SolarAngles(PPBase):
     @staticmethod
     def test():
         return {
-            'LAT_GIN': ('data', 60 * _o(100)),
-            'LON_GIN': ('data', _z(100))
+            'LAT_GIN': ('data', 60 * _o(100), 32),
+            'LON_GIN': ('data', _z(100), 32)
         }
 
     def declare_outputs(self):

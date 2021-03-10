@@ -58,9 +58,9 @@ class AirSpeed(PPBase):
         """
         return {
             'TASCORR': ('const', 1.),
-            'PS_RVSM': ('data', _l(1000, 300, 100)),
-            'Q_RVSM': ('data', 250. * _o(100)),
-            'TAT_DI_R': ('data', _l(25, -40, 100))
+            'PS_RVSM': ('data', _l(1000, 300, 100), 32),
+            'Q_RVSM': ('data', 250. * _o(100), 32),
+            'TAT_DI_R': ('data', _l(290, 250, 100), 32)
         }
 
     def declare_outputs(self):

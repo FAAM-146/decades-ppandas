@@ -68,8 +68,8 @@ class Rvsm(PPBase):
         Return dummy input data for testing.
         """
         return {
-            'PRTAFT_pressure_alt': ('data', _l(0, 3000, 100)),
-            'PRTAFT_ind_air_speed': ('data', 150 * _o(100))
+            'PRTAFT_pressure_alt': ('data', _l(0, 3000, 100), 32),
+            'PRTAFT_ind_air_speed': ('data', 150 * _o(100), 32)
         }
 
     def declare_outputs(self):

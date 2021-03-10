@@ -37,7 +37,7 @@ class RadAlt(PPBase):
         Provide dummy input data for testing.
         """
         return {
-            'PRTAFT_rad_alt': ('data', _l(0, 32000, 100))
+            'PRTAFT_rad_alt': ('data', _l(0, 32000, 100), 2)
         }
 
     def declare_outputs(self):
