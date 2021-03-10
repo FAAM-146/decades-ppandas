@@ -299,7 +299,7 @@ class BBRFlux(PPBase):
 
                 # Red dome has half the critical value
                 if dome == 'P2':
-                    fcritval /= 2
+                    fcritval = fcritval / 2
 
                 # This is a horrible way to do this, essentially ripped
                 # directly from the old FORTRAN code, but it does the job.
@@ -320,9 +320,8 @@ class BBRFlux(PPBase):
                     _above_crit = d[_flux] / (
                         1. - (d._fdir * (1. - d._ceff * (cos_beta / np.cos(d.ZENRAD))))
                     )
-
-                    d[_flux].loc[d[_flux] > fcritval] = _above_crit.loc[d[_flux] > fcritval]
-
+                    _direct = d[_flux] > fcritval
+                    d.loc[_direct, _flux] = _above_crit[_direct]
 
                 output_dome_dict = {
                     'P1': 'SW',

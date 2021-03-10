@@ -544,10 +544,10 @@ class BuckCR2(PPBase):
             method='onto', index=self.dataset['AERACK_buck_ppm'].index
         )
 
-        buck_mirr_temp = self.d['AERACK_buck_mirr_temp']
+        buck_mirr_temp = self.d['AERACK_buck_mirr_temp'].copy()
         buck_mirr_temp += 273.15
-        buck_mirr_temp[buck_mirr_temp == 273.15] = np.nan
-        buck_mirr_temp[buck_mirr_temp < 0] = np.nan
+        buck_mirr_temp.loc[buck_mirr_temp == 273.15] = np.nan
+        buck_mirr_temp.loc[buck_mirr_temp < 0] = np.nan
 
         ps_rvsm = self.d['PS_RVSM']
 
