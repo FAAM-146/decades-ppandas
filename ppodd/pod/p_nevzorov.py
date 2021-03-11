@@ -6,6 +6,7 @@ info.
 # pylint: disable=invalid-name, too-many-arguments, too-many-locals
 # pylint: disable=too-many-statements
 import warnings
+import logging
 
 import numpy as np
 import pandas as pd
@@ -16,6 +17,8 @@ from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..decades import flags
 from .base import PPBase
 from .shortcuts import _o, _z
+
+logger = logging.getLogger(__name__)
 
 
 def get_no_cloud_mask(twc_col_p, wow, window_secs=3, min_period=5, freq=64):
@@ -588,8 +591,8 @@ class Nevzorov(PPBase):
             except (RuntimeError, ValueError) as e:
                 # If the fit has failed, we only want to write
                 # uncorrected variables
-                print('*** Failed to baseline correct Nevzorov ***')
-                print(str(e))
+                logger.warning('Failed to baseline correct Nevzorov')
+                logger.warning(str(e))
                 fitted_K = 0
                 fit_success = False
 

@@ -1,3 +1,4 @@
+import logging
 from functools import reduce
 
 import numpy as np
@@ -12,6 +13,8 @@ AOA_VALID_RANGE = (-10, 15)
 AOSS_VALID_RANGE = (-5, 5)
 MACH_VALID_RANGE = (0.05, 0.8)
 WIND_VALID_RANGE = (-60, 60)
+
+logger = logging.getLogger(__name__)
 
 def mach(p, q):
     return np.sqrt(5*((1 + q / p)**(2./7.) - 1))
@@ -198,7 +201,7 @@ def p_winds(d, consts):
     return d
 
 
-class TurbulentWinds(PPBase):
+class TurbulenceProbe(PPBase):
 
     inputs = [
         'AOA_A0',
@@ -339,13 +342,12 @@ class TurbulentWinds(PPBase):
             slrs(d.WOW_IND, d.PS_RVSM, d.ROLL_GIN, freq=32)
         )
 
-        print(_slrs)
-
         _in_roll = d.ROLL_GIN.abs() > 10
 
-        for i in range(2):
+        for i in range(3):
             if self.test_mode:
                 continue
+
             ws = []
             alphas = [-2, 2]
 
@@ -376,7 +378,9 @@ class TurbulentWinds(PPBase):
                 fit = [0, 1]
             consts['BETA_COR'] = [np.polyval(fit, 0), 1]
 
-            print(consts['ALPHA_COR'][0], consts['BETA_COR'][0])
+            logger.info('alpha, beta corrections = {}, {}'.format(
+                consts['ALPHA_COR'][0], consts['BETA_COR'][0]
+            ))
 
         d = p_turb(d, consts)
         d = p_winds(d, consts)
