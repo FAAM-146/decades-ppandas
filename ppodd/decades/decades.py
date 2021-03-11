@@ -432,7 +432,7 @@ class DecadesVariable(object):
         # Reindex this variable onto the merged index...
         current = current.reindex(merge_index)
         # ...and merge in the other variable
-        current.loc[other.index] = other
+        current.loc[other.dropna().index] = other
 
         # Reindex to ensure there aren't any data gaps
         full_index = pd.date_range(
