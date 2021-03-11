@@ -76,8 +76,8 @@ class PRTTemperatures(PPBase):
             'RM_RECFAC': ('const', {'DI': 1., 'ND': 1.}),
             'CALDIT': ('const', [0, 0, 0]),
             'CALNDT': ('const', [0, 0, 0]),
-            'NDTSENS': ('const', ['xxxxxx', 'plate or loom']),
-            'DITSENS': ('const', ['xxxxxx', 'plate or loom']),
+            'NDTSENS': ('const', [lambda :'xxxxxx', lambda: 'plate or loom']),
+            'DITSENS': ('const', [lambda: 'xxxxxx', lambda: 'plate or loom']),
             'PS_RVSM': ('data', _a(1000, 300, -1), 32),
             'Q_RVSM': ('data', 250*(_o(700)), 32),
             'CORCON_di_temp': ('data', _a(225, 245, .0286)*1000, 32),
@@ -106,8 +106,7 @@ class PRTTemperatures(PPBase):
 
             raise RuntimeError(message) from err
 
-
-        if self.dataset['DITSENS'][1].lower() != 'thermistor':
+        if self.test_mode or self.dataset['DITSENS'][1].lower() != 'thermistor':
             self.declare(
                 'TAT_DI_R',
                 units='degK',
@@ -133,7 +132,7 @@ class PRTTemperatures(PPBase):
                 write=False
             )
 
-        if self.dataset['NDTSENS'][1].lower() != 'thermistor':
+        if self.test_mode or self.dataset['NDTSENS'][1].lower() != 'thermistor':
             self.declare(
                 'TAT_ND_R',
                 units='degK',

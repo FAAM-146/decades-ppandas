@@ -96,8 +96,8 @@ class ThermistorV1Temperatures(PPBase):
     def test():
         return {
             'RM_RECFAC': ('const', {'DI': 1., 'ND': 1.}),
-            'NDTSENS': ('const', ['sensor serial number', 'thermistor']),
-            'DITSENS': ('const', ['sensor serial number', 'thermistor']),
+            'NDTSENS': ('const', [lambda: 'xxx', 'thermistor']),
+            'DITSENS': ('const', [lambda: 'xxx', 'thermistor']),
             'TH_DISS_MUL': ('const', {'ND': 1.8, 'DI': 1.8}),
             'TH_CIRCUIT_TYPE': ('const', 'V1'),
             'TH_RESISTANCE': ('const', {
