@@ -1,8 +1,9 @@
+import importlib
 import os
 import shutil
 import sys
 
-from ppodd.standard import faam_globals, faam_attrs
+#from ppodd.standard import faam_globals, faam_attrs
 from ppodd.pod import pp_modules
 from ppodd.decades.flags import (DecadesBitmaskFlag, DecadesClassicFlag)
 
@@ -46,10 +47,21 @@ def trim_docstr(docstring):
     # Return a single string:
     return '\n'.join(trimmed)
 
-def get_global_attrs_string(required=True):
+def get_global_attrs_string(required=True, standard_name=None,
+                            standard_version=None):
+
+    if standard_name is None or standard_version is None:
+        raise ValueError('Standard name and version must be given')
+
+    dataset_globals = getattr(importlib.import_module(
+        '.'.join(['ppodd.standard', standard_name])
+    ), 'dataset_globals')
+
     filtered_globals = sorted(
-        [i for i in faam_globals['Globals'].items() if
-        i[1]['required'] == required], key=lambda x: x[0]
+        [i for i in dataset_globals.items() if
+        i[1]['required'] == required
+        and standard_version in i[1]['versions']],
+        key=lambda x: x[0]
     )
 
     globals_str = ''
@@ -59,10 +71,22 @@ def get_global_attrs_string(required=True):
         globals_str += f' *Versions*: {versions}\n'
     return globals_str
 
-def get_variable_attrs_string(required=True):
+def get_variable_attrs_string(required=True, standard_name=None,
+                              standard_version=None):
+
+    if standard_name is None or standard_version is None:
+        raise ValueError('Standard name and version must be given')
+
+    variable_attrs = getattr(importlib.import_module(
+        '.'.join(['ppodd.standard', standard_name])
+    ), 'variable_attrs')
+
+
     filtered_attrs = sorted(
-        [i for i in faam_attrs['VariableAttrs'].items() if
-        i[1]['required'] == required], key=lambda x: x[0]
+        [i for i in variable_attrs.items() if
+        i[1]['required'] == required
+        and standard_version in i[1]['versions']],
+        key=lambda x: x[0]
     )
 
     attrs_str = ''
@@ -102,6 +126,7 @@ def get_module_vardoc(m):
         return output
 
     for out_var in m.dataset.outputs:
+        out_var.attrs.set_compliance_mode(True)
         output += f'* ``{out_var.name}``\n'
         for attr in out_var.attrs().items():
             output += f'    * ``{attr[0]}``: {attr[1]}\n'
@@ -181,7 +206,9 @@ def get_variables_tex(default=True):
     return output
 
 def get_dimensions():
-    mods = [i.test_instance() for i in pp_modules]
+    mods = []
+    for i in pp_modules:
+        mods.append(i.test_instance())
     dimstr = ''
     _dims = set()
     for m in mods:
@@ -230,6 +257,10 @@ if 'latex' in sys.argv[1]:
 else:
     get_variables = get_variables_web
 
+standard = os.environ['PPODD_STANDARD']
+standard_name, standard_version = standard.split('@')
+standard_version = float(standard_version)
+print(standard_name, standard_version)
 
 def replace_tag(path, tag, content):
     with open(path, 'r') as f:
@@ -242,19 +273,27 @@ def append(path, content):
         f.write(content)
 
 replace_tag(
-    core, 'TAG_REQUIRED_GLOBAL_ATTRIBUTES', get_global_attrs_string()
+    core, 'TAG_REQUIRED_GLOBAL_ATTRIBUTES',
+    get_global_attrs_string(True, standard_name=standard_name,
+                            standard_version=standard_version)
 )
 
 replace_tag(
-    core, 'TAG_OPTIONAL_GLOBAL_ATTRIBUTES', get_global_attrs_string(False)
+    core, 'TAG_OPTIONAL_GLOBAL_ATTRIBUTES',
+    get_global_attrs_string(False, standard_name=standard_name,
+                            standard_version=standard_version)
 )
 
 replace_tag(
-    core, 'TAG_REQUIRED_VARIABLE_ATTRIBUTES', get_variable_attrs_string()
+    core, 'TAG_REQUIRED_VARIABLE_ATTRIBUTES',
+    get_variable_attrs_string(True, standard_name=standard_name,
+                              standard_version=standard_version)
 )
 
 replace_tag(
-    core, 'TAG_OPTIONAL_VARIABLE_ATTRIBUTES', get_variable_attrs_string(False)
+    core, 'TAG_OPTIONAL_VARIABLE_ATTRIBUTES',
+    get_variable_attrs_string(False, standard_name=standard_name,
+                              standard_version=standard_version)
 )
 
 replace_tag(core, 'TAG_SPS_DIMENSIONS', get_dimensions())
