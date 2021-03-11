@@ -141,3 +141,23 @@ VariableAttrs:
         inherits_from: CF16
         aliases: []
         versions: [1.0]
+
+    valid_min:
+        required: false
+        description: >-
+            The minimum valid value in the variable. Valid in this context does not mean
+            that the data itself is physically valid.
+        inherits_from: CF16
+        aliases: []
+        default: <call min>
+        versions: [1.0]
+
+    valid_max:
+        required: false
+        description: >-
+            The maximum valid value in the variable. Valid in this context does not mean
+            that the data itself is physically valid.
+        inherits_from: CF16
+        aliases: []
+        default: <call max>
+        versions: [1.0]
