@@ -205,7 +205,7 @@ class Nevzorov(PPBase):
         Return dummy input data for testing.
         """
         return {
-            'VANETYPE': ('const', '1t2l1r'),
+            'VANETYPE': ('const', '1T2L1R'),
             'CLWCIREF': ('const', [-5.8e-2, 3.3e-4, 5e-1]),
             'CLWCVREF': ('const', [-5.8e-2, 3.3e-4, 2.0]),
             'CLWCICOL': ('const', [-5.8e-2, 3.3e-4, 5e-1]),
