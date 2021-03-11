@@ -162,9 +162,22 @@ class DecadesVariable(object):
 
             # Pop the attribute off the keyword stack, and set it if it has a
             # value
+            _is_data = False
+            if _default:
+                try:
+                    rex = re.compile('^<call (.+)>$')
+                    hook = rex.findall(_default)[0]
+                    _default = [i.strip() for i in hook.strip().split()]
+                    _is_data = True
+                except (TypeError, IndexError):
+                    pass
+
             _val = kwargs.pop(_attr, _default)
             if _val is not None:
-                self.attrs.add(Attribute(_attr, _val))
+                if _is_data:
+                    self.attrs.add_data_attribute(_attr, _default)
+                else:
+                    self.attrs.add(Attribute(_attr, _val))
 
         # Create an interim DataFrame, and infer its frequency
         _df = pd.DataFrame(*args, **kwargs)

@@ -119,7 +119,10 @@ class AttributesCollection(object):
                 return STR_DERIVED_FROM_FILE
         else:
             if callable(att.value):
-                return att.value()
+                try:
+                    return att.value()
+                except Exception:
+                    return None
             else:
                 return att.value
 
@@ -234,6 +237,7 @@ class AttributesCollection(object):
             a dictionary of attributes, optionally excluding those providing
             their value through a call.
         """
+        from ppodd.decades import DecadesDataset, DecadesVariable
         _dict = {}
         for glo in self._attributes:
             _dict[glo.key] = self._compliancify(glo)
@@ -242,13 +246,21 @@ class AttributesCollection(object):
             return _dict
 
         for name, _pack in self._data_attributes.items():
-            key, attrs = _pack
-            try:
-                var = self._dataset[key]
-            except KeyError:
+            if isinstance(self._dataset, DecadesDataset):
+                key, attrs = _pack
+                try:
+                    var = self._dataset[key]
+                except KeyError:
+                    if self._compliance:
+                        _dict[name] = STR_DERIVED_FROM_FILE
+                    continue
+
+            if isinstance(self._dataset, DecadesVariable):
+                attrs = _pack
+                var = self._dataset()
                 if self._compliance:
                     _dict[name] = STR_DERIVED_FROM_FILE
-                continue
+                    continue
 
             for _attr in attrs:
                 var = getattr(var, _attr)
