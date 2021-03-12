@@ -95,13 +95,19 @@ class AttributesCollection(object):
             key: the key(name) of the attribute to set
             value: the value to associate with key
         """
+        self.remove(Attribute(key, None))
+
         if type(value) is dict:
             for _k, _v in value.items():
                 __k = '_'.join((key, _k))
-                self[__k] = _v
+                #self[__k] = _v
 
-        else:
-            self.add(Attribute(key, value))
+                key = __k
+                value = _v
+
+                self.add(Attribute(key, value))
+            return
+        self.add(Attribute(key, value))
 
     def __call__(self):
         """
@@ -137,6 +143,18 @@ class AttributesCollection(object):
         """
         self._compliance = comp
 
+    def remove(self, att):
+        """
+        Remove an attribute from the AttributesCollection
+
+        Args:
+            att: the Attribute to remove.
+        """
+        for _att in self._attributes:
+            if _att.key == att.key:
+                self._attributes.remove(_att)
+                return
+
     def add(self, att):
         """
         Add an Attribute to the AttributesCollection.
@@ -155,10 +173,7 @@ class AttributesCollection(object):
             raise TypeError('attributes must be of type <Attribute>')
 
         # Remove duplicate keys
-        for i in self._attributes:
-            if i.key == att.key:
-                self._attributes.remove(i)
-                break
+        self.remove(att)
 
         # Raise error or warning if the attribute is not present in the
         # definition
