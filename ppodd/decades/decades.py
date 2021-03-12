@@ -386,6 +386,14 @@ class DecadesVariable(object):
         self.t0 = _df.index[0]
         self.t1 = _df.index[-1]
 
+    @property
+    def isnumeric(self):
+        """
+        Return True if the datatype of the variable array is numeric, False
+        otherwise
+        """
+        return np.issubdtype(self.array.dtype, np.number)
+
     def trim(self, start, end):
         """
         'Trim' the variable to a subset of itself, via a top and tail. The
