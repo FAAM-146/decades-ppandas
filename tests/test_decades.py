@@ -6,6 +6,7 @@ import logging
 import pandas as pd
 import ppodd.readers as r
 from ppodd.decades import DecadesDataset, DecadesVariable, DecadesFile
+from ppodd.decades.attributes import NonStandardAttributeError
 
 logging.disable(logging.CRITICAL)
 
@@ -35,6 +36,12 @@ class TestDecades(unittest.TestCase):
             periods=10, freq='S'
         )
 
+        self.d = DecadesDataset(datetime.datetime(2000, 1, 1))
+        self.v = DecadesVariable(
+            {TEST_VAR_NAME: TEST_VAR_VALUES}, index=self.test_index_1,
+            frequency=1
+        )
+
     @classmethod
     def setUpClass(cls):
         for pattern in TEST_FILE_PATTERNS.keys():
@@ -53,6 +60,15 @@ class TestDecades(unittest.TestCase):
 
     def test_create_dataset(self):
         d = DecadesDataset()
+
+    def test_variable_isnumeric(self):
+        self.assertTrue(self.v.isnumeric)
+
+        v2 = DecadesVariable(
+            {'stringvar': ['a'] * len(TEST_VAR_VALUES)},
+            index=self.test_index_1, frequency=1
+        )
+        self.assertFalse(v2.isnumeric)
 
     def test_create_dataset_with_date(self):
         d = DecadesDataset(datetime.date.today())
@@ -228,3 +244,132 @@ class TestDecades(unittest.TestCase):
 
         for _file in files:
             self.assertIn(_file.filepath, patterns)
+
+    def test_takeoff_land_time(self):
+        vals = [1, 1, 1, 1, 0, 0, 0, 1, 1, 1]
+        prtaft = DecadesVariable(
+            {'PRTAFT_wow_flag': vals}, index=self.test_index_1
+        )
+        self.d.add_input(prtaft)
+
+        self.assertEqual(self.d.takeoff_time, self.test_index_1[4])
+        self.assertEqual(self.d.landing_time, self.test_index_1[7])
+
+    def test_dataset_time_bounds_inputs(self):
+        v1 = DecadesVariable({'a': TEST_VAR_VALUES}, index=self.test_index_1)
+        index2 = self.test_index_1 + datetime.timedelta(minutes=1)
+        v2 = DecadesVariable({'b': TEST_VAR_VALUES}, index=index2)
+        self.d.add_input(v1)
+        self.d.add_input(v2)
+        bnds = self.d.time_bounds()
+        self.assertEqual(bnds[0], self.test_index_1[0])
+        self.assertEqual(bnds[1], index2[-1])
+
+    def test_dataset_time_bounds_outputs(self):
+        v1 = DecadesVariable(
+            {'a': TEST_VAR_VALUES}, index=self.test_index_1, frequency=1
+        )
+        index2 = self.test_index_1 + datetime.timedelta(minutes=1)
+        v2 = DecadesVariable({'b': TEST_VAR_VALUES}, index=index2)
+        self.d.add_output(v1)
+        self.d.add_output(v2)
+        bnds = self.d.time_bounds()
+        self.assertEqual(bnds[0], self.test_index_1[0])
+        self.assertEqual(bnds[1], index2[-1])
+
+    def test_dataset_time_bounds_input_output(self):
+        v1 = DecadesVariable(
+            {'a': TEST_VAR_VALUES}, index=self.test_index_1, frequency=1
+        )
+        index2 = self.test_index_1 + datetime.timedelta(minutes=1)
+        v2 = DecadesVariable(
+            {'b': TEST_VAR_VALUES}, index=index2, frequency=1
+        )
+        self.d.add_output(v1)
+        self.d.add_input(v2)
+        bnds = self.d.time_bounds()
+        self.assertEqual(bnds[0], self.test_index_1[0])
+        self.assertEqual(bnds[1], index2[-1])
+
+    def test_add_input_variable(self):
+        self.d.add_input(self.v)
+        self.assertIn(self.v, self.d._backend.inputs)
+
+    def test_add_output_variable(self):
+        self.d.add_output(self.v)
+        self.assertIn(self.v, self.d._backend.outputs)
+
+    def test_list_variables(self):
+        v1 = DecadesVariable(
+            {'a': TEST_VAR_VALUES}, index=self.test_index_1, frequency=1
+        )
+        v2 = DecadesVariable(
+            {'b': TEST_VAR_VALUES}, index=self.test_index_1, frequency=1
+        )
+
+        self.d.add_input(v1)
+        self.d.add_output(v2)
+
+        self.assertIn(v1.name, self.d.variables)
+        self.assertIn(v2.name, self.d.variables)
+
+    def test_remove_variable(self):
+        self.d.add_input(self.v)
+        self.d.remove(self.v.name)
+        self.assertEqual(self.d.variables, [])
+
+        self.d.add_output(self.v)
+        self.d.remove(self.v.name)
+        self.assertEqual(self.d.variables, [])
+
+    def test_add_constant(self):
+        self.d.add_constant('LTUAE', 42)
+        self.assertEqual(self.d['LTUAE'], 42)
+
+    def test_lazy_constant(self):
+        value = self.d.lazy['LTUAE']
+        self.assertRaises(KeyError, value)
+        self.d.add_constant('LTUAE', 42)
+        self.assertEqual(value(), 42)
+        self.assertEqual(self.d.lazy['LTUAE'], 42)
+
+    def test_outputs_list(self):
+        v1 = self.v
+        v2 = DecadesVariable({'v2': TEST_VAR_VALUES}, index=self.test_index_1,
+                             frequency=1)
+        self.d.add_output(v1)
+        self.d.add_output(v2)
+        self.assertIn(v1, self.d.outputs)
+        self.assertIn(v2, self.d.outputs)
+
+    def test_clear_outputs(self):
+        v1 = self.v
+        v2 = DecadesVariable({'v2': TEST_VAR_VALUES}, index=self.test_index_1,
+                             frequency=1)
+        self.d.add_output(v1)
+        self.d.add_output(v2)
+        self.d.clear_outputs()
+        self.assertEqual(self.d.outputs, [])
+
+    def test_add_global(self):
+        self.assertRaises(
+            NonStandardAttributeError, lambda: self.d.add_global('LTUAE', 42)
+        )
+        self.d.globals.strict = False
+        self.d.add_global('LTUAE', 42)
+        self.assertEqual(self.d.globals()['LTUAE'], 42)
+
+    def test_add_interpolated_global(self):
+        self.d.globals.strict = False
+        self.d.add_global('one', 2)
+        self.d.add_global('two', '{one}')
+        self.d._interpolate_globals()
+        self.assertEqual(self.d.globals()['two'], '2')
+
+    def test_add_data_global(self):
+        self.d.add_output(self.v)
+        self.d.globals.strict = False
+        self.d.add_global('test1', f'<data {TEST_VAR_NAME} max>')
+        self.assertEqual(self.d.globals()['test1'], max(TEST_VAR_VALUES))
+        self.d.add_global('test2', f'<call datetime.date.today>')
+        self.assertEqual(self.d.globals()['test2'], datetime.date.today())
