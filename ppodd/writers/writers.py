@@ -11,6 +11,7 @@ from netCDF4 import Dataset
 import sqlite3
 
 from ..utils import pd_freq, try_to_call, unwrap_array
+from ..decades.attributes import ATTRIBUTE_NOT_SET
 
 __all__ = ['SQLiteWriter', 'NetCDFWriter']
 
@@ -182,6 +183,11 @@ class NetCDFWriter(DecadesWriter):
             if attr_key == 'frequency' and self.write_freq is not None:
                 setattr(ncvar, attr_key, self.write_freq)
                 continue
+            if attr_val == ATTRIBUTE_NOT_SET:
+                logger.warning('Unset variable attribute: {}.{}'.format(
+                    var.name, attr_key
+                ))
+                continue
             setattr(ncvar, attr_key, attr_val)
 
         # Set coordinates attribute on variables, if they've been specified
@@ -193,7 +199,7 @@ class NetCDFWriter(DecadesWriter):
         # Add a few required attributes to the flag variable.
         # ncflag.standard_name = 'status_flag'
         for attr_key, attr_val in var.flag.cfattrs.items():
-            if attr_key is '_FillValue' or attr_val is None:
+            if attr_key == '_FillValue' or attr_val is None:
                 continue
             setattr(ncflag, attr_key, attr_val)
 
@@ -290,6 +296,10 @@ class NetCDFWriter(DecadesWriter):
             key: the global attribute key to write to nc
             value: the global attribute value to write to nc
         """
+
+        if value == ATTRIBUTE_NOT_SET:
+            logger.warning(f'Expected global attribute not set: {key}')
+            return
 
         # Coerce datetimes to a date string
         try:
