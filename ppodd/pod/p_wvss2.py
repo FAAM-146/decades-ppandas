@@ -28,6 +28,9 @@ VMR_VALID_MIN = 50
 
 
 class WVSS2(object):
+    """
+    Base class for WVSS2 processing
+    """
 
     SERIAL_STR_LEN = 11
 
@@ -163,6 +166,13 @@ class WVSS2(object):
 
 
 class WVSS2A(WVSS2, PPBase):
+    """
+    Process data from the WVSS-II water vapour spectrometers. The WVSS2 report
+    volume mixing ratio and other parameters approximately every 2.3 seconds.
+    This represents ~2 s of sampling at ~4 Hz, followed by around 0.3 seconds
+    of processing. This module simply linearly interpolates these data onto a
+    regular 1 Hz index, and provides flagging and metadata.
+    """
     unit = 'WVSS2A'
 
     @staticmethod
@@ -180,6 +190,13 @@ class WVSS2A(WVSS2, PPBase):
 
 
 class WVSS2B(WVSS2, PPBase):
+    """
+    Process data from the WVSS-II water vapour spectrometers. The WVSS2 report
+    volume mixing ratio and other parameters approximately every 2.3 seconds.
+    This represents ~2 s of sampling at ~4 Hz, followed by around 0.3 seconds
+    of processing. This module simply linearly interpolates these data onto a
+    regular 1 Hz index, and provides flagging and metadata.
+    """
     unit = 'WVSS2B'
 
     @staticmethod
