@@ -157,7 +157,7 @@ class DecadesVariable(object):
             # Get the default value of an attribute, if it exists
             try:
                 _default = self.attrs._definition[_attr]['default']
-            except (KeyError, TypeError):
+            except KeyError:
                 _default = None
 
             # Pop the attribute off the keyword stack, and set it if it has a
