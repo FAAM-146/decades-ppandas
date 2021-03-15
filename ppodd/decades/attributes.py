@@ -40,22 +40,6 @@ class AttributesCollection(object):
             strict: if True do not allow attributes which are not defined in
                     the definition to be added to the collection.
         """
-
-        # Get the definition from the classpath
-        _def_module, _def_var = definition.rsplit('.', 1)
-        definition = getattr(importlib.import_module(_def_module), _def_var)
-
-        # Set REQUIRED and OPTIONAL attributes from the attributes definition
-        self.REQUIRED_ATTRIBUTES = [
-            g for g in definition.keys() if definition[g]['required']
-            and version in definition[g]['versions']
-        ]
-
-        self.OPTIONAL_ATTRIBUTES = [
-            g for g in definition.keys() if not definition[g]['required']
-            and version in definition[g]['versions']
-        ]
-
         # Init instance variables
         self._dataset = dataset
         self._attributes = []
@@ -63,6 +47,27 @@ class AttributesCollection(object):
         self._compliance = False
         self._definition = definition
         self._strict = strict
+
+        # Get the definition from the classpath
+        if isinstance(definition, str):
+            _def_module, _def_var = definition.rsplit('.', 1)
+            definition = getattr(importlib.import_module(_def_module), _def_var)
+
+        if definition is not None:
+            # Set REQUIRED and OPTIONAL attributes from the attributes definition
+            self.REQUIRED_ATTRIBUTES = [
+                g for g in definition.keys() if definition[g]['required']
+                and version in definition[g]['versions']
+            ]
+
+            self.OPTIONAL_ATTRIBUTES = [
+                g for g in definition.keys() if not definition[g]['required']
+                and version in definition[g]['versions']
+            ]
+        else:
+            self.REQUIRED_ATTRIBUTES = []
+            self.OPTIONAL_ATTRIBUTES = []
+            self._strict = False
 
         # Create placeholders for all of the required attributes
         for key in self.REQUIRED_ATTRIBUTES:
@@ -85,6 +90,10 @@ class AttributesCollection(object):
             if g.key == key:
                 return self._compliancify(g)
 
+        for _key, _value in self._data_attributes.items():
+            if _key == key:
+                return self._compliancify(Attribute(_key, _value))
+
         raise KeyError('{} not an attribute'.format(key))
 
     def __setitem__(self, key, value):
@@ -100,12 +109,7 @@ class AttributesCollection(object):
         if type(value) is dict:
             for _k, _v in value.items():
                 __k = '_'.join((key, _k))
-                #self[__k] = _v
-
-                key = __k
-                value = _v
-
-                self.add(Attribute(key, value))
+                self.add(Attribute(__k, _v))
             return
         self.add(Attribute(key, value))
 
@@ -148,8 +152,12 @@ class AttributesCollection(object):
         Remove an attribute from the AttributesCollection
 
         Args:
-            att: the Attribute to remove.
+            att: the Attribute or key of Attribute to remove.
         """
+        if isinstance(att, str):
+            # Assume only the key is given
+            att = Attribute(att, None)
+
         for _att in self._attributes:
             if _att.key == att.key:
                 self._attributes.remove(_att)
@@ -181,8 +189,6 @@ class AttributesCollection(object):
             _message = f'Attribute \'{att.key}\' is not defined in standard'
             if self.strict:
                 raise NonStandardAttributeError(_message)
-            else:
-                warnings.warn(_message)
 
         # Add the attribute
         self._attributes.append(att)
