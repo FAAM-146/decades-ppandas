@@ -264,7 +264,7 @@ class Gin(PPBase):
         self.declare(
             'STATUS_GIN',
             frequency=32,
-            units=1,
+            units=None,
             long_name=f'Solution status from {gin_name}',
             standard_name=None,
             instrument_manufacturer=gin_manufacturer,
