@@ -149,6 +149,7 @@ class NetCDFWriter(DecadesWriter):
         """
 
         _freq = self.write_freq or var.frequency
+        ncflag = None
 
         # If the variable is at 1 Hz, it only needs a time dimension,
         # otherwise, it also requires an spsNN dimension.
@@ -158,21 +159,23 @@ class NetCDFWriter(DecadesWriter):
                 fill_value=var.attrs['_FillValue']
             )
 
-            ncflag = nc.createVariable(
-                '{}_FLAG'.format(var.name),
-                np.int8, ('Time',), fill_value=var.flag.cfattrs['_FillValue']
-            )
+            if var.flag is not None:
+                ncflag = nc.createVariable(
+                    '{}_FLAG'.format(var.name),
+                    np.int8, ('Time',), fill_value=var.flag.cfattrs['_FillValue']
+                )
         else:
             ncvar = nc.createVariable(
                 var.name, 'f4', ('Time', 'sps{0:02d}'.format(_freq)),
                 fill_value=var.attrs['_FillValue']
             )
 
-            ncflag = nc.createVariable(
-                '{}_FLAG'.format(var.name), np.int8,
-                ('Time', 'sps{0:02d}'.format(_freq)),
-                fill_value=var.flag.cfattrs['_FillValue']
-            )
+            if var.flag is not None:
+                ncflag = nc.createVariable(
+                    '{}_FLAG'.format(var.name), np.int8,
+                    ('Time', 'sps{0:02d}'.format(_freq)),
+                    fill_value=var.flag.cfattrs['_FillValue']
+                )
 
         # Write variable attributes, excluding _FillValue, which must be given
         # when the variable is created, and frequency, which is set as the
@@ -198,10 +201,11 @@ class NetCDFWriter(DecadesWriter):
 
         # Add a few required attributes to the flag variable.
         # ncflag.standard_name = 'status_flag'
-        for attr_key, attr_val in var.flag.cfattrs.items():
-            if attr_key == '_FillValue' or attr_val is None:
-                continue
-            setattr(ncflag, attr_key, attr_val)
+        if var.flag is not None:
+            for attr_key, attr_val in var.flag.cfattrs.items():
+                if attr_key == '_FillValue' or attr_val is None:
+                    continue
+                setattr(ncflag, attr_key, attr_val)
 
         # Create a new DatetimeIndex to interpolate to, given frequency
         if self.end_time.microsecond == 0 and _freq != 1:
@@ -219,7 +223,10 @@ class NetCDFWriter(DecadesWriter):
             # variable is alreay at the correct frequency, all we require is a
             # reindex, filling any missing data with _FillValue
             _data = var().reindex(_index).fillna(var.attrs['_FillValue'])
-            _flag = var.flag().reindex(_index).fillna(var.flag.cfattrs['_FillValue'])
+            if var.flag is not None:
+                _flag = var.flag().reindex(_index).fillna(
+                    var.flag.cfattrs['_FillValue']
+                )
         else:
             # Variable and flag must be resampled to bring onto the correct
             # frequency and then reindexed. Apply a mean to the data and a pad
@@ -236,22 +243,26 @@ class NetCDFWriter(DecadesWriter):
             if getattr(var, 'circular', False):
                 _data[_data != var.attrs['_FillValue']] %= 360
 
-            _flag = var.flag().resample(
-                pd_freq[_freq]
-            ).pad().reindex(_index).fillna(var.flag.cfattrs['_FillValue'])
+            if var.flag is not None:
+                _flag = var.flag().resample(
+                    pd_freq[_freq]
+                ).pad().reindex(_index).fillna(var.flag.cfattrs['_FillValue'])
 
         # Reshape the data if it is not at 1 Hz
         if _freq != 1:
             _data = _data.values.reshape(int(len(_index) / _freq), _freq)
-            _flag = _flag.values.reshape(int(len(_index) / _freq), _freq)
+            if var.flag is not None:
+                _flag = _flag.values.reshape(int(len(_index) / _freq), _freq)
         else:
             _data = _data.values
-            _flag = _flag.values
+            if var.flag is not None:
+                _flag = _flag.values
 
         # Finally write the data
         logger.info('Writing {}...'.format(var.attrs['long_name']))
         ncvar[:] = _data
-        ncflag[:] = _flag
+        if var.flag is not None:
+            ncflag[:] = _flag
 
     def _init_netcdf(self, nc):
         """

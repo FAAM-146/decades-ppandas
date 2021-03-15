@@ -217,8 +217,11 @@ class DecadesVariable(object):
         # Create the QC Flag array, and add the name of the flag variable to
         # the 'ancillary_variables' attribute. TODO: should we check if this
         # attribute already exists?
-        self.flag = _flag(self)
-        self.attrs.add(Attribute('ancillary_variables', f'{self.name}_FLAG'))
+        if _flag is not None:
+            self.flag = _flag(self)
+            self.attrs.add(Attribute('ancillary_variables', f'{self.name}_FLAG'))
+        else:
+            self.flag = _flag
 
     def __call__(self):
         """

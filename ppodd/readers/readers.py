@@ -130,7 +130,8 @@ class CSVReader(FileReader):
                     long_name=variable_name,
                     units='RAW',
                     frequency=_freq,
-                    write=False
+                    write=False,
+                    flag=None
                 )
 
                 _file.dataset.add_input(variable)
@@ -188,7 +189,7 @@ class CoreNetCDFReader(FileReader):
                         name=var,
                         write=False,
                         flag=self._flag_class(var, nc),
-                        frequency=nc[var].frequency
+                        frequency=nc[var].frequency,
                     )
 
                     self.flag(variable, nc)
@@ -449,7 +450,8 @@ class TcpFileReader(FileReader):
                     units='RAW',
                     frequency=frequency,
                     tolerance=self.tolerance,
-                    write=False
+                    write=False,
+                    flag=None
                 )
 
                 _file.dataset.add_input(variable)
