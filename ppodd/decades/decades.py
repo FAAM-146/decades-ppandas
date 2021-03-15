@@ -408,7 +408,8 @@ class DecadesVariable(object):
         """
 
         # Trim the QC flag over the same interval.
-        self.flag.trim(start, end)
+        if self.flag is not None:
+            self.flag.trim(start, end)
 
         # Create a dataframe, index to the required interval, and extract the
         # required attributes to store.
