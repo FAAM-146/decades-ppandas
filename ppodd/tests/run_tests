@@ -1,0 +1,20 @@
+#!/bin/bash
+/usr/bin/env python -W ignore -m unittest -v
+RESULT=$?
+
+if [ $RESULT -eq 0 ]; then
+    echo ""
+    echo "----------------------------------------------"
+    echo "| All tests have passed, you are good to go. |"
+    echo "----------------------------------------------"
+else
+    commit=$(git log -1 --oneline | cut -f1 -d' ')
+    echo ""
+    echo "----------------------------------------------"
+    echo "| Some tests have failed. Running processing |"
+    echo "| may produce unexpected results. Proceed at |"
+    echo "| your own risk, or contact a maintainer for |"
+    echo "| help. (commit hash $commit)                |"
+    echo "----------------------------------------------"
+fi
+
