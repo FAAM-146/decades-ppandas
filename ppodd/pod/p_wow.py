@@ -6,6 +6,12 @@ from .shortcuts import _c, _o, _z
 
 
 class WeightOnWheels(PPBase):
+    """
+    This module simply provides the aircraft weight-on-wheels flag, recorded on
+    the rear core console. A value of 1 indicates weight on wheels (i.e. the
+    aircraft is on the ground) and a value of 0 indicates no weight on wheels
+    (i.e. the aircraft is airborne).
+    """
 
     inputs = ['PRTAFT_wow_flag']
 
@@ -19,7 +25,7 @@ class WeightOnWheels(PPBase):
         self.declare(
             'WOW_IND',
             frequency=1,
-            units=1,
+            units=None,
             long_name='Weight on wheels indicator',
             standard_name=None
         )
