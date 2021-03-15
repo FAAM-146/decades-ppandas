@@ -45,29 +45,36 @@ class AttributesCollection(object):
         self._attributes = []
         self._data_attributes = {}
         self._compliance = False
-        self._definition = definition
+
         self._strict = strict
 
+        _definition = None
         # Get the definition from the classpath
         if isinstance(definition, str):
             _def_module, _def_var = definition.rsplit('.', 1)
-            definition = getattr(importlib.import_module(_def_module), _def_var)
+            _definition = getattr(importlib.import_module(_def_module), _def_var)
 
-        if definition is not None:
+        if isinstance(definition, dict):
+           _definition = definition
+
+        try:
             # Set REQUIRED and OPTIONAL attributes from the attributes definition
             self.REQUIRED_ATTRIBUTES = [
-                g for g in definition.keys() if definition[g]['required']
-                and version in definition[g]['versions']
+                g for g in _definition.keys() if _definition[g]['required']
+                and version in _definition[g]['versions']
             ]
 
             self.OPTIONAL_ATTRIBUTES = [
-                g for g in definition.keys() if not definition[g]['required']
-                and version in definition[g]['versions']
+                g for g in _definition.keys() if not _definition[g]['required']
+                and version in _definition[g]['versions']
             ]
-        else:
+        except AttributeError:
+            _definition = {}
             self.REQUIRED_ATTRIBUTES = []
             self.OPTIONAL_ATTRIBUTES = []
             self._strict = False
+
+        self._definition = _definition
 
         # Create placeholders for all of the required attributes
         for key in self.REQUIRED_ATTRIBUTES:
