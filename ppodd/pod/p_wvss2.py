@@ -52,7 +52,7 @@ class WVSS2(object):
         try:
             self._ident = self.dataset[
                 '{}_ident'.format(self.unit)
-            ].data[0]
+            ]().dropna().iloc[0]
 
             if type(self._ident) is bytes:
                 self._ident = self._ident.decode()
