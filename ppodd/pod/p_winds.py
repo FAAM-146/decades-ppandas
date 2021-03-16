@@ -6,7 +6,7 @@ from .base import PPBase
 from .shortcuts import _o, _z
 
 
-class TurbWinds(PPBase):
+class TurbWinds():
 
     inputs = [
         'INSPOSN',

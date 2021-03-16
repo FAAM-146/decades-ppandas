@@ -10,7 +10,7 @@ from .shortcuts import _o, _z
 
 MAX_ITERS = 5
 
-class TurbProbe(PPBase):
+class TurbProbe():
 
     inputs = [
         'AOA_A0',    # (const) Coeffs of 2nd-o poly in Mach to calc AOA offset
