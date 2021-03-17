@@ -416,8 +416,10 @@ class TcpFileReader(FileReader):
 
                 # Pandas doesn't enjoy non-native endianess, so convert data
                 # to system byteorder if required
+                _var_dtype = _dtype[0].base
                 if definition.get_field(_name).byte_order != sys.byteorder:
                     _var = _data[_name].byteswap().newbyteorder()
+                    _var_dtype = _var_dtype.newbyteorder()
                 else:
                     _var = _data[_name]
 

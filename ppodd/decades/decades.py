@@ -143,11 +143,12 @@ class DecadesVariable(object):
         _strict = kwargs.pop('strict', True)
         _tolerance = kwargs.pop('tolerance', 0)
 
+
         self.attrs = AttributesCollection(
             dataset=self, definition='.'.join((_standard, 'variable_attrs')),
             version=_standard_version, strict=_strict
         )
-
+        self.dtype = kwargs.pop('dtype', None)
         self.name = kwargs.pop('name', None)
         self.write = kwargs.pop('write', True)
 
@@ -203,11 +204,14 @@ class DecadesVariable(object):
         # reindex the dataframe onto the complete index, and downcast it to the
         # smallest reasonable datatype. This is a memory saving trick, as we
         # don't have to have a 64-bit index associated with every variable.
-        self.array = self._downcast(np.array(
+        array = self._downcast(np.array(
             _df.reindex(
                 _index, tolerance=_tolerance, method='nearest', limit=1
             ).values.flatten()
         ))
+        if self.dtype:
+            array = array.astype(self.dtype)
+        self.array = array
 
         # t0 and t1 are the start and end times of the array, which we're going
         # to store as we dispose of the index
@@ -385,7 +389,10 @@ class DecadesVariable(object):
         )
 
         # Store the merged data
-        self.array = _df.values.flatten()
+        array = _df.values.flatten()
+        if self.dtype:
+            array = array.astype(self.dtype)
+        self.array = array
         self.t0 = _df.index[0]
         self.t1 = _df.index[-1]
 
@@ -454,7 +461,10 @@ class DecadesVariable(object):
         current = current.reindex(full_index)
 
         # Store the required attributes
-        self.array = current.values.flatten()
+        array = current.values.flatten()
+        if self.dtype:
+            array = array.astype(self.dtype)
+        self.array = array
         self.t0 = current.index[0]
         self.t1 = current.index[-1]
 
@@ -945,6 +955,7 @@ class DecadesDataset(object):
             except Exception as err: # pylint: disable=broad-except
                 logger.error(f'Error in reading module {reader}')
                 logger.error(str(err))
+                raise
             del reader
 
         self.readers = None
