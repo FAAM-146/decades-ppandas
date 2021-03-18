@@ -18,8 +18,94 @@ from .shortcuts import _o, _z
 
 class BuckCR2(PPBase):
     r"""
-    Produces dew point temperature and water vapour volume mixing ratio derived
-    from the Buck CR2 hygrometer, along with associated uncertainty estimates.
+    This documentation adapted from FAAM document FAAM010015A (H. Price, 2016).
+
+    The core processed data for the Buck CR2 includes the mirror temperature
+    and the volume mixing ratio of water vapour. Prior to September 2016, the water
+    vapour pressure was calculated using using the parameterisation given by Hardy
+    (1998), which is based on the ITS-90 formulations. In September 2016, the data
+    processing was updated to use the Murphy and Koop (2000) parameterisation for
+    water vapour pressure. The vapour pressure over liquid water is now calculated
+    according to
+
+    .. math::
+        \ln(p_{\text{liq}}) &= 54.842763 - \frac{6763.22}{T} - 4.21\ln{T} +0.000367 T\\
+                &+ \tanh\left(0.0415\left(T - 218.8\right)\right)\left(53.878
+        - \frac{331.22}{T} - 9.44523 \ln T + 0.014025 T \right),
+
+    valid for :math:`123 < T < 332` K. The vapour pressure over ice is
+    calculated as follows:
+
+    .. math::
+        \ln(p_\text{ice}) = 9.550426 - \frac{5723.265}{T} + 3.53068 \ln T
+        -0.00728332 T,
+
+    valid above 110 K. The water vapour pressure inside the instrument,
+    :math:`p_{\text{H}_2\text{O,Buck}}` is calculated using either equation 1 or 2
+    depending on whether a dew point or a frost point has been observed. Above
+    273.15 K, a dew point is clearly observed. Below 243.15 K, we can be
+    confident that a frost point is being measured. Between 243.15 and 273.15 K,
+    a dew point is assumed if the mirror has not been below 243.15 K since it
+    was last above 273.15 K and it has been below 273.15 K for less than ten
+    minutes. If the mirror temperature is within the supercooled water regime
+    but has been below 243.15 K since it was last at 273.15 K, or it has been
+    below 273.15 K for more than ten minutes, a frost point is assumed. The fact
+    that these are assumptions is reflected in the measurement uncertainty,
+    described below.
+
+    The vapour pressure is converted to volume mixing ratio,
+    :math:`r_{\text{H}_2\text{O}}`, as follows:
+
+    .. math::
+        r_{\text{H}_2\text{O}} = \frac{e_f
+        p_{\text{H}_2\text{O,Buck}}}{p_\text{Buck} - e_f
+        p_{\text{H}_2\text{O,Buck}}},
+
+    where :math:`e_f` is the enhancement factor given by Hardy (1998) and
+    :math:`p_\text{Buck}` is the air pressure inside the instrument.
+
+    A corrected dew or frost point is calculated, which is slightly different
+    to the mirror temperature, correcting for the difference between the
+    pressure inside the insturment and the static air pressure outside the
+    aircraft. The water vapour pressure outside the aircraft is
+
+    .. math::
+        p_{\text{H}_2\text{o,outside}} = \frac{p_s r_{\text{H}_2\text{O}}}{e_f +
+        e_f r_{\text{H}_2\text{O}}},
+
+    where :math:`p_s` is the static air pressure. A dew or frost point is then
+    calculated using the Murphy and Koop (2005) parameterisation. Frost points
+    are calculated using an equation given in the paper:
+
+    .. math::
+        T_\text{frost,outside} =
+        \frac{1.814625\ln{p_{\text{H}_2\text{O,outside}}} + 6190.134}{29.120 -
+        \ln{p_{\text{H}_2\text{O,outside}}}}.
+
+    In the the absence of an equation to calculate dew point, a numerical
+    solving routine is used to find :math:`T_\text{dew,outside}` from Equation
+    1.
+
+    The uncertainty associated with the Buck CR2 measurements have several
+    sources
+
+    * The uncertainty associated with the calibration performed at NPL (where
+      applicable). This is derived from the NPL expanded uncertainty and fit to
+      a power law.
+    * The repeatability of the calibration. This is derived from the NPL
+      calibration measurements of different dew points and fit to a power law.
+    * The response time of the instrument and the atmospheric variability. This
+      is based on an assessment of the standard deviation of subsequent readings
+      to give an indication of atmospheric variability.
+    * The uncertainty involved in the interpolation of data between calibration
+      datapoints. This is a function of temperature, increasing below 233.15 K.
+    * The bias associated with the uncertainty about whether there is water or
+      ice on the mirror between 243.15 and 273.15 K. This is calculated using a
+      flagging scheme according to the temperature history of the mirror.
+
+    These are combined to produce one uncertainty value for the mirror
+    temperature, which may be propagated through to the volume mixing ratio
+    and the pressure-corrected dew or frost point.
     """
 
     inputs = [
