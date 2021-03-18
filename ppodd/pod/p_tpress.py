@@ -7,6 +7,19 @@ from .shortcuts import _o, _z
 
 
 class TPress(PPBase):
+    """
+    This module calculates turbulence probe pressure differentials between
+    P0-S10, left-right, and up-down.
+
+    The raw inputs are DLU counts from the differential pressure transducers.
+    Pressures are calculated with polynomial fits to the raw counts, which
+    encompass both the pressure to volts calibration of the transducer, and the
+    volts to counts calibration of the DLU. These are given in the constant
+    parameters ``CALTP1``, ``CALTP2``, and ``CALTP3``, for P0-S10, up-down, and
+    left right, respectively.
+
+    Data are flagged when outside specified limits.
+    """
 
     inputs = [
         'CALTP1',
@@ -30,12 +43,18 @@ class TPress(PPBase):
 
     def declare_outputs(self):
 
+        manufacturer = 'Rosemount Aerospace. Inc.'
+        model = '1221F2'
+
         self.declare(
             'P0_S10',
             units='hPa',
             frequency=32,
             long_name=('Calibrated differential pressure between centre (P0) '
                        'port and S10 static'),
+            sensor_manufacturer=manufacturer,
+            sensor_model=model,
+            sensor_serial_number=self.dataset.lazy['TP1_SN']
         )
 
         self.declare(
@@ -43,7 +62,10 @@ class TPress(PPBase):
             units='hPa',
             frequency=32,
             long_name=('Calibrated differential pressure between turbulence '
-                       'probe vertical ports')
+                       'probe vertical ports'),
+            sensor_manufacturer=manufacturer,
+            sensor_model=model,
+            sensor_serial_number=self.dataset.lazy['TP2_SN']
         )
 
         self.declare(
@@ -51,7 +73,10 @@ class TPress(PPBase):
             units='hPa',
             frequency=32,
             long_name=('Calibrated differential pressure between turbulence '
-                       'probe horizontal ports')
+                       'probe horizontal ports'),
+            sensor_manufacturer=manufacturer,
+            sensor_model=model,
+            sensor_serial_number=self.dataset.lazy['TP3_SN']
         )
 
     def get_range_flag(self, var, limits):
