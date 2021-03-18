@@ -65,6 +65,7 @@ class CPC(PPBase):
             instrument_manufacturer='TSI Incorporated',
             instrument_model=('Modified Water Filled 3786 Condensation '
                               'Particle Counter'),
+            instrument_serial_number=self.dataset.lazy['CPC_SN'],
             comment=('Sampled through a modified Rosemount Aerospace Inc. '
                      'Type 102 Total Temperature Housing.')
         )
