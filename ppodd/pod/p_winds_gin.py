@@ -9,6 +9,48 @@ ROLL_THRESH = 2
 
 
 class GINWinds(PPBase):
+    r"""
+    Calculates  a horizontal wind vector from the aircraft true air speed,
+    derived from the air data computer, and the speed and heading from the
+    GPS-aided inertial navigation unit.
+
+    The RVSM derived TAS is corrected to account for a discrepancy with the
+    turbulence-probe derived TAS according to
+
+    .. math::
+        \Delta\text{TAS} = -(4.0739 - (32.1681 M) + (52.7136 M^2))
+
+    where :math:`M` is the Mach number, given by
+
+    .. math::
+        M = \frac{\text{TAS}}{(661.4788 * 0.514444) \sqrt{\frac{T_{\text{DI}}}
+        {288.15}}},
+
+    where :math:`T_\text{DI}` is the air temperature measured in the deiced
+    housing.
+
+    The resulting corrected TAS may also be modified with a scaling correction,
+    specified in the constants as ``GINWIND_TASCOR``.
+
+    The eastward and northward components of TAS, :math:`\text{TAS}_u` and
+    :math:`\text{TAS}_v` are given by
+
+    .. math::
+        \text{TAS}_u &= \text{TAS}\cos(\theta - 90),\\
+        \text{TAS}_v &= \text{TAS}\sin(\theta - 90).
+
+    Where :math:`\theta` is the aircraft heading, which may be corrected with
+    an offset given in the constant ``GIN_HDG_OFFSET`` to account for any
+    misalignment of the GIN to the aircraft axis. The horizontal winds
+    :math:`u` and :math:`v` are then given by
+
+    .. math::
+        u &= u_G - \text{TAS}_u,\\
+        v &= v_G + \text{TAS}_v,
+
+    where :math:`u_G` and :math:`v_G` are the eastward and northward components
+    of the aircraft speed, reported by the GIN.
+    """
 
     inputs = [
         'GIN_HDG_OFFSET',
