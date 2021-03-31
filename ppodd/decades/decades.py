@@ -200,6 +200,9 @@ class DecadesVariable(object):
         if len(_df.index) != len(_df.index.unique()):
             _df = _df.groupby(_df.index).last()
 
+        # Ensure input is monotonic
+        _df = _df.sort_index()
+
         # Create the data array that we're going to keep. We're going to
         # reindex the dataframe onto the complete index, and downcast it to the
         # smallest reasonable datatype. This is a memory saving trick, as we
