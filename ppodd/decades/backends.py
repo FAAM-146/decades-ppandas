@@ -6,6 +6,9 @@ backend now provided is DefaultBackend.
 """
 # pylint: disable=useless-object-inheritance
 import gc
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class DecadesBackend(object):
@@ -167,9 +170,11 @@ class DefaultBackend(DecadesBackend):
         """
 
         if var.name not in [i.name for i in self.inputs]:
+            logger.debug(f'Adding input {var.name}')
             self.inputs.append(var)
             return
 
+        logger.debug(f'Merging input {var.name}')
         self[var.name].merge(var)
 
     def collect_garbage(self, required_inputs):
