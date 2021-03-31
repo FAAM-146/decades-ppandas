@@ -24,6 +24,7 @@ from ppodd.decades.flags import (DecadesBitmaskFlag, DecadesClassicFlag)
 from ..utils import pd_freq
 
 C_BAD_TIME_DEV = 43200
+C_MIN_ARRAY_LEN = 10
 
 logger = logging.getLogger(__name__)
 
@@ -198,6 +199,12 @@ class CoreNetCDFReader(FileReader):
                         setattr(variable, attr, getattr(nc[var], attr))
 
                     _file.dataset.add_input(variable)
+
+                # This is how we'd add global from the netcdf to the Dataset.
+                # Not sure we want this though, so disabled at the mo
+#                for attr in nc.ncattrs():
+#                    if attr not in _file.dataset.globals().keys():
+#                        _file.dataset.add_global(attr, getattr(nc, attr))
 
 
 @register(patterns=['.*\.zip'])
@@ -406,9 +413,11 @@ class TcpFileReader(FileReader):
 
             _good_times = np.where(~np.isnan(_time))
             _time = _time[_good_times]
+            if len(_time) < C_MIN_ARRAY_LEN:
+                logger.info('Array shorter than minimum valid length.')
+                continue
 
             for _name, _dtype in _data.dtype.fields.items():
-
                 if _name[0] == '$':
                     continue
                 if _name == self.time_variable:
@@ -546,7 +555,7 @@ class CrioDefinitionReader(DefinitionReader):
             logger.info('Reading {}'.format(_file))
             tcp_def = CrioTcpDefintion()
             is_header = True
-            with open(_file.filepath, 'r') as _csv:
+            with open(_file.filepath, 'r', encoding='ISO-8859-1') as _csv:
                 reader = csv.reader(_csv)
                 for row in reader:
 
