@@ -1,11 +1,6 @@
 import os
 import re
 import importlib
-import sys
-
-import numpy as np
-
-from .base import PPBase
 
 def load_plugins():
     pysearchre = re.compile('.py$', re.IGNORECASE)
@@ -27,17 +22,17 @@ def load_plugins():
     return modules
 
 
-def compile_cython():
-    """
-    Does a basic cython compile if required.
-    """
-    import pyximport
-    pyximport.install(
-        setup_args={
-            'include_dirs': np.get_include()
-        }
-    )
-
-
+#def compile_cython():
+#    """
+#    Does a basic cython compile if required.
+#    """
+#    import pyximport
+#    pyximport.install(
+#        setup_args={
+#            'include_dirs': np.get_include()
+#        }
+#    )
+#
+#
 load_plugins()
-pp_modules = PPBase.__subclasses__()
+##pp_modules = PPBase.__subclasses__()

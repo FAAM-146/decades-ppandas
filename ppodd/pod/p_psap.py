@@ -6,13 +6,15 @@ aerosol rack. See class docstring for more information.
 import numpy as np
 
 from ..decades import DecadesVariable, DecadesBitmaskFlag
-from .base import PPBase
+from .base import PPBase, register_pp
 from .shortcuts import _o
 
 TRANS_VALID_MIN = 0.5
 TRANS_VALID_MAX = 1.05
 FLOW_VALID_MIN = 1
 
+
+@register_pp('core')
 class PSAP(PPBase):
     r"""
     Reports data from the Radiance Research Particle Soot Absorbtion

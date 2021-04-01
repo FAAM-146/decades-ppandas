@@ -5,10 +5,11 @@ Provides a processing module for the static mill on the core console.
 import numpy as np
 
 from ..decades import DecadesVariable
-from .base import PPBase
+from .base import PPBase, register_pp
 from .shortcuts import _o
 
 
+@register_pp('core')
 class ElectricFieldJci140(PPBase):
     r"""
     This module reports the raw counts from the JCI static monitor on the

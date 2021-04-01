@@ -14,7 +14,7 @@ from scipy.optimize import curve_fit
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..decades import flags
 from ..utils import slrs
-from .base import PPBase
+from .base import PPBase, register_pp
 from .shortcuts import _o, _r, _z
 
 # Conversion from calories to joules [Woan00]_.
@@ -583,6 +583,7 @@ def calc_wc(W_twc, W_lwc, k, e_liqT=1, e_iceT=1, e_liqL=1, beta_iceL=0):
     return lwc, iwc, twc
 
 
+@register_pp('core')
 class SeaProbe(PPBase):
     """
     Calculates bulk water contents from the SEA WCM-2000 sensor.

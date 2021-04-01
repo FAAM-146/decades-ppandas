@@ -6,12 +6,14 @@ class docstring for more info.
 import numpy as np
 
 from ..decades import DecadesVariable
-from .base import PPBase
+from .base import PPBase, register_pp
 from .shortcuts import _c, _l
 
 VALID_MIN = 650
 VALID_MAX = 1050
 
+
+@register_pp('core')
 class CabinPressure(PPBase):
     r"""
     Derives cabin pressure from a pressure transducer located in the core

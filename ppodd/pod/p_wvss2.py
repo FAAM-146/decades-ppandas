@@ -5,7 +5,7 @@ import pandas as pd
 
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..decades import flags
-from .base import PPBase
+from .base import PPBase, register_pp
 from .shortcuts import _z
 
 parameters = OrderedDict()
@@ -165,6 +165,7 @@ class WVSS2(object):
             self.add_output(var)
 
 
+@register_pp('core')
 class WVSS2A(WVSS2, PPBase):
     """
     Process data from the WVSS-II water vapour spectrometers. The WVSS2 report
@@ -189,6 +190,7 @@ class WVSS2A(WVSS2, PPBase):
         }
 
 
+@register_pp('core')
 class WVSS2B(WVSS2, PPBase):
     """
     Process data from the WVSS-II water vapour spectrometers. The WVSS2 report

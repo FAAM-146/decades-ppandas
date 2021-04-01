@@ -6,7 +6,7 @@ radiative fluxes from these. See the class docstring for mor information.
 # pylint: disable=invalid-name
 import numpy as np
 
-from .base import PPBase
+from .base import PPBase, register_pp
 from .shortcuts import _l, _o, _z, _c
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 
@@ -27,6 +27,7 @@ FLUX_LIMITS = {
 }
 
 
+@register_pp('core')
 class BBRFlux(PPBase):
     r"""
     Caluclates the corrected fluxes from the upper and lower clear dome and red

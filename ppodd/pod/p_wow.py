@@ -1,10 +1,11 @@
 import pandas as pd
 
 from ..decades import DecadesVariable
-from .base import PPBase
+from .base import PPBase, register_pp
 from .shortcuts import _c, _o, _z
 
 
+@register_pp('core')
 class WeightOnWheels(PPBase):
     """
     This module simply provides the aircraft weight-on-wheels flag, recorded on

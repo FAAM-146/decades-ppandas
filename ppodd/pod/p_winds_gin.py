@@ -2,12 +2,13 @@ import pandas as pd
 import numpy as np
 
 from ..decades import DecadesVariable, DecadesBitmaskFlag
-from .base import PPBase
+from .base import PPBase, register_pp
 from .shortcuts import _o, _z
 
 ROLL_THRESH = 2
 
 
+@register_pp('core')
 class GINWinds(PPBase):
     r"""
     Calculates  a horizontal wind vector from the aircraft true air speed,

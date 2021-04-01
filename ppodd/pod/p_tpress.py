@@ -2,10 +2,11 @@ import numpy as np
 
 from ..decades import DecadesVariable
 from ..decades import flags
-from .base import PPBase
+from .base import PPBase, register_pp
 from .shortcuts import _o, _z
 
 
+@register_pp('core')
 class TPress(PPBase):
     """
     This module calculates turbulence probe pressure differentials between

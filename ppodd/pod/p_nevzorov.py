@@ -15,7 +15,7 @@ from scipy.optimize import curve_fit
 
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..decades import flags
-from .base import PPBase
+from .base import PPBase, register_pp
 from .shortcuts import _o, _z
 
 logger = logging.getLogger(__name__)
@@ -134,6 +134,7 @@ def get_fitted_k(col_p, ref_p, ias, ps, no_cloud_mask, k):
     return (k + (popt[0] * (1. / ias) + popt[1] * np.log10(ps)), popt)
 
 
+@register_pp('core')
 class Nevzorov(PPBase):
     r"""
     Post processing for liquid and total water from the Nevzorov Vane. Works

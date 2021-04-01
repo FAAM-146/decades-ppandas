@@ -10,9 +10,11 @@ import numpy as np
 from ppodd.decades import DecadesVariable, DecadesBitmaskFlag
 from ppodd.utils.calcs import sp_mach
 from ppodd.utils.constants import SPEED_OF_SOUND, ICAO_STD_TEMP, ICAO_STD_PRESS
-from ppodd.pod.base import PPBase
+from ppodd.pod.base import PPBase, register_pp
 from ppodd.pod.shortcuts import _l, _o
 
+
+@register_pp('core')
 class AirSpeed(PPBase):
     r"""
     Calculates aircraft indicated and true air speeds. Mach number, :math:`M`,

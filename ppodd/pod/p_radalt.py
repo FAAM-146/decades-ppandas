@@ -8,13 +8,14 @@ more info.
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..decades import flags
 from ..utils.conversions import feet_to_metres
-from .base import PPBase
+from .base import PPBase, register_pp
 from .shortcuts import _l
 
 RADALT_MIN = 10
 RADALT_MAX = 8100
 
 
+@register_pp('core')
 class RadAlt(PPBase):
     r"""
     Calculate the radar altitude, in metres. The radar altitude, from radalt2,

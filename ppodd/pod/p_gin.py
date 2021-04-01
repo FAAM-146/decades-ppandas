@@ -7,10 +7,11 @@ import numpy as np
 import pandas as pd
 
 from ..decades import DecadesVariable, DecadesBitmaskFlag
-from .base import PPBase
+from .base import PPBase, register_pp
 from .shortcuts import _l, _o, _z
 
 
+@register_pp('core')
 class Gin(PPBase):
     r"""
     This module provides variables from the Applanix POS AV 510 GPS-aided

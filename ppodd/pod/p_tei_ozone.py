@@ -2,7 +2,7 @@ import numpy as np
 
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..decades import flags
-from .base import PPBase
+from .base import PPBase, register_pp
 from .shortcuts import _c, _o, _z
 
 FLOW_THRESHOLD = 0.5
@@ -10,6 +10,7 @@ CONC_THRESHOLD = -10
 FLAG_AFTER_TO = 20
 
 
+@register_pp('core')
 class TeiOzone(PPBase):
     r"""
     Provides ozone concentration from the TE49C O\ :math:`_3` analyser. Ozone

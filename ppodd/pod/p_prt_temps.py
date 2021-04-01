@@ -10,12 +10,13 @@ from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..exceptions import EM_CANNOT_INIT_MODULE
 from ..utils.calcs import sp_mach, true_air_temp
 from ..utils.conversions import celsius_to_kelvin
-from .base import PPBase
+from .base import PPBase, register_pp
 from .shortcuts import _a, _o, _c, _z
 
 MACH_VALID_MIN = 0.05
 
 
+@register_pp('core')
 class PRTTemperatures(PPBase):
     r"""
     Calculate indicated and true (static)  air temperatures from the deiced and

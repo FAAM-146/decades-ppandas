@@ -5,7 +5,7 @@ from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..decades import flags
 from ..utils import get_range_flag
 from ..utils.calcs import sp_mach
-from .base import PPBase
+from .base import PPBase, register_pp
 from .shortcuts import _o, _z
 
 MAX_ITERS = 5

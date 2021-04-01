@@ -8,12 +8,13 @@ import numpy as np
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..utils import get_range_flag
 from ..utils.conversions import celsius_to_kelvin
-from .base import PPBase
+from .base import PPBase, register_pp
 from .shortcuts import _o
 
 TDEW_VALID_RANGE = (195, 394)
 
 
+@register_pp('core')
 class GeneralEastern(PPBase):
     r"""
     Processing module to calculate Dew Point temperature from the General

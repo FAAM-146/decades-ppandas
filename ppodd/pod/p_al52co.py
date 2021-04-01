@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 
 from ..decades import DecadesVariable, DecadesBitmaskFlag
-from .base import PPBase
+from .base import PPBase, register_pp
 from .shortcuts import _c, _o, _z
 from ..utils import flagged_avg
 
@@ -18,6 +18,7 @@ CAL_FLUSH_TIME = 5      # Time for system to flush after a cal
 CO_VALID_MIN = -10      # Flag if CO below this value
 
 
+@register_pp('core')
 class AL52CO(PPBase):
     r"""
     Process CO concentration from the AL5002 instrument. The instrument provides

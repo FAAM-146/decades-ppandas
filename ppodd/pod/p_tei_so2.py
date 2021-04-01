@@ -5,13 +5,14 @@ import numpy as np
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..decades import flags
 from ..utils import flagged_avg
-from .base import PPBase
+from .base import PPBase, register_pp
 from .shortcuts import _c, _o, _z
 
 CAL_FLUSH_START = 3
 CAL_FLUSH_END = 5
 
 
+@register_pp('core')
 class TecoSO2(PPBase):
     r"""
     Calculate SO\ :math:`_2` concentration from the TECO 43 instrument. The

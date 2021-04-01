@@ -4,11 +4,12 @@ processing stage for the broadband radiometers.
 """
 # pylint: disable=invalid-name
 
-from .base import PPBase
+from .base import PPBase, register_pp
 from .shortcuts import _o, _z
 from ..decades import DecadesVariable
 
 
+@register_pp('core')
 class BBRSols(PPBase):
     r"""
     Converts the raw voltages on the BBR channels to physical values via a

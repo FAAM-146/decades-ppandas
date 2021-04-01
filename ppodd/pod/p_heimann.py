@@ -8,13 +8,14 @@ import numpy as np
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..decades import flags
 from ..utils.conversions import celsius_to_kelvin
-from .base import PPBase
+from .base import PPBase, register_pp
 from .shortcuts import _c, _o, _z
 
 VALID_MIN = celsius_to_kelvin(-20)
 VALID_MAX = celsius_to_kelvin(40)
 
 
+@register_pp('core')
 class Heimann(PPBase):
     r"""
     Processing for the Heimann Radiometer. The Heimann outputs a voltage with a

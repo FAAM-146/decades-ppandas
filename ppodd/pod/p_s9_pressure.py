@@ -8,13 +8,14 @@ import numpy as np
 from ..utils.calcs import sp_mach
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..decades import flags
-from .base import PPBase
+from .base import PPBase, register_pp
 from .shortcuts import _o
 
 S9_VALID_MIN = 100
 S9_VALID_MAX = 1050
 
 
+@register_pp('core')
 class S9Pressure(PPBase):
     r"""
     Calculate static pressure from the S9 fuselage ports. Static pressure is

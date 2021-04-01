@@ -4,10 +4,11 @@ import pandas as pd
 from pysolar.solar import get_altitude, get_azimuth
 
 from ..decades import DecadesVariable
-from .base import PPBase
+from .base import PPBase, register_pp
 from .shortcuts import _o, _z
 
 
+@register_pp('core')
 class SolarAngles(PPBase):
     r"""
     Calculates solar azimuth and zenith angles at the aircraft location. Uses

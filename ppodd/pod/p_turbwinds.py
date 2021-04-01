@@ -3,7 +3,7 @@ from functools import reduce
 
 import numpy as np
 
-from .base import PPBase
+from .base import PPBase, register_pp
 from .shortcuts import _c, _o, _r, _z
 from ..decades import DecadesVariable, DecadesBitmaskFlag, flags
 from ..utils import slrs, get_range_flag
@@ -201,6 +201,7 @@ def p_winds(d, consts):
     return d
 
 
+@register_pp('core')
 class TurbulenceProbe(PPBase):
 
     inputs = [

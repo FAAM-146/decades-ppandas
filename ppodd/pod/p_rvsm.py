@@ -10,7 +10,7 @@ import numpy as np
 
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..utils import pd_freq
-from .base import PPBase
+from .base import PPBase, register_pp
 from .shortcuts import _l, _o
 
 PALT_MIN = -2000
@@ -20,6 +20,7 @@ IAS_MIN = -50
 IAS_MAX = 500
 
 
+@register_pp('core')
 class Rvsm(PPBase):
     r"""
     Calculate derived parameters from the aircraft's RVSM system. Pressure

@@ -6,13 +6,14 @@ import numpy as np
 
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..decades import flags
-from .base import PPBase
+from .base import PPBase, register_pp
 from .shortcuts import _o
 
 S10_VALID_MIN = 100
 S10_VALID_MAX = 1050
 
 
+@register_pp('core')
 class S10Pressure(PPBase):
     r"""
     Calculate static pressure from the S10 fuselage ports. Static pressure is

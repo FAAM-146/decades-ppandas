@@ -4,7 +4,7 @@ See the class doc-string for more info.
 """
 # pylint: disable=invalid-name
 from ..decades import DecadesVariable, DecadesBitmaskFlag
-from .base import PPBase
+from .base import PPBase, register_pp
 from .shortcuts import _c, _l, _o, _z
 
 SATURATOR_TEMP_VALID_MAX = 6
@@ -19,6 +19,7 @@ SHEATH_FLOW_VALID_MAX = 330
 COUNTER_SATURATION = 1e6
 
 
+@register_pp('core')
 class CPC(PPBase):
     r"""
     Reports particle counts from the TSI 3786 condensation particle counter.

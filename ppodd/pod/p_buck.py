@@ -12,10 +12,11 @@ import pandas as pd
 from scipy.optimize import fsolve
 
 from ..decades import DecadesVariable
-from .base import PPBase
+from .base import PPBase, register_pp
 from .shortcuts import _o, _z
 
 
+@register_pp('core')
 class BuckCR2(PPBase):
     r"""
     This documentation adapted from FAAM document FAAM010015A (H. Price, 2016).

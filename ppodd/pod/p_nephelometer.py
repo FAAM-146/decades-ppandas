@@ -5,10 +5,11 @@ Provides a processing module for the Nephelometer.
 import numpy as np
 
 from ..decades import DecadesVariable
-from .base import PPBase
+from .base import PPBase, register_pp
 from .shortcuts import _z
 
 
+@register_pp('core')
 class Nephelometer(PPBase):
     r"""
     The Nephelometer currently out of service. This module is currently

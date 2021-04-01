@@ -7,7 +7,7 @@ import numpy as np
 
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..decades import flags
-from .base import PPBase
+from .base import PPBase, register_pp
 from .shortcuts import _c, _o, _z
 from ..utils.constants import STEF_BOLTZ
 
@@ -55,6 +55,7 @@ def crg4(ampage, temperature):
     return L_d
 
 
+@register_pp('core')
 class KippZonenPyrgeometer(PPBase):
     r"""
     Calculation of longwave fluxes from the upward and downward facing

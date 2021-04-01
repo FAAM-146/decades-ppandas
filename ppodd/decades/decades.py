@@ -487,7 +487,7 @@ class DecadesDataset(object):
     # pylint: disable=too-many-public-methods, too-many-arguments
 
     def __init__(self, date=None, standard_version=1.0, backend=DefaultBackend,
-                 writer=NetCDFWriter, pp_plugins='ppodd.pod',
+                 writer=NetCDFWriter, pp_group='core',
                  standard='ppodd.standard.core', strict=True, logfile=None):
         """
         Create a class instance.
@@ -499,8 +499,8 @@ class DecadesDataset(object):
             strict [True]: indicates whether the <standard> should be strictly
                 enforced.
             backend [DefaultBackend]: the backend to use for variable storage.
-            pp_plugins [ppodd.pod]: a string pointing to the module containing
-                the postprocessing modules to use.
+            pp_group [core]: a string pointing indicating which group of
+                postprocessing modules should be run.
             writer [NetCDFWriter]: the writer class to use by default.
         """
 
@@ -524,7 +524,7 @@ class DecadesDataset(object):
         )
 
         self.writer = writer
-        self.pp_plugins = pp_plugins
+        self.pp_group = pp_group
 
         self._dataframes = {}
         self.lon = None
@@ -952,6 +952,7 @@ class DecadesDataset(object):
         """
         # pylint: disable=redefined-outer-name, import-outside-toplevel
         import ppodd.qa
+        from ppodd.pod.base import pp_register
         for reader in self.readers:
             try:
                 reader.read()
@@ -968,7 +969,7 @@ class DecadesDataset(object):
 
         # Initialise postprocessing modules
         _pp_modules = []
-        for pp in importlib.import_module(self.pp_plugins).pp_modules:
+        for pp in pp_register[self.pp_group]:
             try:
                 _pp_modules.append(pp(self))
             except Exception as err: # pylint: disable=broad-except
@@ -1134,6 +1135,7 @@ class DecadesDataset(object):
         # some refactoring...
         # pylint: disable=too-many-locals, too-many-branches
         # pylint: disable=too-many-statements
+        from ppodd.pod.base import pp_register
 
         if self.trim:
             self._trim_data()
@@ -1142,7 +1144,7 @@ class DecadesDataset(object):
         # module.
         if modname is not None:
             # Import all of the processing modules
-            mods = importlib.import_module(self.pp_plugins).pp_modules
+            mods = pp_register[self.pp_group]
 
             # Find an run the correct module
             for mod in mods:
@@ -1165,11 +1167,11 @@ class DecadesDataset(object):
             return
 
         # Initialize qa modules
-        self.qa_modules = [qa(self) for qa in ppodd.qa.qa_modules]
+        #self.qa_modules = [qa(self) for qa in ppodd.qa.qa_modules]
 
         # Initialize postprocessing modules
         _pp_modules = []
-        for pp in importlib.import_module(self.pp_plugins).pp_modules:
+        for pp in pp_register[self.pp_group]:
             try:
                 _pp_modules.append(pp(self))
             except Exception as err: # pylint: disable=broad-except

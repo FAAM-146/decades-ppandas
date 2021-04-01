@@ -2,10 +2,11 @@ import numpy as np
 import pandas as pd
 
 from ..decades import DecadesVariable
-from .base import PPBase
+from .base import PPBase, register_pp
 from .shortcuts import _c, _o, _z
 
 
+@register_pp('core')
 class SignalRegister(PPBase):
     """
     The DECADES signal register is a packed representation of some boolean

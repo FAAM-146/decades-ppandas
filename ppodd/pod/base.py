@@ -13,7 +13,19 @@ import pandas as pd
 from ppodd.utils import pd_freq, unwrap_array
 from ppodd.decades import DecadesDataset, DecadesVariable
 
-class PPBase(abc.ABC):
+pp_register = {}
+
+def register_pp(pp_group):
+    def inner(cls):
+        try:
+            pp_register[pp_group].append(cls)
+        except KeyError:
+            pp_register[pp_group] = [cls]
+        return cls
+    return inner
+
+
+class PPBase(object):
     """
     PPBase is an abstract base class from which processing modules should
     inherit to be picked up by the processing code.
@@ -48,7 +60,7 @@ class PPBase(abc.ABC):
         """
         return self.__class__.__name__
 
-    @abc.abstractmethod
+#    @abc.abstractmethod
     def declare_outputs(self):
         """
         Add outputs to be written. This is run during initialization of the
@@ -56,7 +68,7 @@ class PPBase(abc.ABC):
         variable.
         """
 
-    @abc.abstractmethod
+#    @abc.abstractmethod
     def process(self):
         """Do the actual postprocessing - entry point for the module"""
 
