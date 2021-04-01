@@ -9,4 +9,5 @@ def register(patterns=None):
     return _register
 
 from ppodd.readers.readers import *
+from ppodd.readers.fgga import FGGAReader
 from ppodd.readers.sea.reader import WcmFileReader
