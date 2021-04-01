@@ -208,6 +208,14 @@ Globals:
         aliases: []
         versions: [1.0]
 
+    creator_name:
+        required: false
+        description: >-
+            The name of the creator. Should be given if creator_type is person.
+        inherits_from: ACDD13
+        aliases: []
+        versions: [1.0]
+
     creator_type:
         required: true
         description: >-
@@ -437,6 +445,30 @@ Globals:
             Where the processing software used to produce this data file is open source and version
             controlled, this attribute should contain the commit hash of the software. If not
             available, then this attribute may be omitted.
+        inherits_from: null
+        aliases: []
+        versions: [1.0]
+
+    project_principal_investigator:
+        required: false
+        description: >-
+            The name of the project principal investigator.
+        inherits_from: null
+        aliases: []
+        versions: [1.0]
+
+    project_principal_investigator_email:
+        required: false
+        description: >-
+            The contact email for the project principal investigator.
+        inherits_from: null
+        aliases: []
+        versions: [1.0]
+
+    project_principal_investigator_url:
+        required: false
+        description: >-
+            The ORCID (http://orcid.org) URL of the project principal investigator.
         inherits_from: null
         aliases: []
         versions: [1.0]
