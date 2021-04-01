@@ -133,7 +133,9 @@ class DecadesClassicFlag(DecadesFlagABC):
         """
         Return flag values when the instance is called.
         """
-        return pd.DataFrame(self._df.copy(deep=True), index=self.index)
+        s = pd.Series(self._df['FLAG'])
+        s.index = self.index
+        return s
 
     @property
     def cfattrs(self):
@@ -260,7 +262,7 @@ class DecadesBitmaskFlag(DecadesFlagABC):
         return it.
         """
 
-        _meanings = list(self._df.columns)
+        _meanings = self.meanings
 
         _masks = self.masks
 
@@ -272,6 +274,16 @@ class DecadesBitmaskFlag(DecadesFlagABC):
         _flag_vals = _flag_vals.astype(np.int8)
 
         return pd.Series(_flag_vals, index=self._var.index)
+
+    @property
+    def df(self):
+        _df = self._df.copy()
+        _df.index = self.index
+        return _df
+
+    @property
+    def meanings(self):
+        return list(self._df.columns)
 
     @property
     def masks(self):
