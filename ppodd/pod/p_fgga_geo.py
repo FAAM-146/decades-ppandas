@@ -9,6 +9,8 @@ from ..decades import flags
 from .base import PPBase, register_pp
 from .shortcuts import _o
 
+from ppodd.pod.p_gin import gin_name, gin_model, gin_manufacturer
+
 
 @register_pp('fgga')
 class FGGAGeo(PPBase):
@@ -44,14 +46,11 @@ class FGGAGeo(PPBase):
         Declare the outputs that are going to be written by this module.
         """
 
-        gin_manufacturer = self.dataset['LAT_GIN'].instrument_manufacturer
-        gin_model = self.dataset['LAT_GIN'].instrument_model
-
         self.declare(
             'latitude',
-            units=self.dataset['LAT_GIN'].units,
-            long_name=self.dataset['LAT_GIN'].long_name,
-            standard_name=self.dataset['LAT_GIN'].standard_name,
+            units='degree_north',
+            long_name=f'Latitude from {gin_name}',
+            standard_name='latitude',
             instrument_manufacturer=gin_manufacturer,
             instrument_model=gin_model,
             frequency=1
@@ -59,9 +58,9 @@ class FGGAGeo(PPBase):
 
         self.declare(
             'longitude',
-            units=self.dataset['LON_GIN'].units,
-            long_name=self.dataset['LON_GIN'].long_name,
-            standard_name=self.dataset['LON_GIN'].standard_name,
+            units='degree_east',
+            long_name=f'Longitude from {gin_name}',
+            standard_name='longitude',
             instrument_manufacturer=gin_manufacturer,
             instrument_model=gin_model,
             frequency=1
@@ -69,9 +68,9 @@ class FGGAGeo(PPBase):
 
         self.declare(
             'altitude',
-            units=self.dataset['ALT_GIN'].units,
-            long_name=self.dataset['ALT_GIN'].long_name,
-            standard_name=self.dataset['ALT_GIN'].standard_name,
+            units='m',
+            long_name=f'Altitude from {gin_name}',
+            standard_name='altitude',
             instrument_manufacturer=gin_manufacturer,
             instrument_model=gin_model,
             frequency=1
