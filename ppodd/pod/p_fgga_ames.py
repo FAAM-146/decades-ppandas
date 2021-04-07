@@ -1,6 +1,6 @@
 """
-Provides a postprocessing module for the S10 pressure transducer. See class
-docstring for more info.
+Provides a postprocessing module to ocnvert FGGA data from NASA AMES format to
+netCDF. See class docstring for more info.
 """
 import numpy as np
 
@@ -13,12 +13,10 @@ from .shortcuts import _o, _z
 @register_pp('fgga')
 class FGGAAMES(PPBase):
     r"""
-    Calculate static pressure from the S10 fuselage ports. Static pressure is
-    calulated by applying a polynomial transformation to the DLU signal. The
-    coefficients, specified in the flight constants parameter ``CALS10SP``,
-    combine both the DLU and pressure transducer calibrations.
-
-    Data are flagged when they are considered out of range.
+    This module provides an interface to convert data from the FAAM Fast
+    Greenhouse Gas Analyser (FGGA) from NASA AMES format to netCDF. All of the
+    data processing an quality control is done during the creation of the NASA
+    AMES file. Refer to that documentation for more information.
     """
 
     inputs = [
