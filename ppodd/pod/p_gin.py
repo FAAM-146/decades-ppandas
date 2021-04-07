@@ -10,6 +10,10 @@ from ..decades import DecadesVariable, DecadesBitmaskFlag
 from .base import PPBase, register_pp
 from .shortcuts import _l, _o, _z
 
+gin_name = 'POS AV 510 GPS-aided Inertial Navigation unit'
+gin_manufacturer = 'Applanix'
+gin_model = 'POS AV 510'
+
 
 @register_pp('core')
 class Gin(PPBase):
@@ -72,9 +76,6 @@ class Gin(PPBase):
         """
         Declare module outputs.
         """
-        gin_name = 'POS AV 510 GPS-aided Inertial Navigation unit'
-        gin_manufacturer = 'Applanix'
-        gin_model = 'POS AV 510'
 
         self.declare(
             'LAT_GIN',
