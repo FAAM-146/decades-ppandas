@@ -161,7 +161,7 @@ class NetCDFWriter(DecadesWriter):
 
             if var.flag is not None:
                 ncflag = nc.createVariable(
-                    '{}_FLAG'.format(var.name),
+                    '{}_{}'.format(var.name, var.flag.postfix),
                     np.int8, ('Time',), fill_value=var.flag.cfattrs['_FillValue']
                 )
         else:
@@ -172,7 +172,7 @@ class NetCDFWriter(DecadesWriter):
 
             if var.flag is not None:
                 ncflag = nc.createVariable(
-                    '{}_FLAG'.format(var.name), np.int8,
+                    '{}_{}'.format(var.name, var.flag.postfix), np.int8,
                     ('Time', 'sps{0:02d}'.format(_freq)),
                     fill_value=var.flag.cfattrs['_FillValue']
                 )

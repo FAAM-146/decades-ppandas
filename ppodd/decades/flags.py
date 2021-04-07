@@ -25,7 +25,7 @@ class DecadesFlagABC(object):
     Almost Abstract Base Class for Decades Flagging.
     """
 
-    def __init__(self, var):
+    def __init__(self, var, postfix='FLAG'):
         """
         Initialisation
 
@@ -39,7 +39,8 @@ class DecadesFlagABC(object):
         self.t0 = var.t0
         self.t1 = var.t1
         self.frequency = var.frequency
-        self._long_name = f'Flag for {var.name}'
+        self.postfix = postfix
+        self._long_name = f'Data quality flag for {var.name}'
         self.descriptions = {}
 
     @property
@@ -108,14 +109,14 @@ class DecadesClassicFlag(DecadesFlagABC):
     associated with lower quality data.
     """
 
-    def __init__(self, var):
+    def __init__(self, var, *args, **kwargs):
         """
         Initialisation overide.
 
         Args:
             var: the DecadesVariable that this flag is associated with.
         """
-        super().__init__(var)
+        super().__init__(var, *args, **kwargs)
 
         # Initialize the flag to -128, a fill_value
         self._df['FLAG'] = np.int8(-128)

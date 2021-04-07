@@ -142,7 +142,7 @@ class DecadesVariable(object):
         _standard_version = kwargs.pop('standard_version', 1.0)
         _strict = kwargs.pop('strict', True)
         _tolerance = kwargs.pop('tolerance', 0)
-
+        _flag_postfix = kwargs.pop('flag_postfix', 'FLAG')
 
         self.attrs = AttributesCollection(
             dataset=self, definition='.'.join((_standard, 'variable_attrs')),
@@ -225,8 +225,12 @@ class DecadesVariable(object):
         # the 'ancillary_variables' attribute. TODO: should we check if this
         # attribute already exists?
         if _flag is not None:
-            self.flag = _flag(self)
-            self.attrs.add(Attribute('ancillary_variables', f'{self.name}_FLAG'))
+            self.flag = _flag(self, postfix=_flag_postfix)
+            self.attrs.add(
+                Attribute(
+                    'ancillary_variables', f'{self.name}_{_flag_postfix}'
+                )
+            )
         else:
             self.flag = _flag
 

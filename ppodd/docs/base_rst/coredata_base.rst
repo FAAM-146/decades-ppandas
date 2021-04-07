@@ -79,7 +79,7 @@ TAG_OPTIONAL_VARIABLES
 Flags
 -----
 
-Every variable has an associated flag variable named ``<variable_name>_FLAG``, and referenced in the variable's ``ancillary_variables`` attribute, which provides some quality or situational information about the data in the variable.
+Every variable has an associated flag variable named ``<variable_name>_<postfix>``, and referenced in the variable's ``ancillary_variables`` attribute, which provides some quality or situational information about the data in the variable.
 There are two different flagging strategies used in the core data file; the first is a value-based quality flag, referred to as a value-based or classic flag, and the second is a packed boolean representation.
 Flagging is largely automatic, other than the ``flagged_in_qc`` flag meaning, which indicates that in the opinion of the person performing the quality control, that data should be treated with caution.
 It is up to the user to decide whether or not to use data which has been flagged. If in doubt, users should contact FAAM for advice.
