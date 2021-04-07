@@ -4,7 +4,7 @@ import shutil
 import sys
 
 #from ppodd.standard import faam_globals, faam_attrs
-from ppodd.pod import pp_modules
+from ppodd.pod.base import pp_register
 from ppodd.decades.flags import (DecadesBitmaskFlag, DecadesClassicFlag)
 
 BASE_DIR = 'base_rst'
@@ -260,7 +260,8 @@ else:
 standard = os.environ['PPODD_STANDARD']
 standard_name, standard_version = standard.split('@')
 standard_version = float(standard_version)
-print(standard_name, standard_version)
+module_group = os.environ['PP_GROUP']
+pp_modules = pp_register[module_group]
 
 def replace_tag(path, tag, content):
     with open(path, 'r') as f:
