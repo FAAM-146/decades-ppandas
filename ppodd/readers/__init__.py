@@ -11,3 +11,4 @@ def register(patterns=None):
 from ppodd.readers.readers import *
 from ppodd.readers.fgga import FGGAReader
 from ppodd.readers.sea.reader import WcmFileReader
+from ppodd.readers.ccn import CCNReader
