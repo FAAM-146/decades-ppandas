@@ -7,7 +7,7 @@ import numpy as np
 from ..decades import DecadesVariable, DecadesClassicFlag
 from ..decades import flags
 from .base import PPBase, register_pp
-from .shortcuts import _o
+from .shortcuts import _o, _z
 
 
 @register_pp('fgga')
@@ -33,10 +33,12 @@ class FGGA(PPBase):
         """
         Return dummy inputs for testing.
         """
+        n = 100
         return {
-            'CALS10SP': ('const', [-130, .035, 1.85e-9]),
-            'S10SP_SN': ('const', 'xxxx'),
-            'CORCON_s10_press': ('data', 850 * _o(100), 32),
+            'FGGA_CO2': ('data', 420 * _o(n), 1),
+            'FGGA_CO2_FLAG': ('data', _z(n), 1),
+            'FGGA_CH4': ('data', 1000 * _o(n), 1),
+            'FGGA_CH4_FLAG': ('data',  _z(n), 1)
         }
 
     def declare_outputs(self):
