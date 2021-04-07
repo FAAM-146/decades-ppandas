@@ -11,7 +11,7 @@ from .shortcuts import _o, _z
 
 
 @register_pp('fgga')
-class FGGA(PPBase):
+class FGGAAMES(PPBase):
     r"""
     Calculate static pressure from the S10 fuselage ports. Static pressure is
     calulated by applying a polynomial transformation to the DLU signal. The
