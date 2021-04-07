@@ -3,21 +3,12 @@ import os
 import shutil
 import sys
 
-#from ppodd.standard import faam_globals, faam_attrs
 from ppodd.pod.base import pp_register
 from ppodd.decades.flags import (DecadesBitmaskFlag, DecadesClassicFlag)
 
 BASE_DIR = 'base_rst'
 DYN_DIR = 'dynamic_content'
 
-
-core_base = os.path.join(BASE_DIR, 'coredata_base.rst')
-modules_base = os.path.join(BASE_DIR, 'modules_base.rst')
-core = os.path.join(DYN_DIR, 'coredata.rst')
-modules = os.path.join(DYN_DIR, 'modules.rst')
-
-shutil.copy2(core_base, core)
-shutil.copy2(modules_base, modules)
 
 def trim_docstr(docstring):
     """
@@ -47,8 +38,20 @@ def trim_docstr(docstring):
     # Return a single string:
     return '\n'.join(trimmed)
 
+
 def get_global_attrs_string(required=True, standard_name=None,
                             standard_version=None):
+    """
+    Get a restructured text representation of global attributes as defined by a
+    'standard'.
+
+    Kwargs:
+        required [True]: If True, return globals required by the standard,
+            otherwise return optional global attributes.
+        standard_name [None]: The name of the standard from which defines the
+            globals.
+        standard_version [None]: the version of <standard_name> to use.
+    """
 
     if standard_name is None or standard_version is None:
         raise ValueError('Standard name and version must be given')
@@ -69,10 +72,23 @@ def get_global_attrs_string(required=True, standard_name=None,
         versions = ', '.join([f'``{i:0.1f}``' for i in details['versions']])
         globals_str += f'* ``{attr}`` - {details["description"]}'
         globals_str += f' *Versions*: {versions}\n'
+
     return globals_str
+
 
 def get_variable_attrs_string(required=True, standard_name=None,
                               standard_version=None):
+    """
+    Get a restructured text representation of variable attributes as defined by
+    a 'standard'.
+
+    Kwargs:
+        required [True]: If True, return globals required by the standard,
+            otherwise return optional variable attributes.
+        standard_name [None]: The name of the standard from which defines the
+            variable attributes.
+        standard_version [None]: the version of <standard_name> to use.
+    """
 
     if standard_name is None or standard_version is None:
         raise ValueError('Standard name and version must be given')
@@ -94,10 +110,23 @@ def get_variable_attrs_string(required=True, standard_name=None,
         versions = ', '.join([f'``{i:0.1f}``' for i in details['versions']])
         attrs_str += f'* ``{attr}`` - {details["description"]}'
         attrs_str += f' *Versions*: {versions}\n'
+
     return attrs_str
 
 
 def get_module_doc(module):
+    """
+    Returns the module documentation for a given postprocessing module, as
+    restructured text.
+
+    Args:
+        module: The post processing module (probably a subclass of
+            ppodd.pod.Base) to document
+
+    Returns:
+        A restructured text string containing the module documentation.
+    """
+
     m = module.test_instance()
     m.process()
     m.finalize()
@@ -116,16 +145,28 @@ def get_module_doc(module):
 
     return txt
 
-def get_module_vardoc(m):
+def get_module_vardoc(module):
+    """
+    Returns the module variable documentation for a given postprocessing module,
+    as restructured text.
+
+    Args:
+        module: The post processing module (probably a subclass of
+            ppodd.pod.Base) to document
+
+    Returns:
+        A restructured text string containing the module variable documentation.
+    """
+
     output = ''
     output += '\nOutputs\n'
     output += '-' * 7 + '\n\n'
 
-    if not m.dataset.outputs:
+    if not module.dataset.outputs:
         output += 'No outputs are declared by this module.\n'
         return output
 
-    for out_var in m.dataset.outputs:
+    for out_var in module.dataset.outputs:
         out_var.attrs.set_compliance_mode(True)
         output += f'* ``{out_var.name}``\n'
         for attr in out_var.attrs().items():
@@ -135,31 +176,43 @@ def get_module_vardoc(m):
     return output
 
 
-def get_module_flagdoc(m):
+def get_module_flagdoc(module):
+    """
+    Returns the module flagging documentation for a given postprocessing module,
+    as restructured text.
+
+    Args:
+        module: The post processing module (probably a subclass of
+            ppodd.pod.Base) to document
+
+    Returns:
+        A restructured text string containing the module flagging documentation.
+    """
+
     _dict = {}
-    for _var in m.dataset.outputs:
+    for _var in module.dataset.outputs:
         var = str(_var)
-        _dict.update(m.dataset[var].flag.descriptions)
+        _dict.update(module.dataset[var].flag.descriptions)
 
     output = ''
     output += '\nFlags\n'
     output += '-' * 5 + '\n\n'
 
-    if not m.dataset.outputs:
+    if not module.dataset.outputs:
         output += 'No flags are defined in this module.\n\n'
         return output
 
-    if type(m.dataset[var].flag) is DecadesBitmaskFlag:
+    if type(module.dataset[var].flag) is DecadesBitmaskFlag:
         output += ('Variables in this module use bitmask flags. Some, all or '
                    'none of these flags may be applied to each variable. '
                    'Interrogate flag variable attributes ``flag_masks``'
                    ' and ``flag_meanings`` to find the flags for each '
                    'variable.\n')
-    elif type(m.dataset[var].flag) is DecadesClassicFlag:
+    elif type(module.dataset[var].flag) is DecadesClassicFlag:
         output += ('Variables in this module use classic, value based '
                    'flagging.\n')
 
-    if type(m.dataset[var].flag) is DecadesBitmaskFlag:
+    if type(module.dataset[var].flag) is DecadesBitmaskFlag:
         if _dict:
             output += '\n'
             for flag, desc in _dict.items():
@@ -170,21 +223,36 @@ def get_module_flagdoc(m):
         else:
             output += 'No flagging information provided.\n'
 
-    elif type(m.dataset[var].flag) is DecadesClassicFlag:
+    elif type(module.dataset[var].flag) is DecadesClassicFlag:
         output += '\n'
-        for var in m.dataset.outputs:
+        for var in module.dataset.outputs:
             output += f'* {var.name}_FLAG\n'
-            meanings = m.dataset[var.name].flag.cfattrs['flag_meanings'].split()
-            values = m.dataset[var.name].flag.cfattrs['flag_values']
+            meanings = module.dataset[var.name].flag.cfattrs['flag_meanings']
+            meanings = meanings.split()
+
+            values = module.dataset[var.name].flag.cfattrs['flag_values']
             for value, meaning in zip(values, meanings):
                 output += '    * ``{}``: ``{}`` - {}\n'.format(
-                    value, meaning, m.dataset[var.name].flag.descriptions[value]
+                    value, meaning,
+                    module.dataset[var.name].flag.descriptions[value]
                 )
             output += '\n'
 
     return output
 
 def get_variables_tex(default=True):
+    """
+    Return a list of variables, in rst but suitable for compilation to pdf via
+    latex. The latex/pdf version omits standard name from the variable table
+    due to a lack of space in portrait A4.
+
+    Kwargs:
+        default [True]: If True, return only variable whch are written by
+        default, otherwise return variables not written by default.
+
+    Returns:
+        An RST table of variables.
+    """
     mods = [i.test_instance() for i in pp_modules]
     output = '.. csv-table:: Default Variables\n'
     output += '    :header: "Name", "Long Name", "Processing Module"\n'
@@ -205,7 +273,12 @@ def get_variables_tex(default=True):
         output += f'    "{var[0]}", "{var[1]}", "{var[2]}"\n'
     return output
 
+
 def get_dimensions():
+    """
+    Get a list of dimensions produced by the processing module group.
+    """
+
     mods = []
     for i in pp_modules:
         mods.append(i.test_instance())
@@ -225,7 +298,20 @@ def get_dimensions():
 
     return dimstr
 
+
 def get_variables_web(default=True):
+    """
+    Return a list of variables, in rst but suitable for compilation to html.
+    The html version includes standard name in the variable table.
+
+    Kwargs:
+        default [True]: If True, return only variable whch are written by
+        default, otherwise return variables not written by default.
+
+    Returns:
+        An RST table of variables.
+    """
+
     mods = [i.test_instance() for i in pp_modules]
     output = '.. csv-table:: Default Variables\n'
     output += '    :header: "Name", "Long Name", "Standard Name", "Processing Module"\n'
@@ -252,55 +338,91 @@ def get_variables_web(default=True):
         output += f'    "{var[0]}", "{var[1]}", "{var[2]}", "{var[3]}"\n'
     return output
 
-if 'latex' in sys.argv[1]:
-    get_variables = get_variables_tex
-else:
-    get_variables = get_variables_web
-
-standard = os.environ['PPODD_STANDARD']
-standard_name, standard_version = standard.split('@')
-standard_version = float(standard_version)
-module_group = os.environ['PP_GROUP']
-pp_modules = pp_register[module_group]
-
 def replace_tag(path, tag, content):
+    """
+    Replace a given placeholder tag in a file.
+
+    Args:
+        path: the path to the file in which a tag should be replaced.
+        tag: the placeholder tag to replace.
+        content: the content to substitute fot <tag>
+    """
+
     with open(path, 'r') as f:
         text = f.read()
     with open(path, 'w') as f:
         f.write(text.replace(tag, content))
 
 def append(path, content):
+    """
+    Append some content to a given file.
+
+    Args:
+        path: the path of the file to append to.
+        content: the content to append to the file at <path>.
+    """
+
     with open(path, 'a') as f:
         f.write(content)
 
-replace_tag(
-    core, 'TAG_REQUIRED_GLOBAL_ATTRIBUTES',
-    get_global_attrs_string(True, standard_name=standard_name,
-                            standard_version=standard_version)
-)
 
-replace_tag(
-    core, 'TAG_OPTIONAL_GLOBAL_ATTRIBUTES',
-    get_global_attrs_string(False, standard_name=standard_name,
-                            standard_version=standard_version)
-)
+if __name__ == '__main__':
 
-replace_tag(
-    core, 'TAG_REQUIRED_VARIABLE_ATTRIBUTES',
-    get_variable_attrs_string(True, standard_name=standard_name,
-                              standard_version=standard_version)
-)
+    # Get copies of documentation templates to populate.
+    core_base = os.path.join(BASE_DIR, 'coredata_base.rst')
+    modules_base = os.path.join(BASE_DIR, 'modules_base.rst')
+    core = os.path.join(DYN_DIR, 'coredata.rst')
+    modules = os.path.join(DYN_DIR, 'modules.rst')
 
-replace_tag(
-    core, 'TAG_OPTIONAL_VARIABLE_ATTRIBUTES',
-    get_variable_attrs_string(False, standard_name=standard_name,
-                              standard_version=standard_version)
-)
+    shutil.copy2(core_base, core)
+    shutil.copy2(modules_base, modules)
 
-replace_tag(core, 'TAG_SPS_DIMENSIONS', get_dimensions())
+    # We're only supporting compilation to pdf via latex, or html currently
+    if 'latex' in sys.argv[1]:
+        get_variables = get_variables_tex
+    else:
+        get_variables = get_variables_web
 
-replace_tag(core, 'TAG_DEFAULT_VARIABLES', get_variables())
-replace_tag(core, 'TAG_OPTIONAL_VARIABLES', get_variables(False))
+    # The standard to use is specified in the environment variable
+    # PPODD_STANDARD, which should be of the format
+    # <standard_name>@<standard_version>, for example PPODD_STANDARD=core@1.0
+    standard = os.environ['PPODD_STANDARD']
+    standard_name, standard_version = standard.split('@')
+    standard_version = float(standard_version)
 
-for mod in pp_modules:
-    append(modules, get_module_doc(mod))
+    # The module group to document should be specified in the environment group
+    # PP_GROUP, for example PP_GROUP=core
+    module_group = os.environ['PP_GROUP']
+    pp_modules = pp_register[module_group]
+
+    replace_tag(
+        core, 'TAG_REQUIRED_GLOBAL_ATTRIBUTES',
+        get_global_attrs_string(True, standard_name=standard_name,
+                                standard_version=standard_version)
+    )
+
+    replace_tag(
+        core, 'TAG_OPTIONAL_GLOBAL_ATTRIBUTES',
+        get_global_attrs_string(False, standard_name=standard_name,
+                                standard_version=standard_version)
+    )
+
+    replace_tag(
+        core, 'TAG_REQUIRED_VARIABLE_ATTRIBUTES',
+        get_variable_attrs_string(True, standard_name=standard_name,
+                                  standard_version=standard_version)
+    )
+
+    replace_tag(
+        core, 'TAG_OPTIONAL_VARIABLE_ATTRIBUTES',
+        get_variable_attrs_string(False, standard_name=standard_name,
+                                  standard_version=standard_version)
+    )
+
+    replace_tag(core, 'TAG_SPS_DIMENSIONS', get_dimensions())
+
+    replace_tag(core, 'TAG_DEFAULT_VARIABLES', get_variables())
+    replace_tag(core, 'TAG_OPTIONAL_VARIABLES', get_variables(False))
+
+    for mod in pp_modules:
+        append(modules, get_module_doc(mod))
