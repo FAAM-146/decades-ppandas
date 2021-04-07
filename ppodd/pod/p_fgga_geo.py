@@ -94,13 +94,16 @@ class FGGAGeo(PPBase):
         alt_flag_df = alt_flag.df.reindex(index)
 
         lat = DecadesVariable(
-            {'latitude': self.d['LAT_GIN']}, flag=DecadesBitmaskFlag
+            {'latitude': self.d['LAT_GIN']}, flag=DecadesBitmaskFlag,
+            flag_postfix='qcflag'
         )
         lon = DecadesVariable(
-            {'longitude': self.d['LON_GIN']}, flag=DecadesBitmaskFlag
+            {'longitude': self.d['LON_GIN']}, flag=DecadesBitmaskFlag,
+            flag_postfix='qcflag'
         )
         alt = DecadesVariable(
-            {'altitude': self.d['ALT_GIN']}, flag=DecadesBitmaskFlag
+            {'altitude': self.d['ALT_GIN']}, flag=DecadesBitmaskFlag,
+            flag_postfix='qcflag'
         )
 
         for meaning in lat_flag.meanings:

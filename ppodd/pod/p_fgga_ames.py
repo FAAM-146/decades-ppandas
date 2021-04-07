@@ -83,12 +83,12 @@ class FGGAAMES(PPBase):
 
         co2 = DecadesVariable(
             self.d['FGGA_CO2'], name='co2_mol_frac',
-            flag=DecadesClassicFlag
+            flag=DecadesClassicFlag, flag_postfix='qcflag'
         )
 
         ch4 = DecadesVariable(
             self.d['FGGA_CH4'], name='ch4_mol_frac',
-            flag=DecadesClassicFlag
+            flag=DecadesClassicFlag, flag_postfix='qcflag'
         )
 
         meanings = (
