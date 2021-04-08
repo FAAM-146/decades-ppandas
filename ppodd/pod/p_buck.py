@@ -704,11 +704,22 @@ class BuckCR2(PPBase):
 
         # Add flag to outputs and add to the dataset
         for dv in (vmr_buck, vmr_unc, tdew_cr2, tdew_c_u, tdewcr2c):
-            dv.flag.add_meaning(0, 'data good')
-            dv.flag.add_meaning(1, 'not controlling')
-            dv.flag.add_meaning(2, 'mirror contaminated')
-            dv.flag.add_meaning(3, 'in balance cycle')
-            dv.flag.add_meaning(4, 'data missing')
+            dv.flag.add_meaning(0, 'data good', 'Data are considered valid')
+            dv.flag.add_meaning(
+                1, 'not controlling', ('The instrument is not controlling '
+                                       'on a dew point')
+            )
+            dv.flag.add_meaning(
+                2, 'mirror contaminated', ('The instrument is reporting '
+                                           'contamination on the mirror')
+            )
+            dv.flag.add_meaning(
+                3, 'in balance cycle', ('The instrument is in a balance cycle '
+                                        'and not recording a dew point')
+            )
+            dv.flag.add_meaning(
+                4, 'data missing', 'Data are expected but are not present'
+            )
 
             dv.flag.add_flag(flag)
             self.add_output(dv)
