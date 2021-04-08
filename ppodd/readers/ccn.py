@@ -30,7 +30,7 @@ class CCNReader(FileReader):
                         _date = rex.findall(line)
                         if _date:
                             date = datetime.datetime.strptime(
-                                _date[0], '%d/%m/%y'
+                                _date[0], '%m/%d/%y'
                             ).date()
                     if len(header) > 50:
                         break
@@ -63,6 +63,7 @@ class CCNReader(FileReader):
                         {name: data[col]},
                         units=None,
                         frequency=1,
-                        flag=None
+                        flag=None,
+                        write=False
                     )
                 )
