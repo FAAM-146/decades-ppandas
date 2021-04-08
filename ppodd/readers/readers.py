@@ -184,18 +184,32 @@ class CoreNetCDFReader(FileReader):
                     if var.endswith('FLAG') or var == 'Time':
                         continue
 
+                    # Get the frequency of the variable from the name of the
+                    # second dimension. Ugly as sin!
+                    try:
+                        _freq = int(nc[var].dimensions[1].replace('sps', ''))
+                    except IndexError:
+                        _freq = 1
+
                     variable = DecadesVariable(
                         {var: nc[var][:].ravel()},
                         index=self._time_at(time, self._var_freq(nc[var])),
                         name=var,
                         write=False,
                         flag=self._flag_class(var, nc),
-                        frequency=nc[var].frequency,
+                        frequency=_freq,
                     )
 
                     self.flag(variable, nc)
 
                     for attr in nc[var].ncattrs():
+                        # Horrible frequency special case, to cope with v004
+                        # core data files, where frequency corresponds to some
+                        # nominal measurement frequency, rather than sample
+                        # freq in the file
+                        if attr == 'frequency':
+                            setattr(variable, attr, _freq)
+                            continue
                         setattr(variable, attr, getattr(nc[var], attr))
 
                     _file.dataset.add_input(variable)
