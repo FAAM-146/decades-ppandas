@@ -8,7 +8,10 @@ import pandas as pd
 from cfunits import Units
 
 from ppodd.decades import DecadesDataset, DecadesVariable
-from ppodd.pod import pp_modules
+from ppodd.pod.base import pp_register
+pp_modules = []
+for key, value in pp_register.items():
+    pp_modules += value
 
 
 STANDARD_NAMES_URL = ('http://cfconventions.org/Data/cf-standard-names'
