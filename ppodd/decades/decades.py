@@ -575,6 +575,12 @@ class DecadesDataset(object):
 
         raise KeyError('Unknown variable: {}'.format(item))
 
+    @property
+    def coords(self):
+        if self.lat and self.lon:
+            return f'{self.lon} {self.lat}'
+        return None
+
     def time_bounds(self):
         """
         Return the time period covered by this dataset.
@@ -837,6 +843,7 @@ class DecadesDataset(object):
         Args:
             variable: the DecadesVariable to add as an output.
         """
+        variable.attrs.add(Attribute('coordinates', lambda: self.coords))
         self._backend.add_output(variable)
 
     @property

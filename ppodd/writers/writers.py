@@ -193,12 +193,6 @@ class NetCDFWriter(DecadesWriter):
                 continue
             setattr(ncvar, attr_key, attr_val)
 
-        # Set coordinates attribute on variables, if they've been specified
-        if self.dataset.lat and self.dataset.lon:
-            setattr(ncvar, 'coordinates', '{} {}'.format(
-                self.dataset.lat, self.dataset.lon
-            ))
-
         # Add a few required attributes to the flag variable.
         # ncflag.standard_name = 'status_flag'
         if var.flag is not None:
