@@ -300,10 +300,12 @@ class DecadesBitmaskFlag(DecadesFlagABC):
         Implement the cfattrs getter. Returns a dict of attributes which should
         be added to the netCDF flag variable for cf compliance.
         """
+        _valid_range_max = 2 * int(self.masks[-1]) - 1 if self.masks else 0
+        _valid_range_min = 1 if self.masks else 0
         return {
             'long_name': self._long_name,
             '_FillValue': 0,
-            'valid_range': [1, 2 * int(self.masks[-1]) - 1],
+            'valid_range': [_valid_range_min, _valid_range_max],
             'flag_masks': [np.int8(i) for i in self.masks],
             'flag_meanings': ' '.join(self._df.columns)
         }
