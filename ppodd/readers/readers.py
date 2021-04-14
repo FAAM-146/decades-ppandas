@@ -161,10 +161,20 @@ class CoreNetCDFReader(FileReader):
         try:
             nc[f'{var_name}_FLAG'].flag_masks
             return DecadesBitmaskFlag
-        except AttributeError:
+        except (AttributeError, KeyError, IndexError):
+            pass
+
+        try:
+            nc[f'{var_name}_FLAG'].flag_values
             return DecadesClassicFlag
+        except (AttributeError, KeyError, IndexError):
+            pass
+
+        return None
 
     def flag(self, var, nc):
+        if var.flag is None:
+            return
         flag_var = nc[f'{var.name}_FLAG']
         var.flag = type(var.flag).from_nc_variable(flag_var, var)
 
