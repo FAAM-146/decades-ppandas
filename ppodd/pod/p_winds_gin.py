@@ -129,6 +129,7 @@ class GINWinds(PPBase):
         self.correct_tas_rvsm(tas_scale_factor=tas_scale_factor)
 
         d.HDG_GIN += self.dataset['GIN_HDG_OFFSET']
+        d.HDG_GIN %= 360
         air_spd_east = np.cos(np.deg2rad(d.HDG_GIN - 90.)) * d.TAS
         air_spd_north = np.sin(np.deg2rad(d.HDG_GIN - 90.)) * d.TAS
 
