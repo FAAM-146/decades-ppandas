@@ -346,6 +346,11 @@ class TurbulenceProbe(PPBase):
         _in_roll = d.ROLL_GIN.abs() > 10
 
         for i in range(3):
+            # This code was aimed at adjusting alpha and beta correction terms
+            # on a flight-by-flight basis, my minimising mean vertical winds
+            # and the covariance between roll and the vertical wind. Requires
+            # further thought before actually being used.
+            continue
             if self.test_mode:
                 continue
 
