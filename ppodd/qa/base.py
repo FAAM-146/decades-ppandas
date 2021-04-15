@@ -135,13 +135,8 @@ class QAFigure(object):
         self._fig.savefig(_save_file)
 
     def __enter__(self):
-        to_time = self.dataset['WOW_IND'].data.loc[
-            np.gradient(self.dataset['WOW_IND'].array) < 0
-        ].index[-1]
-
-        land_time = self.dataset['WOW_IND'].data.loc[
-            np.gradient(self.dataset['WOW_IND'].array) > 0
-        ].index[-1]
+        to_time = self.dataset.takeoff_time
+        land_time = self.dataset.landing_time
 
         self.to_time = pd.to_datetime(to_time)
         self.land_time = pd.to_datetime(land_time)
