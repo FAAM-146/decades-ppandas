@@ -5,12 +5,13 @@ temperature measurement at the core console. See class docstring for more info.
 # pylint: disable=invalid-name
 import numpy as np
 
-from .base import PPBase
+from .base import PPBase, register_pp
 from .shortcuts import _c, _l
 from ..decades import DecadesVariable
 from ..decades import flags
 
 
+@register_pp('core')
 class CabinTemp(PPBase):
     r"""
     Derives cabin temperature from a sensor located on the right of the core
