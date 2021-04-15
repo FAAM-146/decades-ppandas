@@ -114,10 +114,15 @@ class QAFigure(object):
     def _finalize(self):
         self._set_sizes()
         for ax in self._ts_axes:
-            ax.set_xlim([
-                self.to_time - datetime.timedelta(minutes=5),
-                self.land_time + datetime.timedelta(minutes=5)
-            ])
+            if self.to_time is not None and self.land_time is not None:
+                ax.set_xlim([
+                    self.to_time - datetime.timedelta(minutes=5),
+                    self.land_time + datetime.timedelta(minutes=5)
+                ])
+                ax.axvline([self.to_time], color='gray', linewidth=2,
+                            alpha=.5)
+                ax.axvline([self.land_time], color='gray', linewidth=2,
+                            alpha=.5)
 
     def _savefig(self):
         if self.dataset.qa_dir:
@@ -138,8 +143,15 @@ class QAFigure(object):
         to_time = self.dataset.takeoff_time
         land_time = self.dataset.landing_time
 
-        self.to_time = pd.to_datetime(to_time)
-        self.land_time = pd.to_datetime(land_time)
+        try:
+            self.to_time = pd.to_datetime(to_time)
+        except Exception:
+            self.to_time = None
+
+        try:
+            self.land_time = pd.to_datetime(land_time)
+        except Exception:
+            self.land_time = None
 
         self.set_subtitle(
             'Report for {flight}, on {date}'.format(
