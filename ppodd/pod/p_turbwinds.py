@@ -338,10 +338,13 @@ class TurbulenceProbe(PPBase):
              'INSPOSN', 'BETA_COR', 'ALPHA_COR')
         }
 
-        _slrs = reduce(
-            lambda x, y: x.union(y),
-            slrs(d.WOW_IND, d.PS_RVSM, d.ROLL_GIN, freq=32)
-        )
+        try:
+            _slrs = reduce(
+                lambda x, y: x.union(y),
+                slrs(d.WOW_IND, d.PS_RVSM, d.ROLL_GIN, freq=32)
+            )
+        except TypeError:
+            _slrs = None
 
         _in_roll = d.ROLL_GIN.abs() > 10
 
@@ -357,13 +360,14 @@ class TurbulenceProbe(PPBase):
             ws = []
             alphas = [-2, 2]
 
-            for alpha in alphas:
-                consts['ALPHA_COR'] = [alpha, 1]
-                d = p_turb(d.copy(deep=True), consts)
-                d = p_winds(d.copy(deep=True), consts)
-                ws.append(d.W_C[_slrs].mean())
-            fit = np.polyfit(ws, alphas, 1)
-            consts['ALPHA_COR'] = [np.polyval(fit, 0), 1]
+            if _slrs is not None:
+                for alpha in alphas:
+                    consts['ALPHA_COR'] = [alpha, 1]
+                    d = p_turb(d.copy(deep=True), consts)
+                    d = p_winds(d.copy(deep=True), consts)
+                    ws.append(d.W_C[_slrs].mean())
+                fit = np.polyfit(ws, alphas, 1)
+                consts['ALPHA_COR'] = [np.polyval(fit, 0), 1]
 
             covs = []
             betas = [-2, 2]
