@@ -20,7 +20,9 @@ TEST_FILE_PATTERNS = {
     'CORCON01_TCP_v1.csv': r.CrioDefinitionReader,
     'flight-cst_faam_20010101_r0_c123.yaml': r.YamlConstantsReader,
     'flight-cst_faam_20010101_r0_c123.json': r.JsonConstantsReader,
-    'SEAPROBE_20010101_000000_c123.wcm': r.WcmFileReader
+    'SEAPROBE_20010101_000000_c123.wcm': r.WcmFileReader,
+    'faam-fgga_faam_20010101_r0_c123.na': r.FGGAReader,
+    'CCN-200 data 010101010000.csv': r.CCNReader
 }
 
 
