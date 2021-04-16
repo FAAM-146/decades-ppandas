@@ -533,16 +533,15 @@ class BuckCR2(PPBase):
         """
 
         c = self.get_enhance_coeff(buck_mirror_ctl)
-        result = (np.exp(
-            (1.0 - vp_buck / (buck_pressure * 100))
-            * c[:, 0] + c[:, 1] * buck_mirror_t + c[:, 2] * buck_mirror_t**2
-            + c[:, 3] * buck_mirror_t**3
-        ) + ((buck_pressure * 100) / vp_buck - 1)
-            * np.exp(
-                c[:, 4] + c[:, 5] * buck_mirror_t + c[:, 6]
-                * buck_mirror_t**2 + c[:, 7]*buck_mirror_t**3
-            )
-        )
+        t = buck_mirror_t
+
+        alpha = c[:, 0] + (c[:, 1] * t) + (c[:, 2] * t**2) + (c[:, 3] * t**3)
+        beta = c[:, 4] + (c[:, 5] * t) + (c[:, 6] * t**2) + (c[:, 7] * t**3)
+
+        vp = vp_buck
+        p = buck_pressure * 100
+
+        result = np.exp(alpha * (1 - (vp / p)) + beta * ((p / vp) - 1))
 
         return result
 
