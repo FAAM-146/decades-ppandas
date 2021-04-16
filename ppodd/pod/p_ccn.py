@@ -60,10 +60,37 @@ class CCN(PPBase):
         """
         n = 100
         return {
-            'FGGA_CO2': ('data', 420 * _o(n), 1),
-            'FGGA_CO2_FLAG': ('data', _z(n), 1),
-            'FGGA_CH4': ('data', 1000 * _o(n), 1),
-            'FGGA_CH4_FLAG': ('data',  _z(n), 1)
+            'CCN_Number_Conc_A': ('data', _o(n), 1),
+            'CCN_Number_Conc_B': ('data', _o(n), 1),
+            'CCN_T_OPC_A': ('data', _o(n), 1),
+            'CCN_T_OPC_B': ('data', _o(n), 1),
+            'CCN_Sample_Pressure_A': ('data', _o(n), 1),
+            'CCN_Sample_Pressure_B': ('data', _o(n), 1),
+            'CCN_T1_Read_A': ('data', _o(n), 1),
+            'CCN_T1_Read_B': ('data', _o(n), 1),
+            'CCN_T2_Read_A': ('data', _o(n), 1),
+            'CCN_T2_Read_B': ('data', _o(n), 1),
+            'CCN_T3_Read_A': ('data', _o(n), 1),
+            'CCN_T3_Read_B': ('data', _o(n), 1),
+            'CCN_Sheath_Flow_A': ('data', _o(n), 1),
+            'CCN_Sample_Flow_A': ('data', _o(n), 1),
+            'CCN_Sheath_Flow_B': ('data', _o(n), 1),
+            'CCN_Sample_Flow_B': ('data', _o(n), 1),
+            'CCN_Current_SS_A': ('data', _o(n), 1),
+            'CCN_Current_SS_B': ('data', _o(n), 1),
+            'CCN_Temps_Stabilized_A': ('data', _o(n), 1),
+            'CCN_Temps_Stabilized_B': ('data', _o(n), 1),
+            'CCN_Current_SS_A': ('data', _o(n), 1),
+            'CCN_Current_SS_B': ('data', _o(n), 1),
+            'CCN_T1_Set_A': ('data', _o(n), 1),
+            'CCN_T1_Set_B': ('data', _o(n), 1),
+            'CCN_T_Sample_A': ('data', _o(n), 1),
+            'CCN_T_Sample_B': ('data', _o(n), 1),
+            'TAT_DI_R': ('data', _o(n), 1),
+            'PS_RVSM': ('data', _o(n), 1),
+            'LAT_GIN': ('data', _o(n), 1),
+            'LON_GIN': ('data', _o(n), 1),
+            'ALT_GIN': ('data', _o(n), 1),
         }
 
     def declare_outputs(self):
