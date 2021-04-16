@@ -130,6 +130,13 @@ class TestDecades(unittest.TestCase):
         self.assertEqual(f.index[0], start)
         self.assertEqual(f.index[-1], end)
 
+    def test_recover_index(self):
+        v = self._get_var_1()
+        index = v.index
+        self.d.add_input(v)
+        for a, b in zip(self.d[v.name].index, index):
+            self.assertEqual(a, b)
+
     def test_variable_merge_contiguous(self):
         index1 = pd.date_range(
             start=datetime.datetime(2000, 1, 1),
