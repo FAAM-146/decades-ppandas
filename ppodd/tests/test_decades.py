@@ -36,6 +36,11 @@ class TestDecades(unittest.TestCase):
             periods=10, freq='S'
         )
 
+        self.test_index_32 = pd.date_range(
+            start=datetime.datetime(2000, 1, 1),
+            periods=320, freq='31250000N'
+        )
+
         self.d = DecadesDataset(datetime.datetime(2000, 1, 1))
         self.v = DecadesVariable(
             {TEST_VAR_NAME: TEST_VAR_VALUES}, index=self.test_index_1,
@@ -57,6 +62,11 @@ class TestDecades(unittest.TestCase):
         return  DecadesVariable({
             TEST_VAR_NAME: TEST_VAR_VALUES
         }, index=self.test_index_1)
+
+    def _get_var_32(self):
+        return  DecadesVariable({
+            TEST_VAR_NAME: TEST_VAR_VALUES*32
+        }, index=self.test_index_32)
 
     def test_create_dataset(self):
         d = DecadesDataset()
@@ -104,6 +114,12 @@ class TestDecades(unittest.TestCase):
         v = self._get_var_1()()
         for a, b in zip(v.index, self.test_index_1):
             self.assertEqual(a, b)
+
+    def test_get_freq_for_1hz_and_32hz(self):
+        var1 = self._get_var_1()
+        var32 = self._get_var_32()
+        self.assertEqual(var1.frequency, 1)
+        self.assertEqual(var32.frequency, 32)
 
     def test_calling_variable_values(self):
         v = self._get_var_1()()
