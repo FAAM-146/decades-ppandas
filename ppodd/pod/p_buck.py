@@ -536,12 +536,15 @@ class BuckCR2(PPBase):
         t = buck_mirror_t
 
         alpha = c[:, 0] + (c[:, 1] * t) + (c[:, 2] * t**2) + (c[:, 3] * t**3)
-        beta = c[:, 4] + (c[:, 5] * t) + (c[:, 6] * t**2) + (c[:, 7] * t**3)
+        ln_beta = c[:, 4] + (c[:, 5] * t) + (c[:, 6] * t**2) + (c[:, 7] * t**3)
+        beta = np.exp(ln_beta)
 
         vp = vp_buck
         p = buck_pressure * 100
 
-        result = np.exp(alpha * (1 - (vp / p)) + beta * ((p / vp) - 1))
+        result = np.exp(
+            (alpha * (1 - (vp / p))) + (beta * ((p / vp) - 1))
+        )
 
         return result
 
