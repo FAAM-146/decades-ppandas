@@ -83,7 +83,7 @@ Globals:
         aliases: []
         versions: [1.0]
 
-    project:
+    project_acronym:
         required: true
         description: >-
             The acronym of the project with which this flight was associated. If the flight was
@@ -471,4 +471,28 @@ Globals:
             The ORCID (http://orcid.org) URL of the project principal investigator.
         inherits_from: null
         aliases: []
+        versions: [1.0]
+
+    mission_scientist:
+        required: false
+        description: >-
+            The name of the mission scientist (mission scientist 1), responsible for directing
+            science during the flight
+        inherits_from: null
+        aliases: []
+        versions: [1.0]
+
+    mission_scientist_email:
+        required: false
+        description: >-
+            The (ideally institutional) email address of the mission scientist
+        inherits_from: null
+        aliases: []
+        versions: [1.0]
+
+    mission_scientist_url:
+        required: false
+        description: >-
+            The ORCID (http://orcid.org) URL of the mission scientist.
+        inherits_from: null
         versions: [1.0]
