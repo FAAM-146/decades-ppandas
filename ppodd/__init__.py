@@ -43,13 +43,18 @@ def flipdir(path):
 
 def githash():
     """
-    Return the hash of the current git commit assuming that
-        a) the code is sitting in a git repo;
-        b) the git cli is available on the system.
+    Return the hash of the current git commit assuming that either
+
+    The code is sitting in a git repo and the git cli is available on the
+    system.
+
+    or
+
+    The code has been installed using included setup.py
 
     Returns:
-        output: the hash of the current git commit, or None if this cannot be
-                obtained.
+        str: the hash of the current git commit, or None if this cannot be
+            obtained.
     """
     path = os.path.dirname(inspect.getfile(ppodd))
 
@@ -68,5 +73,16 @@ def githash():
             output = output.decode().split()[0]
         except (AttributeError, IndexError):
             return None
+
+    if output is None:
+        githash_path = os.path.join(
+            os.path.dirname(ppodd.__file__), 'githash'
+        )
+
+        try:
+            with open(githash_path, 'r') as f:
+                output = f.read()
+        except Exception:
+            return output
 
     return output
