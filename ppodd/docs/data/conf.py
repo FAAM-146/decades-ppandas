@@ -14,15 +14,18 @@
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 import sphinx_rtd_theme
+import ppodd
+import datetime
 
 def setup(app):
     app.add_css_file('mods.css')
 
 # -- Project information -----------------------------------------------------
 
-project = 'DRAFT: FAAM Core Data Product'
-copyright = '2020, FAAM'
+project = 'FAAM Core Data Product'
+copyright = f'{datetime.datetime.now().year}, FAAM'
 author = 'FAAM'
+release = f'{ppodd.version()} ({ppodd.githash()})'
 
 
 # -- General configuration ---------------------------------------------------
@@ -59,3 +62,4 @@ html_static_path = ['static']
 latex_elements = {
   'extraclassoptions': 'openany,oneside'
 }
+latex_logo = '../static/faam.png'
