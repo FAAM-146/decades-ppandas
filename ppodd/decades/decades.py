@@ -100,7 +100,7 @@ class DecadesFile(object):
         Initialize an instance.
 
         Args:
-            filepath: a string giving the absolute path to a file.
+            filepath (str): a string giving the absolute path to a file.
         """
         self.filepath = filepath
 
@@ -120,21 +120,25 @@ class DecadesVariable(object):
         """
         Initialize a class instance. Arbitrary args and kwargs are accepted.
         These will be passed to pandas during the initial creation of a
-        DataFrame, other than keys which are defined in the <standard> and:
+        DataFrame, other than keys which are defined in the `standard` and:
 
-        Kwargs:
-            name: the name of the variable
-            write: whether or not this variable should be written to file as an
-                   output. Default True.
-            flag: a class to be used for holding data quality information.
-                  Default is DecadesClassicFlag.
-            standard: a metadata 'standard' which should be adhered to. Default
-                      is 'ppodd.standard.core'.
-            standard_version: the version of <standard> to apply. Default is
-                              1.0
-            strict: whether the <standard> should be strictly enforced. Default
-                    is True.
-            tolerance: tolerance to use when reindexing onto a regular index.
+        Args:
+            name (str, optional): the name of the variable
+            write (bool, optional): whether or not this variable should be
+                written to file as an output. Default `True`.
+            flag (Object, optional): a class to be used for holding data quality
+                information. Default is `DecadesClassicFlag`.
+            standard (str, optional): a metadata 'standard' which should
+                be adhered to. Default is `ppodd.standard.core`.
+            standard_version (float, optional): the version of `standard` to
+                apply. Default is 1.0
+            strict (bool, optional): whether the `standard` should be strictly
+                enforced. Default is `True`.
+            tolerance (int, optional): tolerance to use when reindexing onto a
+                regular index.
+            flag_postfix (str, optional): the postfix to add to a
+                variable when output to indicate it is a quality flag. Default
+                is `FLAG`.
         """
 
         _flag = kwargs.pop('flag', DecadesClassicFlag)
@@ -328,11 +332,11 @@ class DecadesVariable(object):
         """
         Return the frequency of the variable.
 
-        Kwargs:
-            df: if given, infer the frequency of this dataframe.
+        Args:
+            df (pd.DataFrame): if given, infer the frequency of this dataframe.
 
         Returns:
-            _freq: the frequency code of the variable.
+            int: the frequency code of the variable.
         """
         try:
             return pd_freq[self.attrs['frequency']]
@@ -355,10 +359,11 @@ class DecadesVariable(object):
         pd.to_numeric.
 
         Args:
-            array: the numpy array, or pd.Series to downcast.
+            array (np.array): the numpy array, or pd.Series to downcast.
 
         Returns:
-            a downcast copy of array, or array if it cannot be downcast.
+            np.array: a downcast copy of array, or array if it cannot be
+            downcast.
         """
         dc = 'float'
         try:
@@ -382,7 +387,7 @@ class DecadesVariable(object):
         intersection of indicies is the empty set.
 
         Args:
-            other: the variable to merge with this one.
+            other (:obj:`DecadesVariable`): the variable to merge with this one.
         """
 
         # Create a union of data and indicies
@@ -406,7 +411,7 @@ class DecadesVariable(object):
     @property
     def isnumeric(self):
         """
-        Return True if the datatype of the variable array is numeric, False
+        bool: True if the datatype of the variable array is numeric, False
         otherwise
         """
         return np.issubdtype(self.array.dtype, np.number)
@@ -417,8 +422,8 @@ class DecadesVariable(object):
         interval is closed (i.e. start and end will remain in the variable).
 
         Args:
-            start: a datetime like indicating the start of the period to keep
-            end: a datetime like indicating the end of the period to keep.
+            start: a `datetime` like indicating the start of the period to keep
+            end: a `datetime` like indicating the end of the period to keep.
         """
 
         # Trim the QC flag over the same interval.
@@ -440,7 +445,7 @@ class DecadesVariable(object):
         different period into this one.
 
         Args:
-            other: the variable to merge into this one.
+            other (DecadesVariable): the variable to merge into this one.
         """
 
         # If the other variable is after this one, we can merge fast...
@@ -479,6 +484,10 @@ class DecadesVariable(object):
         """
         Return the start and end times of this variable, as the tuple (start,
         end).
+
+        Returns:
+            tuple: A 2-tuple, (start, end), containing the start and end times
+            of this variable.
         """
         return (self.t0, self.t1)
 
@@ -496,16 +505,23 @@ class DecadesDataset(object):
         """
         Create a class instance.
 
-        Kwargs:
-            date [None]: a date representing the date of the flight.
-            standard [ppodd.standard.core]: the metadata standard to adhere to.
-            standard_version [1.0]: the version of <standard> to apply.
-            strict [True]: indicates whether the <standard> should be strictly
-                enforced.
-            backend [DefaultBackend]: the backend to use for variable storage.
-            pp_group [core]: a string pointing indicating which group of
-                postprocessing modules should be run.
-            writer [NetCDFWriter]: the writer class to use by default.
+        Args:
+            date (datetime.datetime, optional): a date representing the date of
+                the flight. Default is None, in which case a date is expected
+                via a constants file.
+            standard (str, optional): the metadata standard to adhere to.
+                Default is `ppodd.standard.core`.
+            standard_version (float, optional): the version of <standard> to
+                apply. Default is 1.0.
+            strict (bool, optional): indicates whether the <standard> should be
+                strictly enforced. Default is True.
+            backend (ppodd.decades.backends.DecadesBackend): the backend to use
+                for variable storage. Default is
+                ppodd.decades.backends.DefaultBackend.
+            pp_group (str, optional): a string pointing indicating which group
+                of postprocessing modules should be run. Default is `core`.
+            writer (ppodd.writers.writers.DecadesWriter): the writer class to
+                use by default. Default is NetCDFWriter.
         """
 
         self._date = date
@@ -577,6 +593,10 @@ class DecadesDataset(object):
 
     @property
     def coords(self):
+        """
+        str: the string to use as a variable coordinates attribute. None if
+        this is not set.
+        """
         if self.lat and self.lon:
             return f'{self.lon} {self.lat}'
         return None
@@ -586,8 +606,8 @@ class DecadesDataset(object):
         Return the time period covered by this dataset.
 
         Returns:
-            a 2-tuple containing the smallest and largest times of variables in
-            this dataset.
+            tuple: a 2-tuple containing the smallest and largest times of
+            variables in this dataset.
         """
         start_time = datetime.datetime.max
         end_time = datetime.datetime.min
@@ -615,7 +635,7 @@ class DecadesDataset(object):
         Remove a variable from the backend.
 
         Args:
-            name: the name of the variable to remove from the backend.
+            name (str): the name of the variable to remove from the backend.
         """
         self._backend.remove(name)
 
@@ -624,6 +644,10 @@ class DecadesDataset(object):
         Turn garbage collection on or off. If on, variables which are not
         required for processing are removed from the dataset. TODO: this should
         probably be done as a property.
+
+        Args:
+            collect (bool): A bool indicating if garbage collection should be
+                turned on (True) or off (False).
         """
         if collect:
             self._garbage_collect = True
@@ -636,8 +660,8 @@ class DecadesDataset(object):
         from memory to whatever storage medium is used.
 
         Args:
-            decache: a boolean indicating whether decaching should be enable of
-                disabled.
+            decache (bool): a boolean indicating whether decaching should be
+                enabled or disabled.
         """
         if decache:
             self._decache = True
@@ -647,7 +671,7 @@ class DecadesDataset(object):
     @property
     def outputs(self):
         """
-        Return a list of output variable from the backend.
+        list: Return a list of output variables from the backend.
         """
         return self._backend.outputs
 
@@ -660,7 +684,7 @@ class DecadesDataset(object):
     @property
     def trim(self):
         """
-        Return True if trim mode is on, False otherwise. If trim mode is on,
+        bool: True if trim mode is on, False otherwise. If trim mode is on,
         data will be trimmed to a set period before takeoff and after landing.
         """
         return self._trim
@@ -678,7 +702,7 @@ class DecadesDataset(object):
     @property
     def date(self):
         """
-        Return the date of this dataset.
+        datetime.datetime: Return the date of this dataset.
         """
         if self._date:
             return datetime.datetime.combine(
@@ -719,8 +743,8 @@ class DecadesDataset(object):
         flattened.
 
         Args:
-            key: the name of the global attribute to add
-            value: the value of the global attribute <key>
+            key (str): the name of the global attribute to add
+            value (Object): the value of the global attribute <key>
         """
 
         # Recursively flatten any dictionaries passed as values
@@ -762,8 +786,11 @@ class DecadesDataset(object):
     @property
     def qa_dir(self):
         """
-        Return the qa_dir property, which is the directory in which QC should
-        be done.
+        str: The directory in which QC should be done. When set, will create
+        the directory if it does not exist.
+
+        Raises:
+            OSError: if the path exists but is not a directory.
         """
         return self._qa_dir
 
@@ -790,8 +817,8 @@ class DecadesDataset(object):
         Infer the reader class which should be used to load a given file.
 
         Args:
-            dfile: the file from which to infer the reader. Expected to be of
-                type DecadesFile.
+            dfile (DecadesFile): the file from which to infer the
+                reader.
         """
         # pylint: disable=relative-beyond-top-level, import-outside-toplevel
         from ..readers import reader_patterns
@@ -819,8 +846,8 @@ class DecadesDataset(object):
         attribute.
 
         Args:
-            name: the name of the constant
-            data: the value of the constant
+            name (str): the name of the constant
+            data (Object): the value of the constant
         """
         self.constants[name] = data
 
@@ -830,8 +857,9 @@ class DecadesDataset(object):
         already exists, as identified by name, then append to that variable
         using pd.Series.combine_first().
 
-        args:
-            variable: the DecadesVariable to add to this DecadesDataset.
+        Args:
+            variable (DecadesVariable): the variable to add to this
+                DecadesDataset.
         """
 
         self._backend.add_input(variable)
@@ -849,7 +877,7 @@ class DecadesDataset(object):
     @property
     def variables(self):
         """
-        Define the .variables property, which returns all of the variables held
+        :obj:`list` of :obj:`str`: Returns all of the variables held
         in the backend.
         """
         return self._backend.variables
@@ -857,8 +885,9 @@ class DecadesDataset(object):
     @property
     def files(self):
         """
-        Return a list of all files currently accociated with this
-        DecadesDataset.
+        :obj:`list` of :obj:`str`: Return a list of all files currently
+        accociated with this :obj:`DecadesDataset`. Cannot be set
+        explicitally.
         """
         _files = []
         for reader in self.readers:
@@ -880,10 +909,10 @@ class DecadesDataset(object):
         Get the FileReader of type cls associated with this Dataset. If no such
         reader exists, raise a ValueError.
 
-        args:
+        Args:
             cls: The class (type) of the reader we wish to retrieve.
 
-        returns:
+        Returns:
             The reader of type cls, if such a reader exists.
         """
 
@@ -899,9 +928,8 @@ class DecadesDataset(object):
         Dataset, then add the file to that reader. If not, create a new reader,
         add that to the dataset, and then add the file to the reader.
 
-        args:
-            dfile:
-                The DecadesFile to add to the dataset.
+        Args:
+            dfile (DecadesFile): The file to add to the dataset.
         """
 
         dfile.dataset = self
@@ -944,11 +972,8 @@ class DecadesDataset(object):
         """
         Add a file to the dataset, first creating a DecadesFile.
 
-        args:
-            filename: the path to the file to add.
-
-        kwargs:
-            file_type: the file type to pass to DecadesFile
+        Args:
+            filename (str): the path to the file to add.
         """
         logger.info('Adding {}'.format(filename))
         try:
@@ -996,8 +1021,8 @@ class DecadesDataset(object):
     @property
     def takeoff_time(self):
         """
-        Return the latest takeoff time of the data set, as determined by the
-        last time at which PRTAFT_wow_flag changing 1 -> 0
+        :term:`datetime-like`: Return the latest takeoff time of the data set,
+        as determined by the last time at which PRTAFT_wow_flag changing 1 -> 0
         """
 
         if self._takeoff_time is not None:
@@ -1020,8 +1045,9 @@ class DecadesDataset(object):
     @property
     def landing_time(self):
         """
-        Return the latest landing time of the dataset, as determined by the
-        last time at which PRTAFT_wow_flag changes from 0 -> 1
+        :term:`datetime-like`: Return the latest landing time of the dataset,
+        as determined by the last time at which PRTAFT_wow_flag changes from
+        0 -> 1
         """
 
         if self._landing_time is not None:
@@ -1045,6 +1071,9 @@ class DecadesDataset(object):
         """
         Get all of the data which may still be required for a processing job.
         Allows for garbage collection.
+
+        Returns:
+            :obj:`list` of :obj:`str`.
         """
 
         _required_inputs = []
@@ -1141,6 +1170,9 @@ class DecadesDataset(object):
     def process(self, modname=None):
         """
         Run processing modules.
+
+        Args:
+            modname (str, optional): the name of the module to run.
         """
         # The linter directives below probably mean this could do with
         # some refactoring...
@@ -1252,7 +1284,7 @@ class DecadesDataset(object):
     def write(self, *args, **kwargs):
         """
         Write data to file, by instantiating the self.writer injected class.
-        All args and kwargs are passed to this classes __init__.
+        All args and kwargs are passed to this classes `write` method.
         """
         self.writer(self).write(*args, **kwargs)
 

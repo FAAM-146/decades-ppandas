@@ -31,14 +31,15 @@ class AttributesCollection(object):
         """
         Initialise an instance.
 
-        Kwargs:
-            dataset: a ppodd Dataset associated with this attributes
-                     collection.
-            definition: a string pointing to the classpath of an attributes
-                        definition.
-            version: the version of the definition to adhere to.
-            strict: if True do not allow attributes which are not defined in
-                    the definition to be added to the collection.
+        Args:
+            dataset (DecadesDataset): a ppodd Dataset associated with this
+                attributes collection.
+            definition (str, optional): a string pointing to the classpath of
+                an attributes definition.
+            version (float, optional): the version of the definition to adhere
+                to. Defaults to 1.0.
+            strict (bool, optional): if True do not allow attributes which are
+                not defined in the definition to be added to the collection.
         """
         # Init instance variables
         self._dataset = dataset
@@ -150,7 +151,7 @@ class AttributesCollection(object):
         Set compliance mode. TODO: why isn't this done with properties??
 
         Args:
-            comp: compliance mode, expected as a boolean.
+            comp (bool): compliance mode, truthy to turn compliance mode on.
         """
         self._compliance = comp
 
@@ -159,7 +160,8 @@ class AttributesCollection(object):
         Remove an attribute from the AttributesCollection
 
         Args:
-            att: the Attribute or key of Attribute to remove.
+            att (:obj:`Attribute` or :obj:`str`): the Attribute or key of
+                Attribute to remove.
         """
         if isinstance(att, str):
             # Assume only the key is given
@@ -175,7 +177,7 @@ class AttributesCollection(object):
         Add an Attribute to the AttributesCollection.
 
         Args:
-            att: The Attribute to add the the collection
+            att (Attribute): The Attribute to add the the collection
 
         Raises:
             TypeError: if att is not of type Attribute.
@@ -203,11 +205,8 @@ class AttributesCollection(object):
     @property
     def strict(self):
         """
-        Get strict mode. If strict is truthy, attributes not defined in the
-        standard cannot be added to the collection.
-
-        Returns:
-            self._strict
+        bool: Get strict mode. If strict is truthy, attributes not defined in
+        the standard cannot be added to the collection.
         """
         return self._strict
 
@@ -224,7 +223,7 @@ class AttributesCollection(object):
     @property
     def is_compliant(self):
         """
-        Return True if the AttributesCollection is compliant. In this context
+        bool: True if the AttributesCollection is compliant. In this context
         this means that all REQUIRED_ATTRIBUTES are set.
         """
         for required in self.REQUIRED_ATTRIBUTES:
@@ -238,16 +237,18 @@ class AttributesCollection(object):
         value.
 
         Args:
-            param: the key of the data attribute.
-            attrs: the callable which yields the value of the attribute.
+            param (str): the key of the data attribute.
+            attrs (:term:`callable`): the callable which yields the value of the
+                attribute.
         """
         self._data_attributes[param] = attrs
 
     def static_items(self):
         """
-        Return a dict containing all of the attributes which are fixed at
-        definition time (i.e. those which do not provide their value via a
-        call.
+        Returns:
+            dict: a dict containing all of the attributes which are fixed at
+            definition time (i.e. those which do not provide their value via a
+            call.
         """
         return self._as_dict(dynamic=False).items()
 
@@ -257,13 +258,14 @@ class AttributesCollection(object):
         optionally excluding those which provide their value through a
         callable.
 
-        Kwargs:
-            dynamic: if True (default), include attributes which provide their
-                     value through a call. If False, exclude these
+        Args:
+            dynamic (bool, optional): if True (default), include attributes
+                which provide their value through a call. If False, exclude
+                these.
 
         Returns:
-            a dictionary of attributes, optionally excluding those providing
-            their value through a call.
+            dict: a dictionary of attributes, optionally excluding those
+                providing their value through a call.
         """
         from ppodd.decades import DecadesDataset, DecadesVariable
         _dict = {}
@@ -300,22 +302,24 @@ class AttributesCollection(object):
     @property
     def keys(self):
         """
-        Return dict_keys of all of the keys in the AttributesCollection.
+        dict_keys: Return dict_keys of all of the keys in the
+        :obj:`AttributesCollection`.
         """
         return self.dict.keys()
 
     @property
     def values(self):
         """
-        Return dict_values of all of the values in the AttributesCollection.
+        dict_values: Return dict_values of all of the values in the
+        :obj:`AttributesCollection`.
         """
         return self.dict.values()
 
     @property
     def dict(self):
         """
-        Return an OrderedDict of all attribures in the AttributesCollection,
-        ordered alphabetically by key.
+        collections.OrderedDict: Return an OrderedDict of all attribures in the
+        :obj:`AttributesCollection`, ordered alphabetically by key.
         """
         _dict = self._as_dict()
         _sorted = collections.OrderedDict()
@@ -327,7 +331,7 @@ class AttributesCollection(object):
 class Attribute(object):
     """
     An Attribute is a simple wrapper containing a key/value pair, and is
-    essentially immutable once created.
+    considered immutable once created.
     """
 
     def __init__(self, key, value):
@@ -335,8 +339,8 @@ class Attribute(object):
         Initialize a class instance.
 
         Args:
-            key: the attribute key
-            value: the attribute value.
+            key (str): the attribute key
+            value (Object): the attribute value.
         """
         self._key = key
         self._value = value
@@ -347,13 +351,13 @@ class Attribute(object):
     @property
     def key(self):
         """
-        Implement key as a property.
+        str: The Attribute key.
         """
         return self._key
 
     @property
     def value(self):
         """
-        Implement value as a property.
+        Object: the Attribute value.
         """
         return self._value
