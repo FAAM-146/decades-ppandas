@@ -17,7 +17,7 @@ import sphinx_rtd_theme
 import datetime
 
 #print(sys.path[0])
-from ppodd import version, githash
+from ppodd import version as ppodd_version, githash
 
 def setup(app):
     app.add_css_file('mods.css')
@@ -27,8 +27,8 @@ def setup(app):
 project = 'DECADES-(PP)andas Post-Processing Suite'
 copyright = f'{datetime.datetime.now().year}, FAAM'
 author = 'FAAM'
-release = f'{version()} ({githash()})'
-
+release = f'{ppodd_version()} ({githash()})'
+version = ppodd_version()
 
 # -- General configuration ---------------------------------------------------
 
