@@ -80,9 +80,9 @@ def githash():
         )
 
         try:
-            with open(githash_path, 'r') as f:
-                output = f.read()
+            from ppodd.githash_freeze import githash as gh
+            return gh
         except Exception:
-            return output
+            raise
 
     return output
