@@ -1,3 +1,10 @@
+==============================
+DECADES-PPandas Code Reference
+==============================
+
+ppodd.decades
+=============
+
 .. module:: ppodd.decades
 
 .. autoclass:: DecadesFile
