@@ -14,3 +14,20 @@ ICAO_STD_PRESS = 1013.25
 
 # Stefan-Boltzmann constant
 STEF_BOLTZ = 5.67e-8
+
+# Gas constant of dry air (J / (kg K))
+R_d = 287.058
+
+# Gas constant of water vapour (J / (kg K))
+R_v = 461.5
+
+# Specific heats of dry air (d) and water vapour (v) at constant pressure (p)
+# and constant volume (v)
+c_vd = (5. / 2.) * R_d
+c_pd = (7. / 2.) * R_d
+c_vv = 3. * R_v
+c_pv = 4. * R_v
+
+# Molecular mass of chemical species
+MOL_MASS_H20 = 18.0185
+MOL_MASS_DRY_AIR = 28.97
