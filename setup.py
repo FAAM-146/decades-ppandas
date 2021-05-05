@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 from setuptools.command.develop import develop
 from setuptools.command.install import install
 from setuptools.command.egg_info import egg_info
@@ -23,16 +23,6 @@ class EggInfo(egg_info):
         super().run()
 
 
-def get_packages():
-    """
-    Hacky way of getting all subdirs as packages.
-    """
-    return ['ppodd'] + [
-        '.'.join(('ppodd', i)) for i in os.listdir('ppodd')
-        if os.path.isdir(os.path.join('ppodd', i))
-        and '__' not in i
-    ]
-
 def write_githash():
     """
     Write the current git commit hash to a module for install.
@@ -47,7 +37,8 @@ setup(
     description='DECADES-PPandas Postprocessing',
     author='FAAM',
     author_email='dave.sproson@faam.ac.uk',
-    packages=get_packages(),
+    packages=find_packages(),
+    package_data={'': ['*.yaml', '*.yml']},
     cmdclass={
         'install': Install,
         'develop': Develop,

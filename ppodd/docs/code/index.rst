@@ -6,4 +6,7 @@ DECADES-PPandas
     :glob:
 
     introduction
+    usage
+    flight_constants
+    extending
     doc
