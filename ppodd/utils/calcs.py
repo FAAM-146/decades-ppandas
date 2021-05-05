@@ -43,3 +43,7 @@ def true_air_temp(iat, mach, recovery_factor=1, flag=False):
     if flag:
         return tat, _flag
     return tat
+
+
+def true_air_temp_variable(iat, mach, eta=0, gamma=1):
+    return iat * ((1. - eta) * (1. + ((gamma - 1.) / 2.) * mach**2.))**(-1.)
