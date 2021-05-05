@@ -84,6 +84,17 @@ class MoistMach(PPBase):
             write=False
         )
 
+        self.declare(
+            'SH_GAMMA',
+            units=1,
+            frequency=32,
+            long_name=('Ratio of specific heats at constant pressure and '
+                       'constant pressure'),
+            write=False
+        )
+
+
+
     def flag(self):
         """
         Create flagging info.
@@ -115,21 +126,28 @@ class MoistMach(PPBase):
         c_v = c_vd * (1 + qh * ((6 / (5 * eps)) - 1))
 
         R_a = c_p - c_v
+        gamma = c_p / c_v
 
         # Moist mach number
         mach = np.sqrt(
             (2 * c_v / R_a) * (((p + q) / p) ** (R_a / c_p) - 1)
         )
 
-        output = DecadesVariable(
+        mach_var = DecadesVariable(
             mach, name='MOIST_MACH', flag=DecadesBitmaskFlag
         )
 
         # Simple flag for aircraft on the ground
-        output.flag.add_mask(
+        mach_var.flag.add_mask(
             wow==1, 'aircraft on ground',
             ('The aircraft is on the ground, as indicated by the '
              'weight-on-wheels indicator')
         )
 
-        self.add_output(output)
+        self.add_output(mach_var)
+
+        gamma_var = DecadesVariable(
+            gamma, name='SH_GAMMA', flag=DecadesBitmaskFlag
+        )
+
+        self.add_output(gamma_var)
