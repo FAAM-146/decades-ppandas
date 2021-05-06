@@ -67,7 +67,7 @@ class WVSS2(object):
 
         for name, attrs in parameters.items():
             self.declare(
-                'WVSS2{}_{}'.format(self._ident, name),
+                'WVSS2{}_{}_U'.format(self._ident, name),
                 frequency=1,
                 comment=('WVSS-II measurements rely on manufacturer '
                          'calibrations, and are not tracable to national '
@@ -102,7 +102,7 @@ class WVSS2(object):
 
         # Insert serial data defined in parameters into the dataframe
         for i, name in enumerate(parameters.keys()):
-            column = 'WVSS2{}_{}'.format(self._ident, name)
+            column = 'WVSS2{}_{}_U'.format(self._ident, name)
             self.d[column] = serial_data[:, i]
 
         # Add the millisecond data onto the index
@@ -128,8 +128,8 @@ class WVSS2(object):
 
         # Output data
         for name in parameters.keys():
-            _key = 'WVSS2{}_{}'.format(self._ident, name)
-            _vmr_key = 'WVSS2{}_VMR'.format(self._ident)
+            _key = 'WVSS2{}_{}_U'.format(self._ident, name)
+            _vmr_key = 'WVSS2{}_VMR_U'.format(self._ident)
 
             interp_df['DATA_MISSING_FLAG'] = 0
 
