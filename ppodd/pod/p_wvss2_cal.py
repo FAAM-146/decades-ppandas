@@ -39,9 +39,9 @@ class WVSS2Calibrated(PPBase):
 
     where :math:`V` is the uncorrected volume mixing ratio, :math:`\sigma_0,
     ..., \sigma_n` are specified in the constants parameter
-    ``WVSS2_F_UNC_SIGMA``, :math:`l_0 \text{ and} l_1` are specified in the
-    constants parameter ``WVSS2_F_UNC_LINEAR`` and :math:`p_0 \text{ and} p_1`
-    are specified in the constants parameter ``WVSS2_F_UNC_POWER``.
+    ``WVSS2_F_UNC_FITPARAMS``, :math:`l_0 \text{ and} l_1` are specified in the
+    constants parameter ``WVSS2_F_UNC_BUCK`` and :math:`p_0 \text{ and} p_1`
+    are specified in the constants parameter ``WVSS2_F_UNC_FITRES``.
     """
 
     inputs = [
@@ -50,9 +50,9 @@ class WVSS2Calibrated(PPBase):
         'WVSS2_F_CAL',
         'WVSS2_F_CAL_RANGE',
         'WVSS2_F_SN',
-        'WVSS2_F_UNC_SIGMA',
-        'WVSS2_F_UNC_LINEAR',
-        'WVSS2_F_UNC_POWER'
+        'WVSS2_F_UNC_FITPARAMS',
+        'WVSS2_F_UNC_BUCK',
+        'WVSS2_F_UNC_FITRES'
     ]
 
     @staticmethod
@@ -67,9 +67,9 @@ class WVSS2Calibrated(PPBase):
             'WVSS2_F_CAL': ('const', [1, 0, 0]),
             'WVSS2_F_CAL_RANGE': ('const', [0, 20000]),
             'WVSS2_F_SN': ('const', lambda: 'xxxx'),
-            'WVSS2_F_UNC_SIGMA': ('const', [1, 0, 0, 0, 0, 0]),
-            'WVSS2_F_UNC_LINEAR': ('const', [5, 0]),
-            'WVSS2_F_UNC_POWER': ('const', [8, 0, 1])
+            'WVSS2_F_UNC_FITPARAMS': ('const', [1, 0, 0, 0, 0, 0]),
+            'WVSS2_F_UNC_BUCK': ('const', [5, 0]),
+            'WVSS2_F_UNC_FITRES': ('const', [8, 0, 1])
         }
 
     def declare_outputs(self):
@@ -111,9 +111,9 @@ class WVSS2Calibrated(PPBase):
     def get_uncertainty(self):
         d = self.d
         vmr_u = d.WVSS2F_VMR_U
-        popt_quintic_sigma_f = self.dataset['WVSS2_F_UNC_SIGMA'][::-1]
-        popt_linear = self.dataset['WVSS2_F_UNC_LINEAR'][::-1]
-        popt_power = self.dataset['WVSS2_F_UNC_POWER']
+        popt_quintic_sigma_f = self.dataset['WVSS2_F_UNC_FITPARAMS'][::-1]
+        popt_linear = self.dataset['WVSS2_F_UNC_BUCK'][::-1]
+        popt_power = self.dataset['WVSS2_F_UNC_FITRES']
 
         sigma_f_data = np.polyval(popt_quintic_sigma_f, vmr_u)
         sigma_b_data = 0.5 * np.polyval(popt_linear, vmr_u)
