@@ -132,7 +132,7 @@ def get_module_doc(module):
     m.finalize()
     _doc = module.__doc__
     if _doc is None:
-        _doc = 'No module documentation has been provided'
+        _doc = 'No module documentation has been provided.'
 
     txt = '.. _{}:\n\n'.format(module.__name__)
     txt += '-' * len(module.__name__) + '\n'
@@ -221,7 +221,7 @@ def get_module_flagdoc(module):
                 output += '* ``' + flag + '`` - ' + desc + '\n'
             output += '\n'
         else:
-            output += 'No flagging information provided.\n'
+            output += 'No flagging information provided.\n\n'
 
     elif type(module.dataset[var].flag) is DecadesClassicFlag:
         output += '\n'
