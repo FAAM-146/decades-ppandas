@@ -8,7 +8,7 @@ import numpy as np
 
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..exceptions import EM_CANNOT_INIT_MODULE
-from ..utils.calcs import sp_mach, true_air_temp
+from ..utils.calcs import sp_mach, true_air_temp_variable
 from ..utils.conversions import celsius_to_kelvin
 from .base import PPBase, register_pp
 from .shortcuts import _a, _o, _c, _z
@@ -61,6 +61,10 @@ class PRTTemperatures(PPBase):
         'CALNDT',                   #  Non deiced calibrations (Const)
         'NDTSENS',                  #  Non deiced sensor type (Const)
         'DITSENS',                  #  Deiced sensor type (Const)
+        'SH_GAMMA',
+        'MOIST_MACH',
+        'ETA_ND',
+        'ETA_DI',
         'PS_RVSM',                  #  Static pressure (derived)
         'Q_RVSM',                   #  Pitot-static pressure (derived)
         'CORCON_di_temp',           #  Deiced temperature counts (DLU)
@@ -81,6 +85,10 @@ class PRTTemperatures(PPBase):
             'DITSENS': ('const', [lambda: 'xxxxxx', lambda: 'plate or loom']),
             'PS_RVSM': ('data', _a(1000, 300, -1), 32),
             'Q_RVSM': ('data', 250*(_o(700)), 32),
+            'SH_GAMMA': ('data', _o(700), 32),
+            'MOIST_MACH': ('data', .5*_o(700), 32),
+            'ETA_ND': ('data', _z(700), 32),
+            'ETA_DI': ('data', _z(700), 32),
             'CORCON_di_temp': ('data', _a(225, 245, .0286)*1000, 32),
             'CORCON_ndi_temp': ('data', _a(225, 245, .0286)*1000, 32),
             'PRTAFT_deiced_temp_flag': (
@@ -158,20 +166,6 @@ class PRTTemperatures(PPBase):
                 write=False
             )
 
-    def calc_mach(self):
-        """
-        Calculate Mach number, from RVSM derived static and dynamic pressures,
-        which are assumed to be in the instance dataframe.
-        """
-        d = self.d
-
-        d['MACHNO'], d['MACHNO_FLAG'] = sp_mach(
-            d['Q_RVSM'], d['PS_RVSM'], flag=True
-        )
-
-        d.loc[d['MACHNO'] < MACH_VALID_MIN, 'MACHNO_FLAG'] = 1
-        d.loc[~np.isfinite(d['MACHNO']), 'MACHNO_FLAG'] = 1
-        d.loc[d['MACHNO'] < MACH_VALID_MIN, 'MACHNO'] = MACH_VALID_MIN
 
     def calc_heating_correction(self):
         """
@@ -193,7 +187,7 @@ class PRTTemperatures(PPBase):
         corr = 0.1 * (
             np.exp(
                 np.exp(
-                    1.171 + (np.log(d['MACHNO']) + 2.738) *
+                    1.171 + (np.log(d['MOIST_MACH']) + 2.738) *
                     (-0.000568 * (d['Q_RVSM'] + d['PS_RVSM']) - 0.452)
                 )
             )
@@ -251,8 +245,8 @@ class PRTTemperatures(PPBase):
         Sets: TAT_ND_R
         """
         d = self.d
-        d['TAT_ND_R'] = true_air_temp(
-            d['IAT_ND_R'], d['MACHNO'], self.dataset['RM_RECFAC']['ND']
+        d['TAT_ND_R'] = true_air_temp_variable(
+            d.IAT_ND_R, d.MOIST_MACH, d.ETA_ND, d.SH_GAMMA
         )
 
     def calc_di_tat(self):
@@ -263,10 +257,9 @@ class PRTTemperatures(PPBase):
         Sets: TAT_DI_R
         """
         d = self.d
-        d['TAT_DI_R'] = true_air_temp(
-            d['IAT_DI_R'], d['MACHNO'], self.dataset['RM_RECFAC']['DI']
+        d['TAT_DI_R'] = true_air_temp_variable(
+            d.IAT_DI_R, d.MOIST_MACH, d.ETA_DI, d.SH_GAMMA
         )
-
 
     def process(self):
         """
@@ -277,7 +270,6 @@ class PRTTemperatures(PPBase):
         proc_dit = self.dataset['DITSENS'][1] != 'thermistor'
 
         self.get_dataframe()
-        self.calc_mach()
 
         if proc_dit:
             self.calc_heating_correction()
@@ -305,7 +297,7 @@ class PRTTemperatures(PPBase):
 
         for at in tats + iats:
             at.flag.add_mask(
-                self.d['MACHNO_FLAG'], 'mach_out_of_range',
+                self.d.MOIST_MACH < MACH_VALID_MIN, 'mach_out_of_range',
                 f'Mach number is below acceptable minimum of {MACH_VALID_MIN}'
             )
             self.add_output(at)
