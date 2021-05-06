@@ -179,7 +179,7 @@ class MoistMach(PPBase):
         u_gamma = np.polyval(self.dataset['SH_UNC_GAMMA'][::-1], wvss2_vmr)
         u_mach_bae = self.dataset['MACH_UNC_BAE']
         u_mach_humidity = mach * np.polyval(
-            self.dataset['MACH_UNC_HUMIDITY'], wvss2_vmr
+            self.dataset['MACH_UNC_HUMIDITY'][::-1], wvss2_vmr
         )
         u_mach = np.sqrt(u_mach_bae**2. + u_mach_humidity**2.)
 
