@@ -53,7 +53,7 @@ class MoistMach(PPBase):
     """
 
     inputs = [
-        'WVSS2F_VMR',
+        'WVSS2F_VMR_C',
         'PS_RVSM',
         'Q_RVSM',
         'WOW_IND'
@@ -66,7 +66,7 @@ class MoistMach(PPBase):
         """
         n = 100
         return {
-            'WVSS2F_VMR': ('data', 100 * _o(n), 1),
+            'WVSS2F_VMR_C': ('data', 100 * _o(n), 1),
             'PS_RVSM': ('data', 850 * _o(n), 32),
             'Q_RVSM': ('data', 70 * _o(n), 32),
             'WOW_IND': ('data', 0 * _o(n), 1)
@@ -109,7 +109,7 @@ class MoistMach(PPBase):
 
         q = d.Q_RVSM
         p = d.PS_RVSM
-        wvss2_vmr = d.WVSS2F_VMR.interpolate(limit=32)
+        wvss2_vmr = d.WVSS2F_VMR_C.interpolate(limit=32)
         wow = d.WOW_IND.fillna(method='bfill')
 
         # epsilon is the mass ratio of water and dry air
