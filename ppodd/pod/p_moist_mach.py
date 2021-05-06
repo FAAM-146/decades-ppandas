@@ -4,6 +4,7 @@ air.
 """
 # pylint: disable=invalid-name
 import numpy as np
+import pandas as pd
 
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..decades import flags
@@ -50,13 +51,23 @@ class MoistMach(PPBase):
         q_h = \frac{\epsilon V}{\epsilon V + 1},
 
     where :math:`V = 1000000\times\text{vmr}_\text{WVSS2F}`.
+
+    The module also provides the parameter ``SH_GAMMA``, which is the ratio of
+    specific heats at constant pressure and constant volume, along with
+    uncertainty estimates for ``MOIST_MACH`` and ``SH_GAMMA``. The former is a
+    combination from uncertainties in the corrected WVSS2 VMR and the
+    uncertainty reported in BAe Reoprt 126, while the latter arises from the
+    uncertainty in the corrected WVSS2 VMR.
     """
 
     inputs = [
         'WVSS2F_VMR_C',
         'PS_RVSM',
         'Q_RVSM',
-        'WOW_IND'
+        'WOW_IND',
+        'SH_UNC_GAMMA',
+        'MACH_UNC_BAE',
+        'MACH_UNC_HUMIDITY'
     ]
 
     @staticmethod
@@ -69,7 +80,10 @@ class MoistMach(PPBase):
             'WVSS2F_VMR_C': ('data', 100 * _o(n), 1),
             'PS_RVSM': ('data', 850 * _o(n), 32),
             'Q_RVSM': ('data', 70 * _o(n), 32),
-            'WOW_IND': ('data', 0 * _o(n), 1)
+            'WOW_IND': ('data', 0 * _o(n), 1),
+            'SH_UNC_GAMMA': ('const', [1E-5, 0, 0]),
+            'MACH_UNC_BAE': ('const', 0.005),
+            'MACH_UNC_HUMIDITY': ('const', [1E-5, 0, 0])
         }
 
     def declare_outputs(self):
@@ -85,6 +99,14 @@ class MoistMach(PPBase):
         )
 
         self.declare(
+            'MOIST_MACH_CU',
+            units=1,
+            frequency=32,
+            long_name='Uncertainty estimate for moist-air Mach',
+            write=True
+        )
+
+        self.declare(
             'SH_GAMMA',
             units=1,
             frequency=32,
@@ -93,12 +115,13 @@ class MoistMach(PPBase):
             write=False
         )
 
-
-
-    def flag(self):
-        """
-        Create flagging info.
-        """
+        self.declare(
+            'SH_GAMMA_CU',
+            units=1,
+            frequency=32,
+            long_name='Uncertainty estimate for SH_GAMMA',
+            write=False
+        )
 
     def process(self):
         """
@@ -143,11 +166,33 @@ class MoistMach(PPBase):
             ('The aircraft is on the ground, as indicated by the '
              'weight-on-wheels indicator')
         )
-
         self.add_output(mach_var)
 
+        # Create gamma output
         gamma_var = DecadesVariable(
             gamma, name='SH_GAMMA', flag=DecadesBitmaskFlag
         )
-
         self.add_output(gamma_var)
+
+
+        # Uncertainties
+        u_gamma = np.polyval(self.dataset['SH_UNC_GAMMA'][::-1], wvss2_vmr)
+        u_mach_bae = self.dataset['MACH_UNC_BAE']
+        u_mach_humidity = mach * np.polyval(
+            self.dataset['MACH_UNC_HUMIDITY'], wvss2_vmr
+        )
+        u_mach = np.sqrt(u_mach_bae**2. + u_mach_humidity**2.)
+
+        # Create gamma uncertainty output
+        u_gamma_out = DecadesVariable(
+            pd.Series(u_gamma, index=wvss2_vmr.index),
+            name='SH_GAMMA_CU', flag=DecadesBitmaskFlag
+        )
+        self.add_output(u_gamma_out)
+
+        # Create mach uncertainty output
+        u_mach_out = DecadesVariable(
+            pd.Series(u_mach, index=wvss2_vmr.index),
+            name='MOIST_MACH_CU', flag=DecadesBitmaskFlag
+        )
+        self.add_output(u_mach_out)
