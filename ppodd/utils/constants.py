@@ -15,6 +15,9 @@ ICAO_STD_PRESS = 1013.25
 # Stefan-Boltzmann constant
 STEF_BOLTZ = 5.67e-8
 
+# Freezing point in K
+ZERO_C_IN_K = 273.15
+
 # Gas constant of dry air (J / (kg K))
 R_d = 287.058
 
