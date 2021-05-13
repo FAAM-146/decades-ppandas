@@ -62,8 +62,8 @@ class PRTTemperatureUncertainties(PPBase):
         'IT_UNC_NPLRES',
         'DITSENS',
         'NDTSENS',
-        'MOIST_MACH',
-        'MOIST_MACH_CU',
+        'MACH',
+        'MACH_CU',
         'SH_GAMMA',
         'SH_GAMMA_CU',
         'ETA_ND',
@@ -100,8 +100,8 @@ class PRTTemperatureUncertainties(PPBase):
             'IT_UNC_NPLRES': ('const', 0.01),
             'DITSENS': ('const', ['xxxx', 'plate']),
             'NDTSENS': ('const', ['xxxx', 'plate']),
-            'MOIST_MACH': ('data', .5 * _o(n), 32),
-            'MOIST_MACH_CU': ('data', 0.001 * _o(n), 32),
+            'MACH': ('data', .5 * _o(n), 32),
+            'MACH_CU': ('data', 0.001 * _o(n), 32),
             'SH_GAMMA': ('data', 1.4 * _o(n), 32),
             'SH_GAMMA_CU': ('data', .01 * _o(n), 32),
             'ETA_ND': ('data', .01 * _o(n), 32),
@@ -193,11 +193,11 @@ class PRTTemperatureUncertainties(PPBase):
     def get_tat_unc(self, nddi):
         d = self.d
         eta = d[f'ETA_{nddi}']
-        mach_moist = d['MOIST_MACH']
+        mach_moist = d['MACH']
         gamma = d['SH_GAMMA']
         it = d[f'IAT_{nddi}_R']
         u_eta = d[f'ETA_{nddi}_CU']
-        u_mach = d['MOIST_MACH_CU']
+        u_mach = d['MACH_CU']
         u_gamma = d['SH_GAMMA_CU']
         u_it = d[f'IAT_{nddi}_R_CU']
 

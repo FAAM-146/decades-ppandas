@@ -62,7 +62,7 @@ class PRTTemperatures(PPBase):
         'NDTSENS',                  #  Non deiced sensor type (Const)
         'DITSENS',                  #  Deiced sensor type (Const)
         'SH_GAMMA',
-        'MOIST_MACH',
+        'MACH',
         'ETA_ND',
         'ETA_DI',
         'PS_RVSM',                  #  Static pressure (derived)
@@ -86,7 +86,7 @@ class PRTTemperatures(PPBase):
             'PS_RVSM': ('data', _a(1000, 300, -1), 32),
             'Q_RVSM': ('data', 250*(_o(700)), 32),
             'SH_GAMMA': ('data', _o(700), 32),
-            'MOIST_MACH': ('data', .5*_o(700), 32),
+            'MACH': ('data', .5*_o(700), 32),
             'ETA_ND': ('data', _z(700), 32),
             'ETA_DI': ('data', _z(700), 32),
             'CORCON_di_temp': ('data', _a(225, 245, .0286)*1000, 32),
@@ -187,7 +187,7 @@ class PRTTemperatures(PPBase):
         corr = 0.1 * (
             np.exp(
                 np.exp(
-                    1.171 + (np.log(d['MOIST_MACH']) + 2.738) *
+                    1.171 + (np.log(d['MACH']) + 2.738) *
                     (-0.000568 * (d['Q_RVSM'] + d['PS_RVSM']) - 0.452)
                 )
             )
@@ -246,7 +246,7 @@ class PRTTemperatures(PPBase):
         """
         d = self.d
         d['TAT_ND_R'] = true_air_temp_variable(
-            d.IAT_ND_R, d.MOIST_MACH, d.ETA_ND, d.SH_GAMMA
+            d.IAT_ND_R, d.MACH, d.ETA_ND, d.SH_GAMMA
         )
 
     def calc_di_tat(self):
@@ -258,7 +258,7 @@ class PRTTemperatures(PPBase):
         """
         d = self.d
         d['TAT_DI_R'] = true_air_temp_variable(
-            d.IAT_DI_R, d.MOIST_MACH, d.ETA_DI, d.SH_GAMMA
+            d.IAT_DI_R, d.MACH, d.ETA_DI, d.SH_GAMMA
         )
 
     def process(self):
@@ -297,7 +297,7 @@ class PRTTemperatures(PPBase):
 
         for at in tats + iats:
             at.flag.add_mask(
-                self.d.MOIST_MACH < MACH_VALID_MIN, 'mach_out_of_range',
+                self.d.MACH < MACH_VALID_MIN, 'mach_out_of_range',
                 f'Mach number is below acceptable minimum of {MACH_VALID_MIN}'
             )
             self.add_output(at)
