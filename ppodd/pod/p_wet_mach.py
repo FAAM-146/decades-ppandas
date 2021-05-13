@@ -14,7 +14,7 @@ from .shortcuts import _o
 
 
 @register_pp('core')
-class MoistMach(PPBase):
+class WetMach(PPBase):
     r"""
     This module calculate a moist-air Mach number using RVSM pressure
     measurements and the volume mixing ratio from the flush mounted WVSSII
@@ -54,7 +54,7 @@ class MoistMach(PPBase):
 
     The module also provides the parameter ``SH_GAMMA``, which is the ratio of
     specific heats at constant pressure and constant volume, along with
-    uncertainty estimates for ``MOIST_MACH`` and ``SH_GAMMA``. The former is a
+    uncertainty estimates for ``MACH`` and ``SH_GAMMA``. The former is a
     combination from uncertainties in the corrected WVSS2 VMR and the
     uncertainty reported in BAe Reoprt 126, while the latter arises from the
     uncertainty in the corrected WVSS2 VMR.
@@ -91,7 +91,7 @@ class MoistMach(PPBase):
         Declare outputs created by this module.
         """
         self.declare(
-            'MOIST_MACH',
+            'MACH',
             units=1,
             frequency=32,
             long_name='Moist air Mach derived from WVSS-II(F) and RVSM',
@@ -99,11 +99,11 @@ class MoistMach(PPBase):
         )
 
         self.declare(
-            'MOIST_MACH_CU',
+            'MACH_CU',
             units=1,
             frequency=32,
             long_name='Uncertainty estimate for moist-air Mach',
-            write=True
+            write=False
         )
 
         self.declare(
@@ -157,7 +157,7 @@ class MoistMach(PPBase):
         )
 
         mach_var = DecadesVariable(
-            mach, name='MOIST_MACH', flag=DecadesBitmaskFlag
+            mach, name='MACH', flag=DecadesBitmaskFlag
         )
 
         # Simple flag for aircraft on the ground
@@ -193,6 +193,6 @@ class MoistMach(PPBase):
         # Create mach uncertainty output
         u_mach_out = DecadesVariable(
             pd.Series(u_mach, index=wvss2_vmr.index),
-            name='MOIST_MACH_CU', flag=DecadesBitmaskFlag
+            name='MACH_CU', flag=DecadesBitmaskFlag
         )
         self.add_output(u_mach_out)
