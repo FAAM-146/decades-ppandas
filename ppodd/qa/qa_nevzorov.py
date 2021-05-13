@@ -36,7 +36,10 @@ class NevzorovQA(QAMod):
         _ax.plot(self.dataset['NV_LWC2_COL_P'].data, label='LWC2 power')
         _ax.plot(self.dataset['NV_TWC_COL_P'].data, label='TWC power')
         _ax.legend(fontsize=6, loc='upper right')
-        _ax.set_ylim([0, max_power + 2])
+        try:
+            _ax.set_ylim([0, max_power + 2])
+        except Exception:
+            pass
 
 
     def make_uncorrected_timeseries(self, fig):
@@ -56,7 +59,10 @@ class NevzorovQA(QAMod):
         _ax.plot(lwc1, label='LWC1 (U)')
         _ax.plot(lwc2, label='LWC2 (U)')
         _ax.legend(fontsize=6, loc='upper right')
-        _ax.set_ylim([min_u, max_u + .1])
+        try:
+            _ax.set_ylim([min_u, max_u + .1])
+        except Exception:
+            pass
 
     def make_corrected_timeseries(self, fig):
         _ax = fig.timeseries_axes([.1, .3, .8, .2], labelx=False)
@@ -75,7 +81,10 @@ class NevzorovQA(QAMod):
         _ax.plot(lwc1, label='LWC1 (C)')
         _ax.plot(lwc2, label='LWC2 (C)')
         _ax.legend(fontsize=6, loc='upper right')
-        _ax.set_ylim([min_c, max_c + .1])
+        try:
+            _ax.set_ylim([min_c, max_c + .1])
+        except Exception:
+            pass
 
 
     def make_mask_plot(self, fig):

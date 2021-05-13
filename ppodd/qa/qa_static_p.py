@@ -66,7 +66,7 @@ class StaticPressure(QAMod):
         def _scatter(ax, param):
             p = fig.filter_in_flight(self.dataset[param].data.asfreq('1S'))
             m = (np.isfinite(p)) & (np.isfinite(rvsm))
-            ax.scatter(rvsm[m], p[m], 5, c=mach)
+            ax.scatter(rvsm[m], p[m], 5, c=mach.reindex(p.index)[m])
             ax.add_121(linewidth=.5)
             fit = np.polyfit(rvsm[m], p[m], 1)
             ax.set_title(f'PS_RVSM v {param} (m={fit[0]:0.3f}, c={fit[1]:0.2f})')

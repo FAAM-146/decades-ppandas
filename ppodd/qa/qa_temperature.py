@@ -69,15 +69,34 @@ class TemperatureQA(QAMod):
             tat_di - tat_nd, color='k', linewidth=.5, alpha=.3, label='DI - ND'
         )
 
-        temp_axis.plot(tat_nd, label='ND')
-        temp_axis.plot(tat_di, label='DI')
+        tmin = fig.filter_in_flight(tat_di).dropna().min()
+        tmax = fig.filter_in_flight(tat_di).dropna().max()
+
+        try:
+            u_tat_di = self.dataset['TAT_DI_R_CU'].data.asfreq('1S')
+            u_tat_nd = self.dataset['TAT_ND_R_CU'].data.asfreq('1S')
+            temp_axis.fill_between(
+                u_tat_nd.index, tat_nd-u_tat_nd, tat_nd+u_tat_nd,
+                alpha=.5, color='tab:blue'
+            )
+            temp_axis.fill_between(
+                u_tat_di.index, tat_di-u_tat_di, tat_di+u_tat_di,
+                alpha=.5, color='tab:orange'
+            )
+        except Exception as e:
+            print(str(e))
+
+        temp_axis.plot(tat_nd, label='ND', color='tab:blue')
+        temp_axis.plot(tat_di, label='DI', color='tab:orange')
 
         temp2_axis.add_zero_line()
+        temp_axis.set_ylim([tmin, tmax])
         temp_axis.set_xticklabels([])
         temp_axis.set_ylabel('Temp. (K)')
         temp2_axis.set_ylabel('$\Delta$ Temp. (K)')
         temp_axis.legend(fontsize=6)
         temp2_axis.legend(fontsize=6)
+        temp2_axis.set_ylim([-2, 2])
 
     def make_mach_alt_plot(self, fig):
         sp = self.dataset['PS_RVSM'].data.asfreq('1S')
@@ -118,8 +137,13 @@ class TemperatureQA(QAMod):
             _index = self.dataset['IAT_DI_R'].data.index
             _mask = (_index > fig.to_time) & (_index < fig.land_time)
 
-            tat_di = self.dataset['IAT_DI_R'].data.loc[_mask]
-            tat_nd = self.dataset['IAT_ND_R'].data.loc[_mask]
+            tat_di = self.dataset['IAT_DI_R'].data.loc[_mask].dropna()
+            tat_nd = self.dataset['IAT_ND_R'].data.loc[_mask].dropna()
+
+            index = tat_di.index.intersection(tat_nd.index)
+            tat_di = tat_di.reindex(index)
+            tat_nd = tat_di.reindex(index)
+
             freqs = np.fft.fftfreq(tat_di.size, 1/32)
 
             ps_nd = np.abs(np.fft.fft(tat_nd))**2

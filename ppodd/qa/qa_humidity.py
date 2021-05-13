@@ -9,7 +9,6 @@ class HumidityQA(QAMod):
         'TDEWCR2C',
         'VMR_CR2',
         'TAT_DI_R',
-        'WVSS2F_VMR'
     ]
 
 
@@ -79,15 +78,15 @@ class HumidityQA(QAMod):
             return result + 273.15
 
         # Calculate a dew point from VMR for the WVSS2
-        for wvss2 in ('F' ,'R'):
-            try:
-                _wvss2_p = self.dataset[f'WVSS2{wvss2}_PRESS'].data
-                _wvss2_vmr = self.dataset[f'WVSS2{wvss2}_VMR'].data / 1.6077
-                wvss2_available = True
-            except KeyError:
-                wvss2_available = False
+        try:
+            _wvss2_p = self.dataset[f'WVSS2F_PRESS_U'].data
+            _wvss2_vmr = self.dataset[f'WVSS2F_VMR_C'].data / 1.6077
+            wvss2_available = True
+        except KeyError:
+            wvss2_available = False
 
-        _temp = self.dataset['TAT_DI_R'].data.reindex(_wvss2_vmr.index)
+        if wvss2_available:
+            _temp = self.dataset['TAT_DI_R'].data.reindex(_wvss2_vmr.index)
         wow = self.dataset['WOW_IND'].data
 
         if wvss2_available:
@@ -105,12 +104,16 @@ class HumidityQA(QAMod):
         cr2 = self.dataset['TDEWCR2C'].data
         ge = self.dataset['TDEW_GE'].data
 
+        dew_min = fig.filter_in_flight(cr2).dropna().min()
+        dew_max = fig.filter_in_flight(cr2).dropna().max()
+
         _axis.plot(cr2, label='CR2')
         _axis.plot(ge, label='GE')
         if wvss2_available:
-            _axis.plot(_dp, label=f'WVSS2-{wvss2}')
+            _axis.plot(_dp, label=f'WVSS2-F')
 
         _axis.set_ylabel('Dew point (K)')
+        _axis.set_ylim([dew_min, dew_max])
         _axis.legend(fontsize=6)
 
     def make_tdew_scatter(self, fig):
@@ -144,13 +147,13 @@ class HumidityQA(QAMod):
         """
 
         _index = self.dataset['VMR_CR2'].index.intersection(
-            self.dataset['WVSS2F_VMR'].index
+            self.dataset['WVSS2F_VMR_C'].index
         )
 
         _axis = fig.axes([.55, .1, .35, .2])
 
         _cr2 = self.dataset['VMR_CR2'].data.loc[_index]
-        _wvss2 = self.dataset['WVSS2F_VMR'].data.loc[_index]
+        _wvss2 = self.dataset['WVSS2F_VMR_C'].data.loc[_index]
         _wow = self.dataset['WOW_IND'].data.loc[_index]
 
         _cr2.loc[_wow == 1] = np.nan
@@ -184,13 +187,11 @@ class HumidityQA(QAMod):
 
         cr2 = self.dataset['VMR_CR2'].data
 
-        for wvss2 in ('F', 'R'):
-            try:
-                wvss = self.dataset[f'WVSS2{wvss2}_VMR'].data
-                wvss2_available = True
-                break
-            except KeyError:
-                wvss2_available = False
+        try:
+            wvss = self.dataset[f'WVSS2F_VMR_C'].data
+            wvss2_available = True
+        except KeyError:
+            wvss2_available = False
 
         # Create a common index, so we can filter by WOW
         index = (cr2.index.intersection(ge.index)
@@ -213,7 +214,7 @@ class HumidityQA(QAMod):
         _axis.plot(ge, label='GE')
 
         if wvss2_available:
-            _axis.plot(wvss, label=f'WVSS2-{wvss2}')
+            _axis.plot(wvss, label=f'WVSS2-F')
 
         _axis.set_ylabel('VMR')
         _axis.set_ylim([0, y_max])
