@@ -1133,11 +1133,14 @@ class DecadesDataset(object):
         """
         while self.qa_modules:
             _mod = self.qa_modules.pop()
+            if not _mod.ready():
+                continue
             try:
                 _mod.run()
                 del _mod
             except Exception as err: # pylint: disable=broad-except
                 logger.error('Error in {}: {}'.format(_mod, err))
+                traceback.print_exc()
 
     def run_flagging(self):
         """
