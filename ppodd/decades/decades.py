@@ -397,13 +397,16 @@ class DecadesVariable(object):
         # Reindex to ensure no gaps in the data
         _df = pd.DataFrame(_data, index=_index).reindex(
             pd.date_range(start=_index[0], end=_index[-1],
-                          freq=pd_freq[self.frequency])
+                          freq=pd_freq[self.frequency]),
+            tolerance='{}N'.format((.5/self.frequency)*1e9),
+            method='nearest'
         )
 
         # Store the merged data
         array = _df.values.flatten()
         if self.dtype:
             array = array.astype(self.dtype)
+
         self.array = array
         self.t0 = _df.index[0]
         self.t1 = _df.index[-1]
@@ -470,7 +473,12 @@ class DecadesVariable(object):
             start=merge_index[0], end=merge_index[-1],
             freq=pd_freq[self.frequency]
         )
-        current = current.reindex(full_index)
+
+        current = current.reindex(
+            full_index,
+            tolerance='{}N'.format((.5/self.frequency)*1e9),
+            method='nearest'
+        )
 
         # Store the required attributes
         array = current.values.flatten()
