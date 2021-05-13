@@ -5,8 +5,12 @@ Provides a processing module for the Nephelometer.
 import numpy as np
 
 from ..decades import DecadesVariable
+from ..decades.flags import DecadesBitmaskFlag
 from .base import PPBase, register_pp
 from .shortcuts import _z
+
+INSTRUMENT_FAULT = 2
+DATA_MISSING = 3
 
 
 @register_pp('core')
@@ -59,7 +63,6 @@ class Nephelometer(PPBase):
         # Instrument is perm U/S, but we're going to hold on the the code until
         # we get a new one
         # pylint: disable=unreachable
-        return
 
         self.declare(
             'NEPH_PR',
@@ -136,12 +139,13 @@ class Nephelometer(PPBase):
         Provide flagging information from the Neph status string.
         """
         d = self.d
+        d.dropna()
         d['RH_FLAG'] = 0
         d['SC_FLAG'] = 0
         d['T_FLAG'] = 0
         d['P_FLAG'] = 0
 
-        neph_status_list = list(d['AERACK_neph_status'])
+        neph_status_list = list(d['AERACK_neph_status'].fillna(method='ffill'))
         tmp = ['{0:04}'.format(int(x)) for x in neph_status_list]
         neph_status = [
             '{0:04b}{1:04b}{2:04b}{3:04b}'.format(
@@ -151,50 +155,55 @@ class Nephelometer(PPBase):
 
         # Lamp Fault
         ix = np.array([int(flag[-1]) for flag in neph_status])
-        d.loc[ix==1, 'SC_FLAG'] = 3
+        d.loc[ix==1, 'SC_FLAG'] = INSTRUMENT_FAULT
 
         # Valve Fault
         ix = np.array([int(flag[-2]) for flag in neph_status])
-        d.loc[ix==1, 'SC_FLAG'] = 3
+        d.loc[ix==1, 'SC_FLAG'] = INSTRUMENT_FAULT
 
         # Chopper Fault
         ix = np.array([int(flag[-3]) for flag in neph_status])
-        d.loc[ix==1, 'SC_FLAG'] = 3
+        d.loc[ix==1, 'SC_FLAG'] = INSTRUMENT_FAULT
 
         # Shutter Fault
         ix = np.array([int(flag[-4]) for flag in neph_status])
-        d.loc[ix==1, 'SC_FLAG'] = 3
+        d.loc[ix==1, 'SC_FLAG'] = INSTRUMENT_FAULT
 
         # Heater unstable
         ix = np.array([int(flag[-5]) for flag in neph_status])
-        d.loc[ix==1, 'SC_FLAG'] = 3
-        d.loc[ix==1, 'RH_FLAG'] = 3
-        d.loc[ix==1, 'T_FLAG'] = 3
+        d.loc[ix==1, 'SC_FLAG'] = INSTRUMENT_FAULT
+        d.loc[ix==1, 'RH_FLAG'] = INSTRUMENT_FAULT
+        d.loc[ix==1, 'T_FLAG'] = INSTRUMENT_FAULT
 
         # Pressure out of range
         ix = np.array([int(flag[-6]) for flag in neph_status])
-        d.loc[ix==1, 'SC_FLAG'] = 3
-        d.loc[ix==1, 'P_FLAG'] = 3
+        d.loc[ix==1, 'SC_FLAG'] = INSTRUMENT_FAULT
+        d.loc[ix==1, 'P_FLAG'] = INSTRUMENT_FAULT
 
         # Sample T out of range
         ix = np.array([int(flag[-7]) for flag in neph_status])
-        d.loc[ix==1, 'SC_FLAG'] = 3
-        d.loc[ix==1, 'T_FLAG'] = 3
+        d.loc[ix==1, 'SC_FLAG'] = INSTRUMENT_FAULT
+        d.loc[ix==1, 'T_FLAG'] = INSTRUMENT_FAULT
 
         # Inlet T out of range
         ix = np.array([int(flag[-8]) for flag in neph_status])
-        d.loc[ix==1, 'SC_FLAG'] = 3
+        d.loc[ix==1, 'SC_FLAG'] = INSTRUMENT_FAULT
 
         # RH out of range
         ix = np.array([int(flag[-9]) for flag in neph_status])
-        d.loc[ix==1, 'RH_FLAG'] = 3
+        d.loc[ix==1, 'RH_FLAG'] = INSTRUMENT_FAULT
 
         # All faults using the last 9 digits from the neph_status number
         ix = np.array([int(flag[-9:]) for flag in neph_status])
-        d.loc[ix==111111111, 'RH_FLAG'] = 3
-        d.loc[ix==111111111, 'SC_FLAG'] = 3
-        d.loc[ix==111111111, 'T_FLAG'] = 3
-        d.loc[ix==111111111, 'P_FLAG'] = 3
+        d.loc[ix==111111111, 'RH_FLAG'] = INSTRUMENT_FAULT
+        d.loc[ix==111111111, 'SC_FLAG'] = INSTRUMENT_FAULT
+        d.loc[ix==111111111, 'T_FLAG'] = INSTRUMENT_FAULT
+        d.loc[ix==111111111, 'P_FLAG'] = INSTRUMENT_FAULT
+
+        d.loc[np.isnan(d['AERACK_neph_status']), 'RH_FLAG'] = DATA_MISSING
+        d.loc[np.isnan(d['AERACK_neph_status']), 'SC_FLAG'] = DATA_MISSING
+        d.loc[np.isnan(d['AERACK_neph_status']), 'T_FLAG'] = DATA_MISSING
+        d.loc[np.isnan(d['AERACK_neph_status']), 'P_FLAG'] = DATA_MISSING
 
 
     def process(self):
@@ -204,7 +213,6 @@ class Nephelometer(PPBase):
         # Instrument is perm U/S, but we're going to hold on the the code until
         # we get a new one
         # pylint: disable=unreachable
-        return
 
         self.get_dataframe()
         self.flag()
@@ -224,19 +232,26 @@ class Nephelometer(PPBase):
         for pair in pairs:
             tcp_name, out_name = pair
 
-            dv = DecadesVariable(self.d[tcp_name], name=out_name)
+            dv = DecadesVariable(
+                self.d[tcp_name], name=out_name,
+            )
+
+            dv.flag.add_meaning(0, 'data_good')
+            dv.flag.add_meaning(1, 'not_used')
+            dv.flag.add_meaning(INSTRUMENT_FAULT, 'instrument_flag_raised')
+            dv.flag.add_meaning(DATA_MISSING, 'data_missing')
 
             if 'SC_' in out_name:
                 dv.data /= 1e6
-                dv.add_flag(self.d['SC_FLAG'])
+                dv.flag.add_flag(self.d['SC_FLAG'])
 
             elif '_PR' in out_name:
-                dv.add_flag(self.d['P_FLAG'])
+                dv.flag.add_flag(self.d['P_FLAG'])
 
             elif '_T' in out_name:
-                dv.add_flag(self.d['T_FLAG'])
+                dv.flag.add_flag(self.d['T_FLAG'])
 
             elif '_RH' in out_name:
-                dv.add_flag(self.d['RH_FLAG'])
+                dv.flag.add_flag(self.d['RH_FLAG'])
 
             self.add_output(dv)
