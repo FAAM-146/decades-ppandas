@@ -135,7 +135,6 @@ class PRTTemperatureUncertainties(PPBase):
             units=1,
             frequency=32,
             long_name=('Combined uncertainty estimate for TAT_DI_R'),
-            write=False
         )
 
         self.declare(
@@ -143,7 +142,6 @@ class PRTTemperatureUncertainties(PPBase):
             units=1,
             frequency=32,
             long_name=('Combined uncertainty estimate for TAT_ND_R'),
-            write=False
         )
 
     def _combine_unc(self, uncs):
