@@ -16,7 +16,7 @@ class QAMod(abc.ABC):
 
     def ready(self):
         for _input in self.inputs:
-            if _input not in self.dataset.inputs + self.outputs:
+            if _input not in self.dataset.variables:
                 return False
         return True
 
