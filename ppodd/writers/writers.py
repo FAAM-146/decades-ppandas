@@ -40,6 +40,9 @@ class DecadesWriter(abc.ABC):
 
         self.start_time, self.end_time = self.dataset.time_bounds()
 
+        self.start_time = self.start_time.replace(microsecond=0)
+        self.end_time = self.end_time.replace(microsecond=0)
+
     def _get_output_freqs(self):
         """Get all of the required output frequencies"""
         output_freqs = []
