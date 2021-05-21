@@ -31,9 +31,11 @@ class DryMach(PPBase):
 
     The module also provides the parameter ``SH_GAMMA``, which is the ratio of
     specific heats at constant pressure and constant volume, along with
-    uncertainty estimates for ``MACH`` and ``SH_GAMMA``. The former is an
-    uncertainty reported in BAe Reoprt 126, while the latter is a constant and
-    assumed zero.
+    uncertainty estimates for ``MACH`` and ``SH_GAMMA``. The former is the
+    combined uncertainty of the uncertainy in BAe report 127 and the
+    uncertainty in gamma, while the latter is a constant and assumed to be
+    0.003, which is derived from the impact of neglecting humidity at the
+    highest expected VMR of 35000 at 1100 hPa.
     """
 
     inputs = [
@@ -130,8 +132,26 @@ class DryMach(PPBase):
 
 
         # Uncertainties
-        u_gamma = np.zeros_like(gamma)
-        u_mach = self.dataset['MACH_UNC_BAE']
+
+        # The calculated gamma for vmr=35000 at 1100 mb is 1.397. This is the
+        # maximum realistic change to gamma that we'd miss out on by not doing
+        # the humidity correction. Not ideal to do this because it's a
+        # systematic error not a randomly distributed unceratinty
+        u_gamma = 0.003 * np.ones_like(gamma)
+
+        # This is the uncertainty in Mach when no humidity correction is
+        # applied. It's a combination of the BAE uncertainty in Mach given in
+        # report 126 and the uncertainty from not taking humidity into account. 
+        # RSS of u_mach_bae + uncertainty from not doing a humidity correction
+        # so 0.005 and 0.0003 (that's the differece the humidity correction
+        # makes to the Mach number for VMR=35000 at 1100mb (also tested other
+        # conditions seen in a flight over India but this was biggest difference
+        # seen) Not ideal to do this because it's a systematic error not a
+        # randomly distributed unceratinty)
+        u_mach = np.sqrt(
+            (self.dataset['MACH_UNC_BAE'] * np.ones_like(mach))**2
+            + u_gamma**2
+        )
 
         # Create gamma uncertainty output
         u_gamma_out = DecadesVariable(
