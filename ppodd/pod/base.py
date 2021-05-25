@@ -12,6 +12,7 @@ import pandas as pd
 
 from ppodd.utils import pd_freq, unwrap_array
 from ppodd.decades import DecadesDataset, DecadesVariable
+from ppodd.decades import DecadesBitmaskFlag
 
 pp_register = {}
 
@@ -92,6 +93,31 @@ class PPBase(object):
 
         self.declarations[name] = kwargs
 
+    def add_flag_mod(self, flag, output):
+        def _add_mask_flag(flag, output):
+            output.flag.add_mask(
+                flag, 'flagged in qc',
+                ('Manually flagged during QC. Check metadata for the reason '
+                 'for flagging.')
+            )
+        def _add_classic_flag(flag, output):
+            values = sorted(list(output.flag.cfattrs['flag_values']))
+            if not values:
+                flag_value = 1
+            else:
+                flag_value = int(values[-1]) + 1
+            output.flag.add_meaning(
+                flag_value, 'flagged in qc',
+                ('Manually flagged during QC. Check metadata for the reason '
+                 'for flagging.')
+            )
+            output.flag.add_flag(flag_value * flag)
+
+        if isinstance(output.flag, DecadesBitmaskFlag):
+            return _add_mask_flag(flag, output)
+
+        return _add_classic_flag(flag, output)
+
     def finalize(self):
         """
         Finalization tasks: ensure all declared outputs have been written and
@@ -117,6 +143,22 @@ class PPBase(object):
             if name in self.dataset._variable_mods:
                 for key, value in self.dataset._variable_mods[name].items():
                     setattr(output, key, value)
+
+            # Apply any extra flagging specified in the flight constants file
+            if name in self.dataset._flag_mods:
+                flag_mods = self.dataset._flag_mods[name]
+                flag = pd.Series(
+                    np.zeros_like(output.data), index=output.index
+                )
+                for flag_mod in flag_mods:
+                    start = datetime.datetime.strptime(
+                        flag_mod['start'], '%Y-%m-%dT%H:%M:%S'
+                    )
+                    end = datetime.datetime.strptime(
+                        flag_mod['end'], '%Y-%m-%dT%H:%M:%S'
+                    )
+                    flag.loc[(flag.index >= start) & (flag.index <= end)] = 1
+                self.add_flag_mod(flag, output)
 
             # And append the output to the dataset
             self.dataset.add_output(output)
