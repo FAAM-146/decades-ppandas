@@ -61,8 +61,8 @@ class CabinPressure(PPBase):
         """
 
         self.d['BOUNDS_FLAG'] = 0
-        self.d.loc[self.d['CAB_PRES'] < VALID_MAX, 'BOUNDS_FLAG'] = 1
-        self.d.loc[self.d['CAB_PRES'] > VALID_MIN, 'BOUNDS_FLAG'] = 1
+        self.d.loc[self.d['CAB_PRES'] > VALID_MAX, 'BOUNDS_FLAG'] = 1
+        self.d.loc[self.d['CAB_PRES'] < VALID_MIN, 'BOUNDS_FLAG'] = 1
 
     def process(self):
         """
