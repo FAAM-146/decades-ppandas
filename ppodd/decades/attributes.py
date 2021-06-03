@@ -284,6 +284,8 @@ class AttributesCollection(object):
                     if self._compliance:
                         _dict[name] = STR_DERIVED_FROM_FILE
                     continue
+            else:
+                var = self._dataset
 
             if isinstance(self._dataset, DecadesVariable):
                 attrs = _pack
@@ -293,9 +295,9 @@ class AttributesCollection(object):
 
             for _attr in attrs:
                 try:
-                    var = getattr(self._dataset, _attr)
+                    var = getattr(var, _attr)
                 except AttributeError:
-                    var = getattr(self._dataset(), _attr)
+                    var = getattr(var(), _attr)
 
             _dict[name] = self._compliancify(Attribute(name, var))
 
