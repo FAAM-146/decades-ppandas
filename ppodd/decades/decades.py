@@ -488,6 +488,9 @@ class DecadesVariable(object):
         self.t0 = current.index[0]
         self.t1 = current.index[-1]
 
+    def range(self):
+        return [np.nanmin(self.array), np.nanmax(self.array)]
+
     def time_bounds(self):
         """
         Return the start and end times of this variable, as the tuple (start,

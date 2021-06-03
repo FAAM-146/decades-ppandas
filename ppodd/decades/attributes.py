@@ -287,13 +287,15 @@ class AttributesCollection(object):
 
             if isinstance(self._dataset, DecadesVariable):
                 attrs = _pack
-                var = self._dataset()
                 if self._compliance:
                     _dict[name] = STR_DERIVED_FROM_FILE
                     continue
 
             for _attr in attrs:
-                var = getattr(var, _attr)
+                try:
+                    var = getattr(self._dataset, _attr)
+                except AttributeError:
+                    var = getattr(self._dataset(), _attr)
 
             _dict[name] = self._compliancify(Attribute(name, var))
 
