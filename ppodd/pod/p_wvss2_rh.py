@@ -24,7 +24,10 @@ class WVSS2RH(PPBase):
         'TAT_DI_R',
         'TAT_ND_R',
         'WVSS2F_VMR_C',
-        'WVSS2F_VMR_C_CU'
+        'WVSS2F_VMR_C_CU',
+        'DITSENS',
+        'WVSS2_LAG',
+        'WVSS2_LAG_STD'
     ]
 
     @staticmethod
@@ -35,9 +38,14 @@ class WVSS2RH(PPBase):
         n = 100
         return {
             'PS_RVSM': ('data', 850 * _o(n), 32),
-            'Q_RVSM': ('data', 75 * _o(n), 32),
-            'CORCON_di_temp': ('data', _o(n), 32),
-            'CORCON_ndi_temp': ('data', _o(n), 32)
+            'WOW_IND': ('data', _o(n), 1),
+            'TAT_DI_R': ('data', 250*_o(n), 32),
+            'TAT_ND_R': ('data', 250*_o(n), 32),
+            'WVSS2F_VMR_C': ('data', 5000*_o(n), 1),
+            'WVSS2F_VMR_C_CU': ('data', 500*_o(n), 1),
+            'DITSENS': ('const', ['xxxx', 'plate']),
+            'WVSS2_LAG': ('const', {'plate': 1, 'loom': 1}),
+            'WVSS2_LAG_STD': ('const', {'plate': .1, 'loom': .5}),
         }
 
     def declare_outputs(self):
