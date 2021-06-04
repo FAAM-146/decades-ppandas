@@ -236,6 +236,13 @@ class DecadesVariable(object):
                 )
             )
         else:
+            if self.name.endswith('_CU'):
+                self.attrs.add(
+                    Attribute(
+                        'ancillary_variables',
+                        f'{self.name[:-3]}_{_flag_postfix}'
+                    )
+                )
             self.flag = _flag
 
     def __call__(self):
