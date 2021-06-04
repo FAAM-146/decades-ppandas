@@ -418,11 +418,11 @@ class WVSS2RH(PPBase):
         )
 
         u_rh_ice_out = DecadesVariable(
-            u_rh_ice.asfreq('1S'), name='RH_ICE_CU', flag=DecadesBitmaskFlag
+            u_rh_ice.asfreq('1S'), name='RH_ICE_CU', flag=None
         )
 
         u_rh_liq_out = DecadesVariable(
-            u_rh_liq.asfreq('1S'), name='RH_LIQ_CU', flag=DecadesBitmaskFlag
+            u_rh_liq.asfreq('1S'), name='RH_LIQ_CU', flag=None
         )
 
 
