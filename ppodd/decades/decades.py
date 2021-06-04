@@ -490,8 +490,8 @@ class DecadesVariable(object):
 
     def range(self):
         return [
-            np.nanmin(self.array).astype(float),
-            np.nanmax(self.array).astype(float)
+            np.nanmin(self.array).astype(np.float32),
+            np.nanmax(self.array).astype(np.float32)
         ]
 
     def time_bounds(self):
