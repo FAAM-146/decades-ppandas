@@ -94,6 +94,7 @@ class PPBase(object):
         self.declarations[name] = kwargs
 
     def add_flag_mod(self, flag, output):
+
         def _add_mask_flag(flag, output):
             output.flag.add_mask(
                 flag, 'flagged in qc',
@@ -112,6 +113,9 @@ class PPBase(object):
                  'for flagging.')
             )
             output.flag.add_flag(flag_value * flag)
+
+        if output.flag is None:
+            return
 
         if isinstance(output.flag, DecadesBitmaskFlag):
             return _add_mask_flag(flag, output)
