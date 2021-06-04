@@ -489,7 +489,10 @@ class DecadesVariable(object):
         self.t1 = current.index[-1]
 
     def range(self):
-        return [np.nanmin(self.array), np.nanmax(self.array)]
+        return [
+            np.nanmin(self.array).astype(float),
+            np.nanmax(self.array).astype(float)
+        ]
 
     def time_bounds(self):
         """
@@ -1160,25 +1163,53 @@ class DecadesDataset(object):
         from some other processing module which can't be guaranteed to exist.
         """
 
-        while self.flag_modules:
-            _flag = self.flag_modules.pop()
-            try:
-                logger.info('Running {}'.format(_flag))
-                _flag.flag()
-                del _flag
-            except Exception as err: # pylint: disable=broad-except
-                logger.error('Error in {}: {}'.format(_flag, err))
+        run_modules = []
+        temp_modules = []
+        module_ran = True
+        flag_modules = collections.deque(self.flag_modules)
 
-    def _trim_data(self):
+        while flag_modules and module_ran:
+            module_ran = False
+            flag_module = flag_modules.popleft()
+
+            if not flag_module.ready(run_modules):
+                logger.debug(f'{flag_module} not ready')
+                temp_modules.append(flag_module)
+                module_ran = True
+                continue
+
+            try:
+                logger.info(f'Running {flag_module}')
+                flag_module.flag()
+            except Exception as err:
+                logger.error(f'Error in {flag_module}', exc_info=True)
+
+            run_modules.append(flag_module.__class__)
+
+            module_ran = True
+            while temp_modules:
+                flag_modules.append(temp_modules.pop())
+
+
+
+    def _trim_data(self, start_cutoff=None, end_cutoff=None):
         """
         Trim all of the data in this dataset based on takeoff and landing
         times.
         """
-        if self.takeoff_time and self.landing_time:
-            start_cutoff = self.takeoff_time - datetime.timedelta(hours=2)
-            end_cutoff = self.landing_time + datetime.timedelta(minutes=30)
-            logger.debug(f'trimming: {start_cutoff} -- {end_cutoff}')
-            self._backend.trim(start_cutoff, end_cutoff)
+        if start_cutoff is None:
+            if self.takeoff_time and self.landing_time:
+                start_cutoff = self.takeoff_time - datetime.timedelta(hours=2)
+
+        if end_cutoff is None:
+            if self.takeoff_time and self.landing_time:
+                end_cutoff = self.landing_time + datetime.timedelta(minutes=30)
+
+        if end_cutoff is None or start_cutoff is None:
+            return
+
+        logger.debug(f'trimming: {start_cutoff} -- {end_cutoff}')
+        self._backend.trim(start_cutoff, end_cutoff)
 
 
     def process(self, modname=None):
@@ -1294,6 +1325,9 @@ class DecadesDataset(object):
             if name in self._variable_mods:
                 for key, value in self._variable_mods[name].items():
                     setattr(var, key, value)
+
+        bounds = self.time_bounds()
+        self._trim_data(start_cutoff=bounds[0], end_cutoff=bounds[1])
 
     def write(self, *args, **kwargs):
         """
