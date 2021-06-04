@@ -13,6 +13,7 @@ class FlaggingBase(abc.ABC):
 
     # Names of required input variables
     inputs = []
+    prerequisites = []
 
     def __init__(self, dataset):
         """
@@ -23,7 +24,7 @@ class FlaggingBase(abc.ABC):
         """
         self.dataset = dataset
 
-    def ready(self):
+    def ready(self, run_modules):
         """
         Decide if the module is ready to run. It can be run if all of its
         inputs are available in the parent dataset.
@@ -32,7 +33,12 @@ class FlaggingBase(abc.ABC):
             True if the module is ready to run, False otherwise.
         """
         for _input in self.inputs:
-            if _input not in self.dataset.inputs + self.dataset.outputs:
+            if _input not in self.dataset.variables:
+                print(f'{_input} not in {self.dataset.variables}')
+                return False
+        for prereq in self.prerequisites:
+            if prereq not in run_modules:
+                print(prereq, ' not in ', run_modules)
                 return False
         return True
 
