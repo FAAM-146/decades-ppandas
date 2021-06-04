@@ -47,5 +47,6 @@ class WeightOnWheels(PPBase):
             DecadesVariable(
                 wow,
                 name='WOW_IND',
+                flag=None
             )
         )
