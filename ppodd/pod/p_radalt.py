@@ -90,7 +90,7 @@ class RadAlt(PPBase):
         )
 
         dv.flag.add_mask(
-            d['WOW_FLAG'], flags.WOW,
+            d['WOW_IND'], flags.WOW,
             ('The aircraft is on the ground, as indicated by the weight '
              'on wheels flag.')
         )
