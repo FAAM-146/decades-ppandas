@@ -116,7 +116,7 @@ class PRTTemperatureUncertainties(PPBase):
         """
         self.declare(
             'IAT_DI_R_CU',
-            units=1,
+            units='K',
             frequency=32,
             long_name=('Combined uncertainty estimate for IAT_DI_R'),
             write=False
@@ -124,7 +124,7 @@ class PRTTemperatureUncertainties(PPBase):
 
         self.declare(
             'IAT_ND_R_CU',
-            units=1,
+            units='K',
             frequency=32,
             long_name=('Combined uncertainty estimate for IAT_ND_R'),
             write=False
@@ -132,14 +132,14 @@ class PRTTemperatureUncertainties(PPBase):
 
         self.declare(
             'TAT_DI_R_CU',
-            units=1,
+            units='K',
             frequency=32,
             long_name=('Combined uncertainty estimate for TAT_DI_R'),
         )
 
         self.declare(
             'TAT_ND_R_CU',
-            units=1,
+            units='K',
             frequency=32,
             long_name=('Combined uncertainty estimate for TAT_ND_R'),
         )
@@ -229,20 +229,20 @@ class PRTTemperatureUncertainties(PPBase):
 
         self.add_output(
             DecadesVariable(unc_itnd, name='IAT_ND_R_CU',
-                            flag=DecadesBitmaskFlag)
+                            flag=None)
         )
 
         self.add_output(
             DecadesVariable(unc_itdi, name='IAT_DI_R_CU',
-                            flag=DecadesBitmaskFlag)
+                            flag=None)
         )
 
         self.add_output(
             DecadesVariable(unc_tatnd, name='TAT_ND_R_CU',
-                            flag=DecadesBitmaskFlag)
+                            flag=None)
         )
 
         self.add_output(
             DecadesVariable(unc_tatdi, name='TAT_DI_R_CU',
-                            flag=DecadesBitmaskFlag)
+                            flag=None)
         )

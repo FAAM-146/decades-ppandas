@@ -118,7 +118,7 @@ class PRTTemperatures(PPBase):
         if self.test_mode or self.dataset['DITSENS'][1].lower() != 'thermistor':
             self.declare(
                 'TAT_DI_R',
-                units='degK',
+                units='K',
                 frequency=32,
                 long_name=('True air temperature from the Rosemount deiced '
                            'temperature sensor'),
@@ -144,7 +144,7 @@ class PRTTemperatures(PPBase):
         if self.test_mode or self.dataset['NDTSENS'][1].lower() != 'thermistor':
             self.declare(
                 'TAT_ND_R',
-                units='degK',
+                units='K',
                 frequency=32,
                 long_name=('True air temperature from the Rosemount non-deiced '
                            'temperature sensor'),
