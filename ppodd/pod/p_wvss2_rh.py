@@ -7,9 +7,13 @@ import numpy as np
 import pandas as pd
 
 from ..decades import DecadesVariable, DecadesBitmaskFlag
+from ..decades import flags
 from ..utils.constants import ZERO_C_IN_K
 from .base import PPBase, register_pp
 from .shortcuts import _o
+
+RH_VALID_MIN = 0
+RH_VALID_MAX = 150
 
 
 @register_pp('core')
@@ -409,22 +413,46 @@ class WVSS2RH(PPBase):
         u_rh_ice[wow == 1] = np.nan
         #=================================================================
 
+        rh_liq = rh_liq.asfreq('1S')
+        rh_ice = rh_ice.asfreq('1S')
+        u_rh_liq = u_rh_liq.asfreq('1S')
+        u_rh_ice = u_rh_ice.asfreq('1S')
+
+        wow = d['WOW_IND'].fillna(method='bfill').fillna(method='ffill')
+        wow = wow.reindex(rh_ice.index)
+
         rh_ice_out = DecadesVariable(
-            rh_ice.asfreq('1S'), name='RH_ICE', flag=DecadesBitmaskFlag
+            rh_ice, name='RH_ICE', flag=DecadesBitmaskFlag
         )
 
         rh_liq_out = DecadesVariable(
-            rh_liq.asfreq('1S'), name='RH_LIQ', flag=DecadesBitmaskFlag
+            rh_liq, name='RH_LIQ', flag=DecadesBitmaskFlag
         )
 
         u_rh_ice_out = DecadesVariable(
-            u_rh_ice.asfreq('1S'), name='RH_ICE_CU', flag=None
+            u_rh_ice, name='RH_ICE_CU', flag=None
         )
 
         u_rh_liq_out = DecadesVariable(
-            u_rh_liq.asfreq('1S'), name='RH_LIQ_CU', flag=None
+            u_rh_liq, name='RH_LIQ_CU', flag=None
         )
 
+        on_ground = ('The aircraft is on the ground, as indicated by '
+                     'weight-on-wheels')
+        out_range = f'RH is outside the range [{RH_VALID_MIN}, {RH_VALID_MAX}]'
+
+        rh_ice_out.flag.add_mask(wow, flags.WOW, on_ground)
+        rh_liq_out.flag.add_mask(wow, flags.WOW, on_ground)
+
+        liq_range_flag = (
+            (rh_liq < RH_VALID_MIN) | (rh_liq > RH_VALID_MAX)
+        )
+        ice_range_flag = (
+            (rh_ice < RH_VALID_MIN) | (rh_ice > RH_VALID_MAX)
+        )
+
+        rh_liq_out.flag.add_mask(liq_range_flag, flags.OUT_RANGE, out_range)
+        rh_ice_out.flag.add_mask(ice_range_flag, flags.OUT_RANGE, out_range)
 
         self.add_output(rh_ice_out)
         self.add_output(rh_liq_out)
