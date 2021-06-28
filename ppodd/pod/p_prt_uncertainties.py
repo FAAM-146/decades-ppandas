@@ -34,7 +34,7 @@ class PRTTemperatureUncertainties(PPBase):
 
     Uncertainties in the true air temperatures are derived from:
 
-        * Uncertainty of the corresponding indicated air temperature
+    * Uncertainty of the corresponding indicated air temperature
     * Uncertainty in the Mach number
     * Uncertainty in the ratio of specific heats
     * Uncertainty in the variable housing recovery factor.
