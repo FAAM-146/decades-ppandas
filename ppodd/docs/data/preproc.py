@@ -192,7 +192,10 @@ def get_module_flagdoc(module):
     _dict = {}
     for _var in module.dataset.outputs:
         var = str(_var)
-        _dict.update(module.dataset[var].flag.descriptions)
+        try:
+            _dict.update(module.dataset[var].flag.descriptions)
+        except Exception:
+            pass
 
     output = ''
     output += '\nFlags\n'

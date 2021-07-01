@@ -63,3 +63,7 @@ latex_elements = {
   'extraclassoptions': 'openany,oneside'
 }
 latex_logo = '../static/faam.png'
+html_js_files = [
+    'https://cdn.jsdelivr.net/npm/iframe-resizer@4.3.2/js/iframeResizer.contentWindow.min.js',
+]
+

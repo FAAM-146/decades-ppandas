@@ -8,15 +8,11 @@
     padding: .809em;
     margin-bottom: .809em;
     z-index: 200;
-    background-color: #3c3c3b;
+    background-color: #ffffff;/*#252243;*/
     text-align: center;
-    color: #252243;
-    border-bottom: 5px solid #0abbef;
-    border-top: 5px solid #0abbef;
-}
-
-.wy-side-nav-search .a {
-    font-color: black
+    color: #ffffff; /*#252243;*/
+    border: 5px solid #0abbef;
+    border-radius: 30px;
 }
 
 .wy-nav-side {
