@@ -6,7 +6,7 @@ from scipy.interpolate import CubicSpline
 
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..exceptions import EM_CANNOT_INIT_MODULE
-from ..utils.calcs import sp_mach, true_air_temp
+from ..utils.calcs import sp_mach, true_air_temp_variable
 from ..utils.conversions import celsius_to_kelvin
 from .base import PPBase, register_pp
 from .shortcuts import *
@@ -90,7 +90,11 @@ class ThermistorV1Temperatures(PPBase):
         'CORCON_padding1',          #  Non deiced temperature counts (DLU)
         'PRTAFT_deiced_temp_flag',  #  Deiced heater indicator flag (DLU)
         'PS_RVSM',                  #  RVSM static pressure (derived)
-        'Q_RVSM'                    #  RVSM dynamic pressure (derived)
+        'Q_RVSM',                   #  RVSM dynamic pressure (derived)
+        'SH_GAMMA',
+        'MACH',
+        'ETA_DI',
+        'ETA_ND'
     ]
 
     @staticmethod
@@ -240,7 +244,7 @@ class ThermistorV1Temperatures(PPBase):
         corr = 0.1 * (
             np.exp(
                 np.exp(
-                    1.171 + (np.log(d['MACHNO']) + 2.738) *
+                    1.171 + (np.log(d['MACH']) + 2.738) *
                     (-0.000568 * (d['Q_RVSM'] + d['PS_RVSM']) - 0.452)
                 )
             )
@@ -356,7 +360,7 @@ class ThermistorV1Temperatures(PPBase):
         dissipation_constant = (interpolated_high * 5.0)**2.0 / (rt_interpolated * self_heating_cal)
 
         aaa = [
-            np.where(np.abs(invented_temperature-i)<0.001)[0][0] for i in cal_temps
+            np.where(np.abs(invented_temperature-i)<0.005)[0][0] for i in cal_temps
         ]
 
         for i in range(12):
@@ -381,14 +385,14 @@ class ThermistorV1Temperatures(PPBase):
         vout_ndi = (padding_1_m * corcon_padding1) + padding_1_c
         vout_di = (corcon_fast_temp_m * corcon_fast_temp) + corcon_fast_temp_c
 
-        if NDDI is 'ND':
+        if NDDI == 'ND':
             vin = (vout_di * rf2 + rb2 * vout_di) / rb2
             r_therm = rf1 * rb1 / (
                 rb1 * (vout_di / vout_ndi) * ((rf2 + rb2) / rb2) - (rb1 + rf1)
             )
             v2out_r = vout_ndi**2.0 / r_therm
 
-        elif NDDI is 'DI':
+        elif NDDI == 'DI':
             vin = (vout_ndi * rf1 + rb1 * vout_ndi) / rb1
             r_therm = rf2 * rb2 / (
                 rb2 * (vout_ndi / vout_di) * ((rf1 + rb1) / rb1) - (rb2 + rf2)
@@ -415,9 +419,12 @@ class ThermistorV1Temperatures(PPBase):
         fitted_sh_odr = v2out_r / dissipation_constant_odr
 
         it_therm_ash_odr = it_therm - fitted_sh_odr
-        tt_therm_ash_odr = true_air_temp(
-            it_therm_ash_odr, self.d['MACHNO'],
-            recovery_factor
+
+        mach = self.d['MACH']
+        eta = self.d[f'ETA_{NDDI}']
+
+        tt_therm_ash_odr = true_air_temp_variable(
+            it_therm_ash_odr, mach, eta, self.d['SH_GAMMA']
         )
 
         NDDI = [NDDI]
