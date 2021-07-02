@@ -12,6 +12,8 @@ from ..utils.calcs import sp_mach
 from .base import PPBase, register_pp
 from .shortcuts import _o
 
+PRT_SENSORS = ('plate', 'loom')
+
 
 @register_pp('core')
 class PRTTemperatureUncertainties(PPBase):
@@ -114,35 +116,41 @@ class PRTTemperatureUncertainties(PPBase):
         """
         Declare outputs created by this module.
         """
-        self.declare(
-            'IAT_DI_R_CU',
-            units='K',
-            frequency=32,
-            long_name=('Combined uncertainty estimate for IAT_DI_R'),
-            write=False
-        )
+        nd_sens = self.dataset['NDTSENS'][1]
+        di_sens = self.dataset['DITSENS'][1]
 
-        self.declare(
-            'IAT_ND_R_CU',
-            units='K',
-            frequency=32,
-            long_name=('Combined uncertainty estimate for IAT_ND_R'),
-            write=False
-        )
+        if di_sens in PRT_SENSORS:
+            self.declare(
+                'IAT_DI_R_CU',
+                units='K',
+                frequency=32,
+                long_name=('Combined uncertainty estimate for IAT_DI_R'),
+                write=False
+            )
 
-        self.declare(
-            'TAT_DI_R_CU',
-            units='K',
-            frequency=32,
-            long_name=('Combined uncertainty estimate for TAT_DI_R'),
-        )
+            self.declare(
+                'TAT_DI_R_CU',
+                units='K',
+                frequency=32,
+                long_name=('Combined uncertainty estimate for TAT_DI_R'),
+            )
 
-        self.declare(
-            'TAT_ND_R_CU',
-            units='K',
-            frequency=32,
-            long_name=('Combined uncertainty estimate for TAT_ND_R'),
-        )
+
+        if nd_sens in PRT_SENSORS:
+            self.declare(
+                'IAT_ND_R_CU',
+                units='K',
+                frequency=32,
+                long_name=('Combined uncertainty estimate for IAT_ND_R'),
+                write=False
+            )
+
+            self.declare(
+                'TAT_ND_R_CU',
+                units='K',
+                frequency=32,
+                long_name=('Combined uncertainty estimate for TAT_ND_R'),
+            )
 
     def _combine_unc(self, uncs):
         return sum([i**2 for i in uncs])**.5
@@ -211,6 +219,35 @@ class PRTTemperatureUncertainties(PPBase):
 
         return (Titerm + etaterm + Mterm + gammaterm)**0.5
 
+    def _process_sensor(self, sensor):
+        """
+        Process the uncertainties for a specific sensor.
+
+        Args:
+            sensor: The sensor to process. Either 'ND' for the non-deiced
+                    sensor, or 'DI' for the deiced sensor.
+        """
+        fn_map = {
+            'ND': self.get_itnd_unc,
+            'DI': self.get_itdi_unc
+        }
+
+        unc_it = fn_map[sensor]()
+        self.d[f'IAT_{sensor}_R_CU'] = unc_it
+
+        unc_tat = self.get_tat_unc(sensor)
+
+        self.add_output(
+            DecadesVariable(unc_it, name=f'IAT_{sensor}_R_CU',
+                            flag=None)
+        )
+
+        self.add_output(
+            DecadesVariable(unc_tat, name=f'TAT_{sensor}_R_CU',
+                            flag=None)
+        )
+
+
     def process(self):
         """
         Processing entry hook.
@@ -218,31 +255,11 @@ class PRTTemperatureUncertainties(PPBase):
         self.get_dataframe()
         d = self.d
 
-        unc_itnd = self.get_itnd_unc()
-        d['IAT_ND_R_CU'] = unc_itnd
+        nd_sens = self.dataset['NDTSENS'][1]
+        di_sens = self.dataset['DITSENS'][1]
 
-        unc_itdi = self.get_itdi_unc()
-        d['IAT_DI_R_CU'] = unc_itdi
+        if nd_sens in PRT_SENSORS:
+            self._process_sensor('ND')
 
-        unc_tatnd = self.get_tat_unc('ND')
-        unc_tatdi = self.get_tat_unc('DI')
-
-        self.add_output(
-            DecadesVariable(unc_itnd, name='IAT_ND_R_CU',
-                            flag=None)
-        )
-
-        self.add_output(
-            DecadesVariable(unc_itdi, name='IAT_DI_R_CU',
-                            flag=None)
-        )
-
-        self.add_output(
-            DecadesVariable(unc_tatnd, name='TAT_ND_R_CU',
-                            flag=None)
-        )
-
-        self.add_output(
-            DecadesVariable(unc_tatdi, name='TAT_DI_R_CU',
-                            flag=None)
-        )
+        if di_sens in PRT_SENSORS:
+            self._process_sensor('DI')
