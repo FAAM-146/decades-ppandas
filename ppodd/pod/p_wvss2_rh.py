@@ -95,7 +95,12 @@ class WVSS2RH(PPBase):
         self.get_dataframe()
         d = self.d
 
-        temp = d['TAT_DI_R']
+        try:
+            nddi = self.dataset['WVSS2_RH_TEMP_SENSOR']
+        except Exception:
+            nddi = 'DI'
+
+        temp = d[f'TAT_{nddi}_R']
         press = d['PS_RVSM']
         wow = d['WOW_IND']
         wow.fillna(method='ffill', inplace=True)
@@ -105,7 +110,7 @@ class WVSS2RH(PPBase):
         temp_smooth = temp.rolling(64).mean()
         press_smooth = press.rolling(64).mean()
 
-        temp_sens = self.dataset['DITSENS'][1]
+        temp_sens = self.dataset[f'{nddi}TSENS'][1]
         wvss2_lag = self.dataset['WVSS2_LAG'][temp_sens]
         wvss2_lag_std = self.dataset['WVSS2_LAG_STD'][temp_sens]
 
