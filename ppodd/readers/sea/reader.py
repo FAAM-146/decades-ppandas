@@ -22,9 +22,12 @@ class WcmFileReader(FileReader):
             for k in dfs.keys():
                 df = dfs[k]
                 for i, name in enumerate(parser_f[k]['names']):
-                    _freq = int(
-                        np.timedelta64(1, 's') / dfs[k].index.freq.delta
-                    )
+                    try:
+                        _freq = int(
+                            np.timedelta64(1, 's') / dfs[k].index.freq.delta
+                        )
+                    except Exception:
+                        break
 
                     _data = df[name].values
 
