@@ -3,6 +3,7 @@ This module provides a postprocessing module for the Applanix GIN. See the
 class docstring for more info.
 """
 # pylint: disable=invalid-name
+import datetime
 import numpy as np
 import pandas as pd
 
@@ -286,6 +287,14 @@ class Gin(PPBase):
             method='onto', index=index,
             circular=['GINDAT_hdg', 'GINDAT_trck', 'GINDAT_wand']
         )
+
+        try:
+            time_offset = self.dataset['GIN_TIME_OFFSET']
+        except Exception:
+            time_offset = 0
+
+        # Timeshift correction for older data compatibility
+        self.d.index = self.d.index + datetime.timedelta(seconds=time_offset)
 
         # Round the status message to a integer
         finite = np.isfinite(self.d['GINDAT_status'])
