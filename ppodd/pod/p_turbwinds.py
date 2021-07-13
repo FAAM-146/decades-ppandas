@@ -378,13 +378,23 @@ class TurbulenceProbe(PPBase):
             covs = []
             betas = [-2, 2]
 
+            roll_index = (
+                np.isfinite(d.ROLL_GIN[_in_roll]) &
+                np.isfinite(d.W_C[_in_roll])
+            )
+
             for beta in betas:
                 consts['BETA_COR'] = [beta, 1]
 
                 d = p_turb(d.copy(deep=True), consts)
                 d = p_winds(d.copy(deep=True), consts)
 
-                covs.append((np.cov(d.W_C[_in_roll], d.ROLL_GIN[_in_roll]))[0, 1])
+                covs.append(
+                    (np.cov(
+                        d.W_C[_in_roll][roll_index],
+                        d.ROLL_GIN[_in_roll][roll_index]
+                    ))[0, 1]
+                )
 
             try:
                 fit = np.polyfit(covs, betas, 1)
