@@ -143,7 +143,7 @@ class WVSS2RH(PPBase):
             * (u_wvss2c * 1e-6)**2
         )
 
-        psrvsm_term = ((vmr * 1e-6) / (1 + (vmr * 1e-6)))**2 * (u_pressure**2)**2
+        psrvsm_term = ((vmr * 1e-6) / (1 + (vmr * 1e-6)))**2 * (u_pressure * 100)**2
         delta_vp=(vmr_term+psrvsm_term)**0.5
         #=====================================================
 
