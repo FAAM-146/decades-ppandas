@@ -338,24 +338,30 @@ class TurbulenceProbe(PPBase):
              'INSPOSN', 'BETA_COR', 'ALPHA_COR')
         }
 
-        try:
-            _slrs = reduce(
-                lambda x, y: x.union(y),
-                slrs(d.WOW_IND, d.PS_RVSM, d.ROLL_GIN, freq=32)
-            )
-        except TypeError:
-            _slrs = None
+        calc_ab_cor = self.dataset.constants.get('TP_CALC_AB_COR', False)
 
-        _in_roll = d.ROLL_GIN.abs() > 10
+        if calc_ab_cor:
+            try:
+                _slrs = reduce(
+                    lambda x, y: x.union(y),
+                    slrs(d.WOW_IND, d.PS_RVSM, d.ROLL_GIN, freq=32)
+                )
+            except TypeError:
+                _slrs = None
+
+            _in_roll = d.ROLL_GIN.abs() > 10
 
         for i in range(3):
-            # This code was aimed at adjusting alpha and beta correction terms
-            # on a flight-by-flight basis, my minimising mean vertical winds
-            # and the covariance between roll and the vertical wind. Requires
-            # further thought before actually being used.
-            continue
+            if not calc_ab_cor:
+                # Just use a, b corrections specified in constants
+                continue
+
             if self.test_mode:
                 continue
+
+            if _slrs is None:
+                logger.warning('No SLRs identified. Cannot estimate alpha '
+                               'correction term')
 
             ws = []
             alphas = [-2, 2]
