@@ -643,6 +643,24 @@ class BuckCR2(PPBase):
         p = np.poly1d(self.dataset['BUCK'][::-1])
         buck_mirr_temp = p(buck_mirr_temp)
 
+        try:
+            p_ice = np.poly1d(self.dataset['BUCK_ICE'][::-1])
+            ice = buck_mirr_temp < 273.15
+            buck_mirr_temp[ice] = p_ice(buck_mirr_temp[ice])
+        except KeyError:
+            pass
+        except Exception as e:
+            warnings.warn('Failed to apply buck ice calibration')
+
+        try:
+            p_liq = np.poly1d(self.dataset['BUCK_LIQ'][::-1])
+            liq = buck_mirr_temp >= 273.15
+            buck_mirr_temp[liq] = p_ice(buck_mirr_temp[liq])
+        except KeyError:
+            pass
+        except Exception as e:
+            warnings.warn('Failed to apply buck liquid calibration')
+
         buck_pressure = self.d['AERACK_buck_pressure']
         buck_dewpoint_flag = self.d['AERACK_buck_dewpoint_flag']
         buck_mirr_cln_flag = self.d['AERACK_buck_mirr_cln_flag']
