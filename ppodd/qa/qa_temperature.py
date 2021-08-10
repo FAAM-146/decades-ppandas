@@ -74,14 +74,18 @@ class TemperatureQA(QAMod):
 
         try:
             u_tat_di = self.dataset['TAT_DI_R_CU'].data.asfreq('1S')
+            temp_axis.fill_between(
+                u_tat_di.index, tat_di-u_tat_di, tat_di+u_tat_di,
+                alpha=.5, color='tab:orange'
+            )
+        except Exception as e:
+            print(str(e))
+
+        try:
             u_tat_nd = self.dataset['TAT_ND_R_CU'].data.asfreq('1S')
             temp_axis.fill_between(
                 u_tat_nd.index, tat_nd-u_tat_nd, tat_nd+u_tat_nd,
                 alpha=.5, color='tab:blue'
-            )
-            temp_axis.fill_between(
-                u_tat_di.index, tat_di-u_tat_di, tat_di+u_tat_di,
-                alpha=.5, color='tab:orange'
             )
         except Exception as e:
             print(str(e))
@@ -142,7 +146,7 @@ class TemperatureQA(QAMod):
 
             index = tat_di.index.intersection(tat_nd.index)
             tat_di = tat_di.reindex(index)
-            tat_nd = tat_di.reindex(index)
+            tat_nd = tat_nd.reindex(index)
 
             freqs = np.fft.fftfreq(tat_di.size, 1/32)
 
