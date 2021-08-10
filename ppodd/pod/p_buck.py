@@ -106,7 +106,11 @@ class BuckCR2(PPBase):
 
     These are combined to produce one uncertainty value for the mirror
     temperature, which may be propagated through to the volume mixing ratio
-    and the pressure-corrected dew or frost point.
+    and the pressure-corrected dew or frost point. Note that prior to software
+    version 0.10.1 the uncertainties are expanded uncertainties. From software
+    version 0.10.1 onwards, the uncertainties are combined uncertainties, for
+    consistency with other variables in the core dataset which have an
+    associated uncertainty.
     """
 
     inputs = [
@@ -157,8 +161,8 @@ class BuckCR2(PPBase):
             'VMR_C_U',
             units='ppmv',
             frequency=1,
-            long_name=('Uncertainty estimate for water vapour volume mixing '
-                       'ratio measured by the Buck CR2'),
+            long_name=('Combined uncertainty estimate for water vapour volume '
+                       'mixing ratio measured by the Buck CR2'),
             instrument_manufacturer=manufacturer,
             instrument_model=model,
             instrument_serial_number=self.dataset.lazy['BUCK_SN']
@@ -179,7 +183,8 @@ class BuckCR2(PPBase):
             'TDEW_C_U',
             units='degK',
             frequency=1,
-            long_name='Uncertainty estimate for Buck CR2 Mirror Temperature',
+            long_name=('Combined uncertainty estimate for Buck CR2 '
+                       'Mirror Temperature'),
             instrument_manufacturer=manufacturer,
             instrument_model=model,
             instrument_serial_number=self.dataset.lazy['BUCK_SN']
@@ -289,7 +294,8 @@ class BuckCR2(PPBase):
             Ub = buck_unc_b[i]
             Uk = buck_unc_k[i]
 
-            buck_unc_k[i] = 2 * np.sqrt(Uc**2 + Ur**2 + Ut**2 + Ui**2 + Ub**2)
+            # Combined, not extended, uncertainty
+            buck_unc_k[i] = np.sqrt(Uc**2 + Ur**2 + Ut**2 + Ui**2 + Ub**2)
 
         ix = np.where(buck_mirr_control[i] == 3)[0]
         buck_unc_k[ix] = np.nan
@@ -642,10 +648,13 @@ class BuckCR2(PPBase):
 
         p = np.poly1d(self.dataset['BUCK'][::-1])
         buck_mirr_temp = p(buck_mirr_temp)
+        buck_mirr_control = self.get_buck_mirror_ctl(buck_mirr_temp)
 
+        # Potentially apply different calibrations for when frost or liquid is
+        # on the mirror
         try:
             p_ice = np.poly1d(self.dataset['BUCK_ICE'][::-1])
-            ice = buck_mirr_temp < 273.15
+            ice = (buck_mirr_control == 1)
             buck_mirr_temp[ice] = p_ice(buck_mirr_temp[ice])
         except KeyError:
             pass
@@ -654,8 +663,8 @@ class BuckCR2(PPBase):
 
         try:
             p_liq = np.poly1d(self.dataset['BUCK_LIQ'][::-1])
-            liq = buck_mirr_temp >= 273.15
-            buck_mirr_temp[liq] = p_ice(buck_mirr_temp[liq])
+            liq = (buck_mirr_control == 0)
+            buck_mirr_temp[liq] = p_liq(buck_mirr_temp[liq])
         except KeyError:
             pass
         except Exception as e:
@@ -665,7 +674,6 @@ class BuckCR2(PPBase):
         buck_dewpoint_flag = self.d['AERACK_buck_dewpoint_flag']
         buck_mirr_cln_flag = self.d['AERACK_buck_mirr_cln_flag']
 
-        buck_mirr_control = self.get_buck_mirror_ctl(buck_mirr_temp)
 
         vp_buck = self.calc_vp(buck_mirr_temp, buck_mirr_control)
 
