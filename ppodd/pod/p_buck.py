@@ -568,7 +568,7 @@ class BuckCR2(PPBase):
         """
         flag = np.zeros(buck_mirr_flag.size, dtype=np.int)
         flag[buck_dewpoint_flag == 0] = 1
-        # flag[buck_mirr_flag == 1] = 2
+        flag[buck_mirr_flag == 1] = 2
         flag[buck_dewpoint_flag == 2] = 3
         return flag
 
@@ -737,10 +737,10 @@ class BuckCR2(PPBase):
                 1, 'not controlling', ('The instrument is not controlling '
                                        'on a dew point')
             )
-            # dv.flag.add_meaning(
-            #     2, 'mirror contaminated', ('The instrument is reporting '
-            #                                'contamination on the mirror')
-            # )
+            dv.flag.add_meaning(
+                2, 'mirror contaminated', ('The instrument is reporting '
+                                           'contamination on the mirror')
+            )
             dv.flag.add_meaning(
                 3, 'in balance cycle', ('The instrument is in a balance cycle '
                                         'and not recording a dew point')
