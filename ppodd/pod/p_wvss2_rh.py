@@ -262,110 +262,12 @@ class WVSS2RH(PPBase):
         )
 
         #---------------------------------------------------------------
-        delta_alpha_ice = (
-            ef_ice_coeff[1] + 2.0 * ef_ice_coeff[2] * temp_smooth
-            + 3.0 * ef_ice_coeff[3] * temp_smooth**2.0
-        ) * u_tat
+        # Maximum expected uncertainty due to enhancement factors
+        max_ef_unc = 0.00065
 
-        delta_beta_ice = (
-            ef_ice_coeff[5] +2.0 * ef_ice_coeff[6] * temp_smooth
-            +3.0 * ef_ice_coeff[7] * temp_smooth**2.0
-        ) * beta_ice * u_tat
-
-        dfdalpha_ice = (
-            1. - pure_sat_vp_ice / (press_smooth * 100.)
-        ) * ef_sat_ice
-
-        dfdbeta_ice = (
-            (press_smooth * 100.) / pure_sat_vp_ice - 1
-        ) * ef_sat_ice
-
-        dfdes_ice = (
-            -alpha_ice / (press_smooth * 100.0) - beta_ice
-            * (press_smooth * 100.0) / (pure_sat_vp_ice**2)
-        ) * ef_sat_ice
-
-        dfdps_ice = (
-            alpha_ice * pure_sat_vp_ice / ((press_smooth * 100)**2)
-            + beta_ice / pure_sat_vp_ice
-        ) * ef_sat_ice
-
-        delta_ef_ice = (
-            dfdalpha_ice**2 * delta_alpha_ice**2 + dfdbeta_ice**2
-            * delta_beta_ice**2 + dfdes_ice**2 * delta_satv_ice**2
-            + dfdps_ice**2 * (u_pressure*100)**2
-        )**0.5
-
-        delta_alpha_waterliq = (
-            ef_waterliq_coeff[1] + 2. * ef_waterliq_coeff[2] * temp_smooth
-            + 3.0 * ef_waterliq_coeff[3] * temp_smooth**2
-        ) * u_tat
-
-        delta_beta_waterliq = (
-            ef_waterliq_coeff[5] + 2. * ef_waterliq_coeff[6] * temp_smooth
-            + 3. * ef_waterliq_coeff[7] * temp_smooth**2
-        ) * beta_waterliq * u_tat
-
-        dfdalpha_waterliq = (
-            1. - pure_sat_vp_liq / (press_smooth * 100.)
-        ) * ef_sat_waterliq
-
-        dfdbeta_waterliq = (
-            (press_smooth * 100.) / pure_sat_vp_liq - 1.
-        ) * ef_sat_waterliq
-
-        dfdes_waterliq = (
-            - alpha_waterliq / (press_smooth * 100.)
-            - beta_waterliq * (press_smooth*100.0) / (pure_sat_vp_liq**2)
-        ) * ef_sat_waterliq
-
-        dfdps_waterliq = (
-            alpha_waterliq * pure_sat_vp_liq / (
-                (press_smooth * 100.)**2
-            ) + beta_waterliq / pure_sat_vp_liq
-        ) * ef_sat_waterliq
-
-        delta_ef_waterliq = (
-            dfdalpha_waterliq**2 * delta_alpha_waterliq**2
-            + dfdbeta_waterliq**2 * delta_beta_waterliq**2
-            + dfdes_waterliq**2 * delta_satv_liq**2
-            + dfdps_waterliq**2 * (u_pressure * 100.)**2
-        )**0.5
-
-        delta_alpha_watersc = (
-            ef_watersc_coeff[1] + 2. * ef_watersc_coeff[2] * temp_smooth
-            + 3. * ef_watersc_coeff[3] * temp_smooth**2.
-        ) * u_tat
-
-        delta_beta_watersc = (
-            ef_watersc_coeff[5] + 2. * ef_watersc_coeff[6] * temp_smooth +
-            3. * ef_watersc_coeff[7] * temp_smooth**2.0
-        ) * beta_watersc * u_tat
-
-        dfdalpha_watersc = (
-            1. - pure_sat_vp_liq / (press_smooth * 100.)
-        ) * ef_sat_watersc
-
-        dfdbeta_watersc = (
-            (press_smooth * 100.) / pure_sat_vp_liq - 1.
-        ) * ef_sat_watersc
-
-        dfdes_watersc = (
-            - alpha_watersc / (press_smooth * 100.) - beta_watersc
-            * (press_smooth * 100.) / (pure_sat_vp_liq**2)
-        ) * ef_sat_watersc
-
-        dfdps_watersc = (
-            alpha_watersc * pure_sat_vp_liq / ((press_smooth * 100.)**2.0)
-            + beta_watersc / pure_sat_vp_liq
-        ) * ef_sat_watersc
-
-        delta_ef_watersc = (
-            dfdalpha_watersc**2 * delta_alpha_watersc**2
-            + dfdbeta_watersc**2. * delta_beta_watersc**2
-            + dfdes_watersc**2. * delta_satv_liq**2.0
-            + dfdps_watersc**2. * (u_pressure*100.0)**2.
-        )**0.5
+        delta_ef_watersc = max_ef_unc
+        delta_ef_waterliq = max_ef_unc
+        delta_ef_ice = max_ef_unc
         #===============================================================
 
         # Here we multiply the pure saturation vapour pressures by the
