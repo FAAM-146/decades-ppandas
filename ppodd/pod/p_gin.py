@@ -11,15 +11,15 @@ from ..decades import DecadesVariable, DecadesBitmaskFlag
 from .base import PPBase, register_pp
 from .shortcuts import _l, _o, _z
 
-gin_name = 'POS AV 510 GPS-aided Inertial Navigation unit'
+gin_name = 'POS AV 410 GPS-aided Inertial Navigation unit'
 gin_manufacturer = 'Applanix'
-gin_model = 'POS AV 510'
+gin_model = 'POS AV 410'
 
 
 @register_pp('core')
 class Gin(PPBase):
     r"""
-    This module provides variables from the Applanix POS AV 510 GPS-aided
+    This module provides variables from the Applanix POS AV 410 GPS-aided
     inertial navigation system (GIN). The GIN provides parameters at a
     frequency of 50 Hz; this module simply downsamples these parameters to 32
     Hz.
