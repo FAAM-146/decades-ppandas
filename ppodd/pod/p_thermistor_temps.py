@@ -143,7 +143,11 @@ class ThermistorV1Temperatures(PPBase):
             'CORCON_fast_temp': ('data', _a(225, 245, .0286)*1000, 32),
             'CORCON_padding1': ('data', _a(225, 245, .0286)*1000, 32),
             'PRTAFT_deiced_temp_flag': ('data', _c([_z(200), _o(300),
-                                                    _z(200)]), 1)
+                                                    _z(200)]), 1),
+            'MACH': ('data', .5 * _o(700), 32),
+            'SH_GAMMA': ('data', 1.6 * _o(700), 32),
+            'ETA_DI': ('data', _o(700), 32),
+            'ETA_ND': ('data', _o(700), 32),
         }
 
     def declare_outputs(self):
