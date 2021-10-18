@@ -100,3 +100,8 @@ The preliminary file is intended to be used for visualisation and initial analys
 Once all of the variables in this file have been checked by a FAAM staff member, the data will be archived at the Centre for Environmental Data Analysis (CEDA; https://www.ceda.ac.uk).
 The archived verison will not include the ``_prelim`` postfix, and having gone through QC, may differ from the preliminary file.
 Users can access the data by first registering as a CEDA user, and then applying for access to FAAM core data. The core data file is generally freely available, however access may be restricted for upto one year at the request of a project PI.
+
+Usage License
+-------------
+
+FAAM data are licensed under the Open Government Licence (http://www.nationalarchives.gov.uk/doc/open-government-licence).

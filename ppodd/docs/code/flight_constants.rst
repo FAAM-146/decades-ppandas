@@ -25,6 +25,14 @@ processing, and directives as to what the processing should do. Its basic format
         Exclude:
             - ModuleToExclude
             - OtherModuleToExclude
+        Flags:
+            VAR_1:
+                - start: 'yyyy-mm-ddTHH:MM:SS'
+                  end: 'yyyy-mm-ddTHH:MM:SS'
+                  reason: reason for flagging
+                - start: 'yyyy-mm-ddTHH:MM:SS'
+                  end: 'yyyy-mm-ddTHH:MM:SS'
+                  reason: reason for flagging second period
 
     Constants:
         group1:
@@ -91,8 +99,8 @@ will resolve to
 Modifications
 =============
 
-The ``Modifications`` group is split into two subgroups: ``Variables`` and
-``Exclude``. 
+The ``Modifications`` group is split into three subgroups: ``Variables``,
+``Exclude``, and ``Flags``.
 
 Variables
 ---------
@@ -110,16 +118,36 @@ automatically run during the processing, even if the data they require to run is
 available. Each entry should be the class name of the module to exclude, not
 including the classpath.
 
+Flags
+-----
+
+The ``Flags`` group is a map from variable names to a list of periods for which that varaible should
+be flagged. This allows manual flags to be applied to the data in QC in a tracable way. Each element
+in the list of flag periods should be a map with keys ``start``, ``end``, and ``reason``. The ``start``
+and ``end`` keys give the start and end times of the period to flag, in the format ``yyyy-mm-ddTHH:MM:SS``,
+and the ``reason`` should be a short description of the reason for adding the flagged period. Note that
+in the netCDF metadata, the ``flag_meaning`` for data flagged this way will always be ``flagged_in_qc``.
+To ascertain the actual reason for flagging, one will have to cross-reference with the flight constants,
+though this may be included as metadata in the future.
+
 Constants
 =========
 
-The constants group provide data that are required during processing, for example
-calibraion coefficients, information about the instruments fitted or switches to
-control flow within processing modules.
+The constants group provide data that are required during processing, for example calibraion coefficients,
+information about the instruments fitted or switches to control flow within processing modules. Constants
+should be divided into groups, however this is purely for convenience, and the groups will be ignored when
+the constants are read. Therefore constant keys must be globally unique. The keys of constants must be strings,
+however the values can be any native data type - numeric, string, array, or map.
 
-Constants should be divided into groups, however this is purely for convenience, and
-the groups will be ignored when the constants are read. Therefore constant keys must
-be globally unique.
+Available Constants
+-------------------
 
-The keys of constants must be strings, however the values can be any native data
-type - numeric, string, array, or map.
+Below are a list of defined constants. Most of these will be required for the corresponding processing
+module to run, though some are optional. Constants are required in they are included in the ``inputs``
+list of a processing module.
+
+.. csv-table:: Flight Constants
+    :file: flight-constants.csv
+    :widths: 20, 10, 70
+    :header-rows: 1
+
