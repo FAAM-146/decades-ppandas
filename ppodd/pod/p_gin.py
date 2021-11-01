@@ -303,9 +303,6 @@ class Gin(PPBase):
         ] = self.d.loc[finite, 'GINDAT_status'].astype(int)
 
         self.d['SOLUTION_FLAG'] = self.d['GINDAT_status'] == 8
-        self.d['HEADING_FLAG'] = (
-            (self.d['GINDAT_status'] > 0) & (self.d['GINDAT_status'] < 6)
-        )
 
         self.d['ZERO_FLAG'] = (
             (self.d['GINDAT_lon'] == 0) & (self.d['GINDAT_lat'] == 0)
@@ -323,13 +320,6 @@ class Gin(PPBase):
                     self.d.SOLUTION_FLAG, 'no solution',
                     ('The GIN status flag indicates no solution has been '
                      'obtained.')
-                )
-
-            if input_name == 'GINDAT_hdg':
-                dv.flag.add_mask(
-                    self.d.HEADING_FLAG, 'gin align',
-                    ('Status flag indicates instrument is in align, which may '
-                     'indicate an increased heading error')
                 )
 
             dv.flag.add_mask(

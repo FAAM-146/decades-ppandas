@@ -8,8 +8,9 @@ class WVSS2RHTemperatureFlag(FlaggingBase):
 
     inputs = ['RH_ICE', 'RH_LIQ', 'TAT_DI_R']
     prerequisites = [RosemountTempCloudFlag, RosemountTempDeltaFlag]
+    flagged = ['RH_ICE', 'RH_LIQ']
 
-    def flag(self):
+    def _flag(self):
         tat = self.dataset['TAT_DI_R']
         rh_ice = self.dataset['RH_ICE']
         rh_liq = self.dataset['RH_LIQ']

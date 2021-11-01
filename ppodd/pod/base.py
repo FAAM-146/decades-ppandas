@@ -12,7 +12,8 @@ import pandas as pd
 
 from ppodd.utils import pd_freq, unwrap_array
 from ppodd.decades import DecadesDataset, DecadesVariable
-from ppodd.decades import DecadesBitmaskFlag
+from ppodd.decades import DecadesBitmaskFlag, DecadesClassicFlag
+from ppodd.decades import flags
 
 pp_register = {}
 
@@ -136,6 +137,8 @@ class PPBase(object):
                     )
                 )
 
+        input_flag = self.get_input_flag(list(self.outputs.items())[0].index)
+
         for name, output in self.outputs.items():
             # Apply any modifications specified in self.dataset._variable_mods
             # - canonically as specified in the flight constants file
@@ -163,6 +166,35 @@ class PPBase(object):
                     )
                     flag.loc[(flag.index >= start) & (flag.index <= end)] = 1
                 self.add_flag_mod(flag, output)
+
+
+
+            if type(output.flag) is DecadesBitmaskFlag:
+                if np.any(~np.isnan(input_flag)):
+                    input_flag = input_flag.reindex(output.index).fillna(0)
+                    output.flag.add_mask(
+                        input_flag, flags.DEPENDENCY,
+                        ('A dependency, used in the derivation of this '
+                         'variable has a non-zero flag.')
+                    )
+
+            if type(output.flag) is DecadesClassicFlag:
+                try:
+                    flag_value = max(list(output.flag.meanings)) + 1
+                except ValueError:
+                    flag_value = 1
+
+                if np.any(~np.isnan(input_flag)) and np.any(input_flag):
+                    input_flag = input_flag.reindex(output.index).fillna(0)
+                    input_flag[input_flag > 0] = flag_value
+
+                    output.flag.add_meaning(
+                        flag_value, flags.DEPENDENCY,
+                        ('A dependency, used in the derivation of this '
+                         'variable has a non-zero flag.')
+                    )
+
+                    output.flag.add_flag(input_flag)
 
             # And append the output to the dataset
             self.dataset.add_output(output)
@@ -194,6 +226,29 @@ class PPBase(object):
         ).interpolate(
             'time', limit=limit, period=period
         ).loc[index]
+
+    def get_input_flag(self, index):
+        cflag = pd.Series(dtype=np.int8)
+        for _input in self.inputs:
+            try:
+                flag = self.dataset[_input].flag()
+                flag = flag[flag > 0].dropna()
+            except (TypeError, AttributeError):
+                # TypeError for no flag, AttributeError for constant
+                continue
+
+            cindex = cflag.index.union(flag.index).sort_values().unique()
+
+            # TODO: we probably don't want to fill with 0 in the case of
+            # differing frequencies
+            cflag = cflag.reindex(cindex).fillna(0)
+            cflag.loc[flag.index] = np.maximum(
+                flag, cflag.loc[flag.index]
+            )
+
+        cflag[cflag > 1] = 1
+        return cflag
+
 
     def get_dataframe(self, method='outerjoin', index=None, limit=1,
                       circular=None, exclude=None):

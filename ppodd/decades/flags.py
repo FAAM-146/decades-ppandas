@@ -18,6 +18,7 @@ DATA_GOOD = 'data_good'
 DATA_MISSING = 'data_missing'
 OUT_RANGE = 'data_out_of_range'
 WOW = 'aircraft_on_ground'
+DEPENDENCY = 'dependency_is_flagged'
 
 
 class DecadesFlagABC(object):
@@ -270,7 +271,12 @@ class DecadesBitmaskFlag(DecadesFlagABC):
         _flag_vals = np.zeros((len(self._df.index),))
 
         for i, meaning in enumerate(_meanings):
-            _flag_vals += _masks[i] * np.array(self._df[meaning])
+            try:
+                _flag_vals += _masks[i] * np.array(self._df[meaning]).astype(int)
+            except Exception:
+                print(_flag_vals)
+                print(_masks[i])
+                raise
 
         _flag_vals = _flag_vals.astype(np.int8)
 
@@ -320,14 +326,22 @@ class DecadesBitmaskFlag(DecadesFlagABC):
             meaning: the meaning/description associated with the mask.
         """
 
+        col_name = meaning.replace(' ', '_').lower()
+
+        if col_name in self._df:
+            return self._add_to_mask(data, col_name)
+
         if len(data) != len(self._df.index):
             print(f'{len(data)} != {len(self._df.index)}')
             raise ValueError('Flag length is incorrect')
 
-        col_name = meaning.replace(' ', '_').lower()
-
         self._df[col_name] = np.atleast_1d(data).astype(bool)
         self.descriptions[col_name] = description
+
+    def _add_to_mask(self, data, col_name):
+        data = data.reindex(self.index).fillna(0)
+        data.index = range(len(data.index))
+        self._df.loc[data > 0, col_name] = data[data > 0]
 
     @classmethod
     def from_nc_variable(cls, ncvar, decadesvar):

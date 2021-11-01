@@ -101,6 +101,10 @@ class WVSS2RH(PPBase):
             nddi = 'DI'
 
         temp = d[f'TAT_{nddi}_R']
+
+        input_to_remove = 'ND' if nddi == 'DI' else 'DI'
+        self.inputs.remove(f'TAT_{input_to_remove}_R')
+
         press = d['PS_RVSM']
         wow = d['WOW_IND']
         wow.fillna(method='ffill', inplace=True)

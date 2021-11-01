@@ -22,8 +22,9 @@ class RosemountTempDeltaFlag(FlaggingBase):
     """
 
     inputs = list(TEMPERATURE_VARIABLES)
+    flagged = list(TEMPERATURE_VARIABLES)
 
-    def flag(self):
+    def _flag(self):
         """
         Entry point for the flagging module.
         """
@@ -56,8 +57,9 @@ class RosemountTempCloudFlag(FlaggingBase):
     """
 
     inputs = ['NV_CLEAR_AIR_MASK']
+    flagged = list(TEMPERATURE_VARIABLES)
 
-    def flag(self):
+    def _flag(self):
         """
         Entry point for the flagging module.
         """
