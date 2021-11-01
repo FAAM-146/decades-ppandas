@@ -97,7 +97,8 @@ class RecoveryFactor(PPBase):
             frequency=32,
             long_name=('Uncertainty in recovery factor for deiced '
                        'Rosemount housing'),
-            write=False
+            write=False,
+            flag=None
         )
 
         self.declare(
@@ -106,7 +107,8 @@ class RecoveryFactor(PPBase):
             frequency=32,
             long_name=('Uncertainty in recovery factor for non-deiced '
                        'Rosemount housing'),
-            write=False
+            write=False,
+            flag=None
         )
 
     def process(self):

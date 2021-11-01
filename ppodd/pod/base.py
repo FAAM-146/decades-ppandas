@@ -6,6 +6,7 @@ modules should subclass PPBase to be included in the processing.
 
 import abc
 import datetime
+import logging
 
 import numpy as np
 import pandas as pd
@@ -16,6 +17,7 @@ from ppodd.decades import DecadesBitmaskFlag, DecadesClassicFlag
 from ppodd.decades import flags
 
 pp_register = {}
+logger = logging.getLogger(__name__)
 
 def register_pp(pp_group):
     def inner(cls):
@@ -137,7 +139,12 @@ class PPBase(object):
                     )
                 )
 
-        input_flag = self.get_input_flag(list(self.outputs.items())[0].index)
+        try:
+            input_flag = self.get_input_flag(list(self.outputs.items())[0].index)
+        except Exception:
+            logger.warning(f'Failed to get input flag for '
+                           f'{self.__class__.__name__}')
+            input_flag = []
 
         for name, output in self.outputs.items():
             # Apply any modifications specified in self.dataset._variable_mods

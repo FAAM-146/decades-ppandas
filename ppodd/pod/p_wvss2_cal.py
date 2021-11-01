@@ -92,7 +92,8 @@ class WVSS2Calibrated(PPBase):
             long_name=('Uncertainty estimate for calibrated volume mixing '
                        'ratio from WVSS2F'),
             instrument_manufacturer='SpectraSensors',
-            instrument_serial_number=self.dataset.lazy['WVSS2_F_SN']
+            instrument_serial_number=self.dataset.lazy['WVSS2_F_SN'],
+            flag=None
         )
 
 
