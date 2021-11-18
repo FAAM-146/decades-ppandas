@@ -7,6 +7,8 @@ using data which may not be available at the time processing modules are run.
 import abc
 import logging
 
+import numpy as np
+
 from ppodd.decades import flags
 
 
@@ -43,6 +45,8 @@ class FlaggingBase(abc.ABC):
             dataset: a DecadesDataset from which the processing is being run.
         """
         self.dataset = dataset
+        self.test_flag = np.arange(5)
+        self.flags = {}
 
     def __str__(self):
         return f'[Flagging module: {self.__class__.__name__}]'
@@ -65,9 +69,23 @@ class FlaggingBase(abc.ABC):
                 return False
         return True
 
+    def add_mask(self, var, mask, meaning, description=None):
+        """
+        Add a new flag mask to a specified variable
+        """
+        self.dataset[var].flag.add_mask(mask, meaning, description)
+        try:
+            self.flags[var].append((meaning.replace(' ', '_'), description))
+        except KeyError:
+            self.flags[var] = [(meaning.replace(' ', '_'), description)]
+
     @abc.abstractmethod
     def _flag(self):
         """Add extra flag info to derived variables."""
+
+    @abc.abstractmethod
+    def _get_flag(self):
+        """Get the flag information"""
 
     def _get_downstream(self, var):
         """

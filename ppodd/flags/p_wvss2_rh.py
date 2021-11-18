@@ -10,19 +10,31 @@ class WVSS2RHTemperatureFlag(FlaggingBase):
     prerequisites = [RosemountTempCloudFlag, RosemountTempDeltaFlag]
     flagged = ['RH_ICE', 'RH_LIQ']
 
-    def _flag(self):
+    def _get_flag(self):
         tat = self.dataset['TAT_DI_R']
         rh_ice = self.dataset['RH_ICE']
         rh_liq = self.dataset['RH_LIQ']
         tat_flag_ice = tat.flag().reindex(rh_ice.index)
         tat_flag_liq = tat.flag().reindex(rh_liq.index)
 
-        rh_ice.flag.add_mask(
+        return (tat_flag_ice, tat_flag_liq)
+
+    def _flag(self, test=False):
+
+        if test:
+            tat_flag_ice = self.test_flag
+            tat_flag_liq = self.test_flag
+        else:
+            tat_flag_ice, tat_flag_liq = self._get_flag()
+
+        self.add_mask(
+            'RH_ICE',
             tat_flag_ice, 'temperature_flagged',
             'The input temperature measurement has a non-zero flag value'
         )
 
-        rh_liq.flag.add_mask(
+        self.add_mask(
+            'RH_LIQ',
             tat_flag_liq, 'temperature_flagged',
             'The input temperature measurement has a non-zero flag value'
         )

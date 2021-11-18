@@ -21,32 +21,39 @@ class WVSS2CloudFlag(FlaggingBase):
     """
 
     inputs = ['NV_CLEAR_AIR_MASK']
+    flagged = list(WVSS2_VARIABLES)
 
-    def _flag(self):
-        """
-        Entry point for the flagging module.
-        """
+    def _get_flag(self, var):
+
+        try:
+            index = self.dataset[var].index
+        except (KeyError, AttributeError):
+            raise ValueError('Unable to get variable index')
+
+        clear_air_series = self.dataset['NV_CLEAR_AIR_MASK']()
+        mask = clear_air_series == UNMASKED
+        nv_start = clear_air_series.index[0]
+        nv_end = clear_air_series.index[-1]
+        mask = mask.reindex(index)
+        mask.loc[(mask.index <= nv_start) | (mask.index >= nv_end)] = 0
+        mask.fillna(method='ffill', inplace=True)
+        mask.fillna(method='bfill', inplace=True)
+
+        return mask
+
+    def _flag(self, test=False):
 
         for var in WVSS2_VARIABLES:
-            if var not in self.dataset.variables:
-                continue
+            if test:
+                flag = self.test_flag
+            else:
+                try:
+                    flag = self._get_flag(var)
+                except ValueError:
+                    continue
 
-            self.flagged.append(var)
-
-            try:
-                index = self.dataset[var].index
-            except (KeyError, AttributeError):
-                continue
-
-            clear_air_series = self.dataset['NV_CLEAR_AIR_MASK']()
-            mask = clear_air_series == UNMASKED
-            nv_start = clear_air_series.index[0]
-            nv_end = clear_air_series.index[-1]
-            mask = mask.reindex(index)
-            mask.loc[(mask.index <= nv_start) | (mask.index >= nv_end)] = 0
-            mask.fillna(method='ffill', inplace=True)
-            mask.fillna(method='bfill', inplace=True)
-
-            self.dataset[var].flag.add_mask(
-                mask, 'in cloud'
+            self.add_mask(
+                var, flag, 'in cloud',
+                ('The aircraft is indicated as being in cloud, according to '
+                 'the clear air mask derived from the Nevzorov power variance.')
             )
