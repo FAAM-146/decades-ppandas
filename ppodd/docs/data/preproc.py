@@ -3,8 +3,12 @@ import os
 import shutil
 import sys
 
+import pandas as pd
+
 from ppodd.pod.base import pp_register
 from ppodd.decades.flags import (DecadesBitmaskFlag, DecadesClassicFlag)
+from ppodd.decades import (DecadesDataset, DecadesVariable)
+from ppodd.flags import flag_modules
 
 BASE_DIR = 'base_rst'
 DYN_DIR = 'dynamic_content'
@@ -144,6 +148,37 @@ def get_module_doc(module):
     txt += get_module_flagdoc(m)
 
     return txt
+
+def get_flagmod_doc(module):
+    index = module.test_index
+    flag = module.test_flag
+    d = DecadesDataset()
+    for var in module.flagged:
+        v = DecadesVariable(
+            pd.Series(flag, index=index, name=var),
+            flag=DecadesBitmaskFlag
+        )
+        d.add_output(v)
+
+    mod = module(d)
+    mod._flag(test=True)
+
+    output = "\n\n"
+    output += '-' * len(module.__name__) + '\n'
+    output += module.__name__ + '\n'
+    output += '-' * len(module.__name__) + '\n\n'
+    output += mod.__doc__
+
+    for var, flag_infos in mod.flags.items():
+        mod_var_txt = f'Flagged variable: `{var}`'
+        output += '\n\n' + mod_var_txt + '\n'
+        output += '-' * len(mod_var_txt) + '\n\n'
+
+        for flag_info in flag_infos:
+            output += f'* ``{flag_info[0]}`` - {flag_info[1]}\n'
+        
+
+    return output
 
 def get_module_vardoc(module):
     """
@@ -374,11 +409,14 @@ if __name__ == '__main__':
     # Get copies of documentation templates to populate.
     core_base = os.path.join(BASE_DIR, 'coredata_base.rst')
     modules_base = os.path.join(BASE_DIR, 'modules_base.rst')
+    flagmods_base = os.path.join(BASE_DIR, 'flagmods_base.rst')
     core = os.path.join(DYN_DIR, 'coredata.rst')
     modules = os.path.join(DYN_DIR, 'modules.rst')
+    flagmods = os.path.join(DYN_DIR, 'flagmods.rst')
 
     shutil.copy2(core_base, core)
     shutil.copy2(modules_base, modules)
+    shutil.copy2(flagmods_base, flagmods)
 
     # We're only supporting compilation to pdf via latex, or html currently
     if 'latex' in sys.argv[1]:
@@ -397,6 +435,7 @@ if __name__ == '__main__':
     # PP_GROUP, for example PP_GROUP=core
     module_group = os.environ['PP_GROUP']
     pp_modules = pp_register[module_group]
+
 
     replace_tag(
         core, 'TAG_REQUIRED_GLOBAL_ATTRIBUTES',
@@ -427,5 +466,10 @@ if __name__ == '__main__':
     replace_tag(core, 'TAG_DEFAULT_VARIABLES', get_variables())
     replace_tag(core, 'TAG_OPTIONAL_VARIABLES', get_variables(False))
 
+    # Create rst files with processing module level documentation
     for mod in pp_modules:
         append(modules, get_module_doc(mod))
+
+    # Create rst files with flagging module level documentation
+    for mod in flag_modules:
+        append(flagmods, get_flagmod_doc(mod))

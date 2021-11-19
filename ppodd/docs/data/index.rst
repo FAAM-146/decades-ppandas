@@ -8,3 +8,4 @@ FAAM Core Data Guide
     content/intro
     dynamic_content/coredata
     dynamic_content/modules
+    dynamic_content/flagmods

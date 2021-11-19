@@ -5,9 +5,11 @@ using data which may not be available at the time processing modules are run.
 """
 
 import abc
+import datetime
 import logging
 
 import numpy as np
+import pandas as pd
 
 from ppodd.decades import flags
 
@@ -37,6 +39,12 @@ class FlaggingBase(abc.ABC):
     prerequisites = []
     flagged = []
 
+    # Super simple data for testing use
+    test_flag = np.arange(5)
+    test_index = pd.date_range(
+        start=datetime.datetime.now(), periods=5, freq='S'
+    )
+
     def __init__(self, dataset):
         """
         Initialize an instance.
@@ -45,7 +53,6 @@ class FlaggingBase(abc.ABC):
             dataset: a DecadesDataset from which the processing is being run.
         """
         self.dataset = dataset
-        self.test_flag = np.arange(5)
         self.flags = {}
 
     def __str__(self):
