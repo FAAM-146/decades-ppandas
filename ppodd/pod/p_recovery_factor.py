@@ -75,7 +75,7 @@ class RecoveryFactor(PPBase):
         """
         self.declare(
             'ETA_ND',
-            units=1,
+            units='1',
             frequency=32,
             long_name=('Variable recovery factor for non-deiced Rosemount '
                        'housing'),
@@ -84,7 +84,7 @@ class RecoveryFactor(PPBase):
 
         self.declare(
             'ETA_DI',
-            units=1,
+            units='1',
             frequency=32,
             long_name=('Variable recovery factor for deiced Rosemount '
                        'housing'),
@@ -93,7 +93,7 @@ class RecoveryFactor(PPBase):
 
         self.declare(
             'ETA_ND_CU',
-            units=1,
+            units='1',
             frequency=32,
             long_name=('Uncertainty in recovery factor for deiced '
                        'Rosemount housing'),
@@ -103,7 +103,7 @@ class RecoveryFactor(PPBase):
 
         self.declare(
             'ETA_DI_CU',
-            units=1,
+            units='1',
             frequency=32,
             long_name=('Uncertainty in recovery factor for non-deiced '
                        'Rosemount housing'),

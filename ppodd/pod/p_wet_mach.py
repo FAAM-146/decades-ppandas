@@ -92,7 +92,7 @@ class WetMach(PPBase):
         """
         self.declare(
             'MACH',
-            units=1,
+            units='1',
             frequency=32,
             long_name='Moist air Mach derived from WVSS-II(F) and RVSM',
             write=False
@@ -100,7 +100,7 @@ class WetMach(PPBase):
 
         self.declare(
             'MACH_CU',
-            units=1,
+            units='1',
             frequency=32,
             long_name='Uncertainty estimate for moist-air Mach',
             write=False
@@ -108,7 +108,7 @@ class WetMach(PPBase):
 
         self.declare(
             'SH_GAMMA',
-            units=1,
+            units='1',
             frequency=32,
             long_name=('Ratio of specific heats at constant pressure and '
                        'constant pressure'),
@@ -117,7 +117,7 @@ class WetMach(PPBase):
 
         self.declare(
             'SH_GAMMA_CU',
-            units=1,
+            units='1',
             frequency=32,
             long_name='Uncertainty estimate for SH_GAMMA',
             write=False

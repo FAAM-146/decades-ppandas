@@ -103,7 +103,11 @@ class WVSS2RH(PPBase):
         temp = d[f'TAT_{nddi}_R']
 
         input_to_remove = 'ND' if nddi == 'DI' else 'DI'
-        self.inputs.remove(f'TAT_{input_to_remove}_R')
+        try:
+            self.inputs.remove(f'TAT_{input_to_remove}_R')
+        except ValueError:
+            # The other temperature doesn't exist and therefore can't be removed.
+            pass
 
         press = d['PS_RVSM']
         wow = d['WOW_IND']
