@@ -203,6 +203,135 @@ def p_winds(d, consts):
 
 @register_pp('core')
 class TurbulenceProbe(PPBase):
+    r"""
+    This module produces flow angles and airspeed from the turbulence probe 
+    pressure differentials, and combines these with inertial/GPS measurements
+    to derive 3-dimensional winds. These two processes are performed iteratively
+    so that covariances between inferred winds and inertial measurements can be
+    used to calculate on-the-fly flow angle correction terms. Alternatively,
+    flow angle corrections can be provided in the flight constants.
+
+    **Flow angles, dynamic pressure, and TAS**
+
+    Initial estimates for angle of attack, :math:`\alpha`, and angle of sideslip, :math:`\beta`,
+    are given by
+
+    .. math::
+        \alpha &= \left(P_a / q - a_0\right) / a_1,\\
+        \beta  &= \left(P_b / q - b_0\right) / b_1.
+
+    Here, :math:`P_a` and :math:`P_b` are the pressure differentials between the 
+    top/bottom and left/right probe ports, :math:`a_n` and :math:`b_n` are 
+    calibration coefficients derived from flight data, and :math:`q` is the 
+    RVSM-derived dynamic pressure.
+
+    Correction terms to these flow angles, required as stagnation points do not
+    correspond exactly with probe ports, calculated by BAeS during the probe 
+    commissioning, are given by
+
+    .. math::
+        \delta_\alpha &= 0.0273 + \alpha\left(-0.0141 + \alpha\left(0.00193 - 0.000052\alpha\right)\right),\\
+        \delta_\beta &= 0.00076172\beta^2.
+
+    An initial estimate of dynamic pressure from the turbulence probe, :math:`q_t`, is then given by
+
+    .. math::
+        q_t = \Delta_{P_0S_{10}} + q(\delta_\alpha + \delta_\beta),
+
+    where :math:`\Delta_{P_0S_{10}}` is the pressure differential between :math:`P_0` and :math:`S_{10}`.
+
+    This whole process is then iteratively repeated with :math:`q = q_t`, either until the difference in 
+    both flow angles between iterations is less than 0.2 degrees, or 5 iterations have been completed.
+
+    Mach number, :math:`M`, is given by 
+
+    .. math::
+        M = \sqrt{5\left(\left(1 + \frac{q_t}{p}\right)^\frac{2}{7} - 1\right)},
+
+    where :math:`p` is the static pressure from the RVSM system.
+
+    True airspeed, TAS, is then given by
+
+    .. math::
+        \text{TAS} = \text{TAS}_c C_0 M \sqrt{T_\text{air} / T_0},
+
+    where :math:`\text{TAS}_c` is a correction term derived from flight data, :math:`C_0` is the speed of
+    sound at ICAO STP, :math:`T_\text{air}` is the (deiced) true air temperature, and :math:`T_0` is the
+    temperature at ICAO STP.
+
+    **Wind vector**
+
+    First let us define rotation matricies which provide the transformations between geographical
+    and aircraft-relative coordinate systems.
+
+    .. math::
+        \mathbf{A_1} &= \begin{bmatrix}
+                1 & 0       & 0 \\
+                0 & \cos(r) & -\sin(r) \\
+                0 & sin(r)  & cos(r)
+            \end{bmatrix},\\ 
+        \mathbf{A_2} &= \begin{bmatrix}
+                \cos(\theta) & 0 & -\sin(\theta) \\
+                0            & 1 & 0 \\
+                \sin(\theta) & 0 & \cos(\theta)
+            \end{bmatrix}, \\
+        \mathbf{A_3} &= \begin{bmatrix}
+                \cos(\phi)  & \sin(\phi) & 0 \\
+                -\sin(\phi) & \cos(\phi) & 0 \\
+                0           & 0          & 1
+            \end{bmatrix},
+
+    where :math:`r`, :math:`\theta`, and :math:`\phi` are the aircraft roll, pitch, and yaw, respectively. We
+    can combine these into a single transformation tensor, :math:`\mathbf{R} = (\mathbf{A_3}\cdot\mathbf{A_2})
+    \cdot\mathbf{A_1}`.
+
+    The wind vector :math:`\mathbf{U}`, is given by 
+
+    .. math::
+        \mathbf{U} = \mathbf{V} + \mathbf{T} + \mathbf{L},
+
+    where :math:`\mathbf{V}` is the aircraft velocity vector, :math:`\mathbf{T}` is the aircraft TAS
+    vector, relative to the earth, and :math:`\mathbf{L}` is a correction term which accounts for the
+    offset between the aircraft inertial measurement and the turbulence probe.
+
+    The correction term :math:`\mathbf{L}` is given by
+
+    .. math::
+        \mathbf{L} = \mathbf{L_L} \times \mathbf{L_R},
+
+    where :math:`\mathbf{L_R} = \mathbf{R} \cdot \mathbf{l}` and :math:`\mathbf{L_L} = \mathbf{L_1} +
+    \mathbf{L_2} + \mathbf{L_3}`.
+
+    Here :math:`\mathbf{l}` is the position vector describing the offset of the inertial measurement from
+    the turbulence probe, and
+
+    .. math::
+        \mathbf{L_1} &= [0, 0, -\dot\phi],\\
+        \mathbf{L_2} &= \mathbf{A_3} \cdot [0, \dot\theta, 0],\\
+        \mathbf{L_3} &= (\mathbf{A_3}\cdot\mathbf{A_2})\cdot[\dot{r}, 0, 0],
+
+    where an overdot represents a time derivative.
+
+    The TAS term :math:`\mathbf{T}` is given by
+
+    .. math::
+        R = \mathbf{R} \cdot [-T_p, -T_p\tan(\beta), T_p\tan(\alpha)],
+
+    where
+
+    .. math::
+        T_p = \frac{\text{TAS}}{\sqrt{1 + \tan(\beta)^2 + \tan(\alpha)^2}}.
+
+    **Flow angle corrections**
+
+    The derivation of the variables above assumes no flow angle corrections, which are generally required.
+    We take the approach of calculating flow angle corrections on line. This is done in an iterative loop
+    where, after calculation of the flow angles and wind vector, flow angle corrections are calulated by
+    1) minimising the covariance between platform roll and vertical wind in the turns, and 2) minimising the
+    mean vertical wind when the platform is straight and level. Flow angles and are then recalculated, and
+    so on until the flow angle corrections converge suitably. This has been seen to occur rapidly, and only
+    two iterations after the initial calculations are performed.    
+    """
 
     inputs = [
         'AOA_A0',
