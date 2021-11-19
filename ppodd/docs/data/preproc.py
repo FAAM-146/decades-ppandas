@@ -150,6 +150,16 @@ def get_module_doc(module):
     return txt
 
 def get_flagmod_doc(module):
+    """
+    Returns documentation for a given flagging module, as restructured text.
+
+    Args:
+        module: the flagging module to document, expected to be a subclass of 
+            ppodd.flags.FlaggingBase.
+
+    Returns:
+        A restructured text string containing the module documentation.
+    """
     index = module.test_index
     flag = module.test_flag
     d = DecadesDataset()
