@@ -8,6 +8,16 @@ Summary
 
 This document provides a description of the FAAM core data product, including a summary of the processing that takes place and a standard which describes the format of, and metadata associated with, the core data product.
 
+-----------
+Tracability
+-----------
+
+The code that produces the FAAM core data product is openly available on `GitHub <https://github.com>`_ at 
+https://github.com/FAAM-146/decades-ppandas. Additionally, from software version `0.11.1`, the code is archived
+on `Zenodo <https://zenodo.org>`_ with DOI `10.5281/zenodo.5711136 <https://doi.org/10.5281/zenodo.5711136>`_.
+This is the concept DOI, which points to the most recent release of the code; DOIs are also available on a per-release
+basis.
+
 ---------------
 FAIR Principles
 ---------------
