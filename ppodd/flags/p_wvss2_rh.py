@@ -1,10 +1,18 @@
 """
-This module frovides flagging info for the WVSS-2 derived RH
+This module provides flagging modules for the WVSS-2 derived relative humidity
+measurement which cannot be inferred during initial processing.
 """
+
 from .p_rosemount_temps import RosemountTempCloudFlag, RosemountTempDeltaFlag
 from .base import FlaggingBase
 
 class WVSS2RHTemperatureFlag(FlaggingBase):
+    """
+    This class flags the WVSS-II derived relative humitity whereever the de-iced
+    temperature is flagged. This is now depreciated, as this information is
+    now provided by the `dependency_is_flagged` flag, and may be removed in a
+    future release.
+    """
 
     inputs = ['RH_ICE', 'RH_LIQ', 'TAT_DI_R']
     prerequisites = [RosemountTempCloudFlag, RosemountTempDeltaFlag]

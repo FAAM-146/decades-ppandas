@@ -16,7 +16,7 @@ UNMASKED = 0
 
 class RosemountTempDeltaFlag(FlaggingBase):
     """
-    The temperature delta flag adds a flag to the rosemount temperatures if the
+    This class adds a flag to the rosemount temperatures if the
     two temperatures disagree by more than a given absolute value. This is
     given by the module constant TEMPERATURE_THRESHOLD.
     """
@@ -65,8 +65,8 @@ class RosemountTempDeltaFlag(FlaggingBase):
 
 class RosemountTempCloudFlag(FlaggingBase):
     """
-    The cloud flags adds a flag to all temperature variables if the aircraft is
-    in cloud, as indicated by NV_CLEAR_AIR_MASK, derived from the Nevzerov
+    This class adds a flag to all rosemount temperature variables if the aircraft
+    is in cloud, as indicated by NV_CLEAR_AIR_MASK, derived from the Nevzorov
     probe.
     """
 

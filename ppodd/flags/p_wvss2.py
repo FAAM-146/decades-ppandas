@@ -1,7 +1,7 @@
 """
-This module provides flagging modules for the Rosemount temperature probes,
-providing data quality information which can not be inferred during processing
-of the temperatures.
+This module provides flagging modules for the uncorrected WVSS-II volume mixing,
+ratios, providing data quality information which can not be inferred during
+processing of the WVSS-II data.
 """
 
 import numpy as np
@@ -15,9 +15,9 @@ WVSS2_VARIABLES = ('WVSS2F_VMR_U', 'WVSS2R_VMR_U')
 
 class WVSS2CloudFlag(FlaggingBase):
     """
-    The cloud flags adds a flag to all temperature variables if the aircraft is
-    in cloud, as indicated by NV_CLEAR_AIR_MASK, derived from the Nevzerov
-    probe.
+    This class adds a flag to (uncorrected) WVSS-II volume mixing ratios if the
+    aircraft is in cloud, as indicated by NV_CLEAR_AIR_MASK, derived from the
+    Nevzorov probe.
     """
 
     inputs = ['NV_CLEAR_AIR_MASK']
