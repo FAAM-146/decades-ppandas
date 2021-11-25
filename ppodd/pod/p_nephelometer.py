@@ -16,8 +16,10 @@ DATA_MISSING = 3
 @register_pp('core')
 class Nephelometer(PPBase):
     r"""
-    The Nephelometer currently out of service. This module is currently
-    retained for possible future use.
+    Provides data and flagging information from the TSI nephelometer. The data
+    from the nephelometer do not require any further processing, however this
+    module parses the instrument status information to provide a QC flag for
+    the data.
     """
 
     inputs = [
@@ -63,26 +65,34 @@ class Nephelometer(PPBase):
         # Instrument is perm U/S, but we're going to hold on the the code until
         # we get a new one
         # pylint: disable=unreachable
+        neph_manufacturer='TSI'
+        neph_model='3563'
 
         self.declare(
             'NEPH_PR',
             units='hPa',
             frequency=1,
-            long_name='Internal sample pressure of the Nephelometer'
+            long_name='Internal sample pressure of the Nephelometer',
+            instrument_manufacturer=neph_manufacturer,
+            instrument_model=neph_model
         )
 
         self.declare(
             'NEPH_T',
             units='K',
             frequency=1,
-            long_name='Internal sample temperature of the Nephelometer'
+            long_name='Internal sample temperature of the Nephelometer',
+            instrument_manufacturer=neph_manufacturer,
+            instrument_model=neph_model
         )
 
         self.declare(
             'NEPH_RH',
             units='%',
             frequency=1,
-            long_name='Relative humidity from TSI 3563 Nephelometer'
+            long_name='Relative humidity from TSI 3563 Nephelometer',
+            instrument_manufacturer=neph_manufacturer,
+            instrument_model=neph_model
         )
 
         self.declare(
@@ -90,7 +100,9 @@ class Nephelometer(PPBase):
             units='m-1',
             frequency=1,
             long_name=('Uncorrected blue total scattering coefficient from '
-                       'TSI 3563 Nephelometer')
+                       'TSI 3563 Nephelometer'),
+            instrument_manufacturer=neph_manufacturer,
+            instrument_model=neph_model
         )
 
         self.declare(
@@ -98,7 +110,9 @@ class Nephelometer(PPBase):
             units='m-1',
             frequency=1,
             long_name=('Uncorrected red total scattering coefficient from '
-                       'TSI 3563 Nephelometer')
+                       'TSI 3563 Nephelometer'),
+            instrument_manufacturer=neph_manufacturer,
+            instrument_model=neph_model
         )
 
         self.declare(
@@ -106,7 +120,9 @@ class Nephelometer(PPBase):
             units='m-1',
             frequency=1,
             long_name=('Uncorrected red total scattering coefficient from '
-                       'TSI 3563 Nephelometer')
+                       'TSI 3563 Nephelometer'),
+            instrument_manufacturer=neph_manufacturer,
+            instrument_model=neph_model
         )
 
         self.declare(
@@ -114,7 +130,9 @@ class Nephelometer(PPBase):
             units='m-1',
             frequency=1,
             long_name=('Uncorrected blue back scattering coefficient from '
-                       'TSI 3563 Nephelometer')
+                       'TSI 3563 Nephelometer'),
+            instrument_manufacturer=neph_manufacturer,
+            instrument_model=neph_model
         )
 
         self.declare(
@@ -122,7 +140,9 @@ class Nephelometer(PPBase):
             units='m-1',
             frequency=1,
             long_name=('Uncorrected green back scattering coefficient from '
-                       'TSI 3563 Nephelometer')
+                       'TSI 3563 Nephelometer'),
+            instrument_manufacturer=neph_manufacturer,
+            instrument_model=neph_model
         )
 
         self.declare(
@@ -130,7 +150,9 @@ class Nephelometer(PPBase):
             units='m-1',
             frequency=1,
             long_name=('Uncorrected red back scattering coefficient from '
-                       'TSI 3563 Nephelometer')
+                       'TSI 3563 Nephelometer'),
+            instrument_manufacturer=neph_manufacturer,
+            instrument_model=neph_model
         )
 
 
