@@ -4,6 +4,7 @@ aerosol rack. See class docstring for more information.
 """
 # pylint: disable=invalid-name
 import numpy as np
+import pandas as pd
 
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 from .base import PPBase, register_pp
@@ -108,12 +109,20 @@ class PSAP(PPBase):
         d.loc[d['PSAP_TRA'] < 0.5, 'TRA_FLAG'] = 1
         d.loc[d['PSAP_TRA'] > 1.05, 'TRA_FLAG'] = 1
         d.loc[d['PSAP_FLO'] < 1, 'FLO_FLAG'] = 2
-        d['COM_FLAG'] = d['FLO_FLAG'] + d['TRA_FLAG']
+        
 
-        # TODO: Original flagging adds a 2 second buffer when the PSAP pump is
+        # Adds a 2 second buffer to the flag when the PSAP pump is
         # toggled.
-        pump_on = np.where(np.diff(d['FLO_FLAG']) == 1)
-        pump_off = np.where(np.diff(d['FLO_FLAG']) == -1)
+        pump_off = d['FLO_FLAG'].loc[d['FLO_FLAG'].diff() == 2]
+        pump_on = d['FLO_FLAG'].loc[d['FLO_FLAG'].diff() == -2]
+
+        sec = pd.Timedelta('1S')
+        for index in pump_on.index:
+            d.loc[[index, index + sec, index + (2 * sec)], 'FLO_FLAG'] = 2
+        for index in pump_off.index:
+            d.loc[[index-(2 * sec), index - sec, index], 'FLO_FLAG'] = 2
+
+        d['COM_FLAG'] = d['FLO_FLAG'] + d['TRA_FLAG']
 
     def process(self):
         """
