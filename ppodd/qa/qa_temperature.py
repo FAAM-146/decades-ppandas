@@ -19,7 +19,10 @@ class TemperatureQA(QAMod):
 
         lwc_axis = fig.timeseries_axes([.1, .80, .8, .05], labelx=False)
 
-        clear_air = self.dataset['NV_CLEAR_AIR_MASK'].data.asfreq('1S')
+        try:
+            clear_air = self.dataset['NV_CLEAR_AIR_MASK'].data.asfreq('1S')
+        except KeyError:
+            return
         cloud = 1 - clear_air
 
         wow = self.dataset['WOW_IND'].data.asfreq('1S')

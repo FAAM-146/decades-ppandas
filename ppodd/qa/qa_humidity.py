@@ -21,7 +21,11 @@ class HumidityQA(QAMod):
 
         lwc_axis = fig.timeseries_axes([.1, .83, .8, .05], labelx=False)
 
-        clear_air = self.dataset['NV_CLEAR_AIR_MASK'].data.asfreq('1S')
+        try:
+            clear_air = self.dataset['NV_CLEAR_AIR_MASK'].data.asfreq('1S')
+        except KeyError:
+            return
+
         cloud = 1 - clear_air
 
         wow = self.dataset['WOW_IND'].data.asfreq('1S')
@@ -232,7 +236,13 @@ class HumidityQA(QAMod):
         _cr2 = self.dataset['TDEWCR2C'].data
         _wow = self.dataset['WOW_IND'].data
         _temp = self.dataset['TAT_DI_R'].data
-        _clearair = self.dataset['NV_CLEAR_AIR_MASK'].data
+
+        try:
+            _clearair = self.dataset['NV_CLEAR_AIR_MASK'].data
+        except KeyError:
+            _text = 'No cloud mask available; GE/CR2 not compared'
+            _col = 'gray'
+            fig.text(.5, .91, _text, color=_col, horizontalalignment='center')
 
         # Create a common index
         _index = (_ge.index.intersection(_cr2.index)
