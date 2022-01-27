@@ -3,3 +3,5 @@ __pycache__/
 *.swp
 *~
 _build/
+.vscode
+dev_test.py
