@@ -139,7 +139,7 @@ class Heimann(PPBase):
 
         # Combined measurement / calibration timeseries
         combined = measuring
-        combined.loc[self.d.INCAL == 1] = caling
+        combined[self.d.INCAL == 1] = caling
         combined.name = 'BTHEIM_U'
         self.d['BTHEIM_U'] = combined
 
