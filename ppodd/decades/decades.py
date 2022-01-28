@@ -30,7 +30,7 @@ import pandas as pd
 import ppodd.flags
 
 from ppodd.decades.backends import DefaultBackend
-from ppodd.decades.attributes import AttributesCollection, Attribute
+from ppodd.decades.attributes import AttributesCollection, Attribute, ATTR_USE_EXAMPLE
 from ppodd.decades.flags import DecadesClassicFlag
 from ppodd.utils import pd_freq, infer_freq
 from ppodd.writers import NetCDFWriter
@@ -130,8 +130,6 @@ class DecadesVariable(object):
                 information. Default is `DecadesClassicFlag`.
             standard (str, optional): a metadata 'standard' which should
                 be adhered to. Default is `ppodd.standard.core`.
-            standard_version (float, optional): the version of `standard` to
-                apply. Default is 1.0
             strict (bool, optional): whether the `standard` should be strictly
                 enforced. Default is `True`.
             tolerance (int, optional): tolerance to use when reindexing onto a
@@ -142,15 +140,14 @@ class DecadesVariable(object):
         """
 
         _flag = kwargs.pop('flag', DecadesClassicFlag)
-        _standard = kwargs.pop('standard', 'ppodd.standard.core')
-        _standard_version = kwargs.pop('standard_version', 1.0)
+        _standard = kwargs.pop('standard', 'faam_data')
         _strict = kwargs.pop('strict', True)
         _tolerance = kwargs.pop('tolerance', 0)
         _flag_postfix = kwargs.pop('flag_postfix', 'FLAG')
 
         self.attrs = AttributesCollection(
-            dataset=self, definition='.'.join((_standard, 'variable_attrs')),
-            version=_standard_version, strict=_strict
+            dataset=self, definition='.'.join((_standard, 'VariableAttributes')),
+            strict=_strict
         )
         self.dtype = kwargs.pop('dtype', None)
         self.name = kwargs.pop('name', None)
@@ -161,7 +158,7 @@ class DecadesVariable(object):
         for _attr in _attrs:
             # Get the default value of an attribute, if it exists
             try:
-                _default = self.attrs._definition[_attr]['default']
+                _default = self.attrs._definition.schema()['properties'][_attr]['ppodd_default']
             except KeyError:
                 _default = None
 
@@ -264,22 +261,11 @@ class DecadesVariable(object):
         """
         return len(self.array)
 
-    def __getattribute__(self, attr):
+    def __getattr__(self, attr):
         """
         Implement .<attr>.
         """
         # pylint: disable=too-many-return-statements
-
-        try:
-            return super().__getattribute__(attr)
-        except AttributeError:
-            pass
-
-        if attr == 'attrs':
-            try:
-                return self.__dict__['attrs']
-            except KeyError:
-                pass
 
         if attr == 'index':
             return self().index
@@ -294,11 +280,6 @@ class DecadesVariable(object):
             return self.attrs[attr]
 
         try:
-            # Dirty check that we have t0 and t1, or self() will recurse with
-            # __getattribute__()
-            # pylint: disable=pointless-statement
-            self.__dict__['t0']
-            self.__dict__['t1']
             return getattr(self(), attr)
         except (KeyError, AttributeError):
             pass
@@ -436,18 +417,22 @@ class DecadesVariable(object):
             end: a `datetime` like indicating the end of the period to keep.
         """
 
-        # Trim the QC flag over the same interval.
-        if self.flag is not None:
-            self.flag.trim(start, end)
-
         # Create a dataframe, index to the required interval, and extract the
         # required attributes to store.
         _df = self()
         loc = (_df.index >= start) & (_df.index <= end)
         trimmed = _df.loc[loc]
-        self.array = trimmed.values.flatten()
-        self.t0 = trimmed.index[0]
-        self.t1 = trimmed.index[-1]
+
+        try:
+            self.array = trimmed.values.flatten()
+            self.t0 = trimmed.index[0]
+            self.t1 = trimmed.index[-1]
+        except Exception:
+            return
+
+        # Trim the QC flag over the same interval.
+        if self.flag is not None:
+            self.flag.trim(start, end)
 
     def merge(self, other):
         """
@@ -522,7 +507,7 @@ class DecadesDataset(object):
 
     def __init__(self, date=None, standard_version=1.0, backend=DefaultBackend,
                  writer=NetCDFWriter, pp_group='core',
-                 standard='ppodd.standard.core', strict=True, logfile=None):
+                 standard='faam_data', strict=True, logfile=None):
         """
         Create a class instance.
 
@@ -560,8 +545,8 @@ class DecadesDataset(object):
         self.failed_modules = []
 
         self.globals = AttributesCollection(
-            dataset=self, definition='.'.join((standard, 'dataset_globals')),
-            version=standard_version, strict=strict
+            dataset=self, definition='.'.join((standard, 'GlobalAttributes')),
+            strict=strict
         )
 
         self.writer = writer
@@ -792,6 +777,9 @@ class DecadesDataset(object):
                 value = locate(groups['value'])
                 if value is None:
                     return
+
+            if groups['action'] == 'example':
+                value = ATTR_USE_EXAMPLE
 
             if groups['action'] == 'data':
                 # Data directive: parse the string and delegate to

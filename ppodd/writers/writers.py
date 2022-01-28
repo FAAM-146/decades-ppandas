@@ -154,37 +154,54 @@ class NetCDFWriter(DecadesWriter):
         _freq = self.write_freq or var.frequency
         ncflag = None
 
+        try:
+            fill_value = var.attrs['_FillValue']
+        except KeyError:
+            try:
+                fill_value = var.attrs['FillValue']
+            except KeyError:
+                fill_value = None
+
+        if var.flag is not None:
+            try:
+                flag_fill_value = var.flag.cfattrs['_FillValue']
+            except KeyError:
+                try:
+                    flag_fill_value = var.flag.cfattrs['FillValue']
+                except KeyError:
+                    flag_fill_value = None
+
         # If the variable is at 1 Hz, it only needs a time dimension,
         # otherwise, it also requires an spsNN dimension.
         if _freq == 1:
             ncvar = nc.createVariable(
                 var.name, 'f4', ('Time',),
-                fill_value=var.attrs['_FillValue']
+                fill_value=fill_value
             )
 
             if var.flag is not None:
                 ncflag = nc.createVariable(
                     '{}_{}'.format(var.name, var.flag.postfix),
-                    np.int8, ('Time',), fill_value=var.flag.cfattrs['_FillValue']
+                    np.int8, ('Time',), fill_value=flag_fill_value
                 )
         else:
             ncvar = nc.createVariable(
                 var.name, 'f4', ('Time', 'sps{0:02d}'.format(_freq)),
-                fill_value=var.attrs['_FillValue']
+                fill_value=fill_value
             )
 
             if var.flag is not None:
                 ncflag = nc.createVariable(
                     '{}_{}'.format(var.name, var.flag.postfix), np.int8,
                     ('Time', 'sps{0:02d}'.format(_freq)),
-                    fill_value=var.flag.cfattrs['_FillValue']
+                    fill_value=flag_fill_value
                 )
 
         # Write variable attributes, excluding _FillValue, which must be given
         # when the variable is created, and frequency, which is set as the
         # write frequency, if given
         for attr_key, attr_val in var.attrs().items():
-            if attr_key == '_FillValue' or attr_val is None:
+            if 'FillValue' in attr_key or attr_val is None:
                 continue
             if attr_key == 'frequency' and self.write_freq is not None:
                 setattr(ncvar, attr_key, self.write_freq)
@@ -200,7 +217,7 @@ class NetCDFWriter(DecadesWriter):
         # ncflag.standard_name = 'status_flag'
         if var.flag is not None:
             for attr_key, attr_val in var.flag.cfattrs.items():
-                if attr_key == '_FillValue' or attr_val is None:
+                if 'FillValue' in attr_key or attr_val is None:
                     continue
                 setattr(ncflag, attr_key, attr_val)
 
@@ -219,10 +236,10 @@ class NetCDFWriter(DecadesWriter):
         if _freq == var.frequency:
             # variable is alreay at the correct frequency, all we require is a
             # reindex, filling any missing data with _FillValue
-            _data = var().reindex(_index).fillna(var.attrs['_FillValue'])
+            _data = var().reindex(_index).fillna(fill_value)
             if var.flag is not None:
                 _flag = var.flag().reindex(_index).fillna(
-                    var.flag.cfattrs['_FillValue']
+                    flag_fill_value
                 )
         else:
             # Variable and flag must be resampled to bring onto the correct
@@ -235,15 +252,15 @@ class NetCDFWriter(DecadesWriter):
 
             _data = _data.resample(
                 pd_freq[_freq]
-            ).apply('mean').reindex(_index).fillna(var.attrs['_FillValue'])
+            ).apply('mean').reindex(_index).fillna(fill_value)
 
             if getattr(var, 'circular', False):
-                _data[_data != var.attrs['_FillValue']] %= 360
+                _data[_data != fill_value] %= 360
 
             if var.flag is not None:
                 _flag = var.flag().resample(
                     pd_freq[_freq]
-                ).pad().reindex(_index).fillna(var.flag.cfattrs['_FillValue'])
+                ).pad().reindex(_index).fillna(flag_fill_value)
 
         # Reshape the data if it is not at 1 Hz
         if _freq != 1:

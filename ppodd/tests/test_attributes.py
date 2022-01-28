@@ -1,7 +1,12 @@
 import unittest
 import logging
 
+from typing import Optional
+
 import pandas as pd
+
+from pydantic import BaseModel, Field
+
 import ppodd.readers as r
 from ppodd.decades import DecadesDataset, DecadesVariable
 from ppodd.decades.attributes import AttributesCollection, Attribute
@@ -10,46 +15,54 @@ from ppodd.decades.attributes import STR_DERIVED_FROM_FILE, ATTRIBUTE_NOT_SET
 
 logging.disable(logging.CRITICAL)
 
-test_definition = {
-    'Required': {
-        'required': True,
-        'description': 'A required attribute',
-        'aliases': [],
-        'versions': [1.0],
-        'inherits_from': None
-    },
-    'RequiredDefault': {
-        'required': True,
-        'description': 'A required attribute',
-        'aliases': [],
-        'versions': [1.0],
-        'inherits_from': None,
-        'default': 42
-    },
-    'Optional': {
-        'required': False,
-        'description': 'A required attribute',
-        'aliases': [],
-        'versions': [1.0],
-        'inherits_from': None
-    },
-    'key1': {
-        'required': False,
-        'description': 'A test attribute',
-        'aliases': [],
-        'versions': [1.0],
-        'inherits_from': None
-    },
-    'key2': {
-        'required': False,
-        'description': 'A test attribute',
-        'aliases': [],
-        'versions': [1.0],
-        'inherits_from': None
-    }
-}
+class Attributes(BaseModel):
+    Required: str = Field(description='A required attribute', example='my attribute')
+    RequiredDefault: str = Field(
+        description='A required attribute w/ default',
+        ppodd_default='A required attribute'
+    )
+    OptionalAttr: Optional[str] = 'An optional attribute'
 
-DEF_PATH = 'ppodd.tests.test_attributes.test_definition'
+# test_definition = {
+#     'Required': {
+#         'required': True,
+#         'description': 'A required attribute',
+#         'aliases': [],
+#         'versions': [1.0],
+#         'inherits_from': None
+#     },
+#     'RequiredDefault': {
+#         'required': True,
+#         'description': 'A required attribute',
+#         'aliases': [],
+#         'versions': [1.0],
+#         'inherits_from': None,
+#         'default': 42
+#     },
+#     'Optional': {
+#         'required': False,
+#         'description': 'A required attribute',
+#         'aliases': [],
+#         'versions': [1.0],
+#         'inherits_from': None
+#     },
+#     'key1': {
+#         'required': False,
+#         'description': 'A test attribute',
+#         'aliases': [],
+#         'versions': [1.0],
+#         'inherits_from': None
+#     },
+#     'key2': {
+#         'required': False,
+#         'description': 'A test attribute',
+#         'aliases': [],
+#         'versions': [1.0],
+#         'inherits_from': None
+#     }
+# }
+
+DEF_PATH = 'ppodd.tests.test_attributes.Attributes'
 
 class TestAttributes(unittest.TestCase):
     """
@@ -68,28 +81,20 @@ class TestAttributes(unittest.TestCase):
     def teardownClass(cls):
         pass
 
-    def _get_var_1(self):
-        return  DecadesVariable({
-            TEST_VAR_NAME: TEST_VAR_VALUES
-        }, index=self.test_index_1)
-
     def test_create_collection_with_no_definition(self):
         a = AttributesCollection()
 
     def test_create_collection_with_path_definition(self):
-        a = AttributesCollection(definition=DEF_PATH, version=1.0)
-
-    def test_create_collection_with_dict_definition(self):
-        a = AttributesCollection(definition=test_definition, version=1.0)
+        a = AttributesCollection(definition=DEF_PATH)
 
     def test_required_attributes_from_definition(self):
-        a = AttributesCollection(definition=DEF_PATH, version=1.0)
+        a = AttributesCollection(definition=DEF_PATH,)
         for key in ['Required', 'RequiredDefault']:
             self.assertIn(key, a.REQUIRED_ATTRIBUTES)
 
     def test_option_attributes_from_definition(self):
-        a = AttributesCollection(definition=DEF_PATH, version=1.0)
-        self.assertIn('Optional', a.OPTIONAL_ATTRIBUTES)
+        a = AttributesCollection(definition=DEF_PATH)
+        self.assertIn('OptionalAttr', a.OPTIONAL_ATTRIBUTES)
 
     def test_required_attributes_with_no_definition(self):
         a = AttributesCollection()
@@ -113,17 +118,11 @@ class TestAttributes(unittest.TestCase):
         self.assertEquals(a['key1'], 'value2')
 
     def test_add_invalid_key_in_strict_mode(self):
-        a = AttributesCollection(definition=test_definition)
+        a = AttributesCollection(definition=Attributes)
         self.assertRaises(
             NonStandardAttributeError,
             lambda: a.add(Attribute('invalid', 'invalid'))
         )
-
-    def test_get_item_compliancify(self):
-        a = AttributesCollection()
-        a.add(Attribute('key1', lambda: 'value'))
-        a.set_compliance_mode(True)
-        self.assertEquals(a['key1'], STR_DERIVED_FROM_FILE)
 
     def test_set_item(self):
         a = AttributesCollection()
@@ -143,13 +142,6 @@ class TestAttributes(unittest.TestCase):
         d = a()
         for k, v in zip(('key1', 'key2'), ('value1', 'value2')):
             self.assertEquals(d[k], v)
-
-    def test_set_compliance_mode(self):
-        a = AttributesCollection(definition=test_definition)
-        a.set_compliance_mode(True)
-        self.assertEquals(a._compliance, True)
-        a.set_compliance_mode(False)
-        self.assertEquals(a._compliance, False)
 
     def test_remove_attribute(self):
         a = AttributesCollection()

@@ -2,8 +2,11 @@ import collections
 import importlib
 import warnings
 
+import pydantic
+
 STR_DERIVED_FROM_FILE = '<derived from file>'
 ATTRIBUTE_NOT_SET = 'ATTRIBUTE_NOT_SET'
+ATTR_USE_EXAMPLE = '<example>'
 
 
 class AttributeNotSetError(Exception):
@@ -27,7 +30,7 @@ class AttributesCollection(object):
     which defines which attributes are required or optional.
     """
 
-    def __init__(self, dataset=None, definition=None, version=1.0, strict=True):
+    def __init__(self, dataset=None, definition=None, strict=True):
         """
         Initialise an instance.
 
@@ -54,21 +57,21 @@ class AttributesCollection(object):
         if isinstance(definition, str):
             _def_module, _def_var = definition.rsplit('.', 1)
             _definition = getattr(importlib.import_module(_def_module), _def_var)
-
-        if isinstance(definition, dict):
-           _definition = definition
+        elif definition is not None:
+            _definition = definition
 
         try:
             # Set REQUIRED and OPTIONAL attributes from the attributes definition
+            schema = _definition.schema()
+
             self.REQUIRED_ATTRIBUTES = [
-                g for g in _definition.keys() if _definition[g]['required']
-                and version in _definition[g]['versions']
+                g for g in schema['properties'].keys() if g in schema['required']
             ]
 
             self.OPTIONAL_ATTRIBUTES = [
-                g for g in _definition.keys() if not _definition[g]['required']
-                and version in _definition[g]['versions']
+                g for g in schema['properties'].keys() if g not in schema['required']
             ]
+
         except AttributeError:
             _definition = {}
             self.REQUIRED_ATTRIBUTES = []
@@ -119,6 +122,10 @@ class AttributesCollection(object):
                 __k = '_'.join((key, _k))
                 self.add(Attribute(__k, _v))
             return
+
+        if value == ATTR_USE_EXAMPLE:
+            value = self._definition.schema()['properties'][key]['example']
+
         self.add(Attribute(key, value))
 
     def __call__(self):
@@ -132,28 +139,13 @@ class AttributesCollection(object):
         return self.dict
 
     def _compliancify(self, att):
-        if self._compliance:
-            if callable(att.value) or att.value == ATTRIBUTE_NOT_SET:
-                return STR_DERIVED_FROM_FILE
+        if callable(att.value):
+            try:
+                return att.value()
+            except Exception:
+                return None
         else:
-            if callable(att.value):
-                try:
-                    return att.value()
-                except Exception:
-                    return None
-            else:
-                return att.value
-
-        return att.value
-
-    def set_compliance_mode(self, comp):
-        """
-        Set compliance mode. TODO: why isn't this done with properties??
-
-        Args:
-            comp (bool): compliance mode, truthy to turn compliance mode on.
-        """
-        self._compliance = comp
+            return att.value
 
     def remove(self, att):
         """
