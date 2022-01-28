@@ -5,3 +5,5 @@ __pycache__/
 _build/
 .vscode
 dev_test.py
+build/
+*.egg-info/
