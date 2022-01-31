@@ -310,6 +310,29 @@ class NetCDFWriter(DecadesWriter):
                     'sps{0:02d}'.format(self.write_freq), self.write_freq
                 )
 
+    def _stringify_if_datetime(self, dt):
+        """
+        Stringify a datetime like object. An object is assumed to be datetime
+        like if it has a strftime method.
+
+        If dt has an hour attribute, the full time is returned, otherwise just
+        the date.
+
+        Args:
+            dt - on object
+
+        Returns:
+            an iso formatted date/time string if dt supports strftime, otherwise
+            dt
+        """
+        if not (hasattr(dt, 'strftime') and callable(dt.strftime)):
+            return dt
+
+        if hasattr(dt, 'hour'):
+            return dt.strftime('%Y-%m-%dT%H:%M:%SZ')
+        
+        return dt.strftime('%Y-%m-%d')
+
     def _write_global(self, nc, key, value):
         """
         Write a (key, value) pair to a given netCDF handle as global
@@ -327,10 +350,7 @@ class NetCDFWriter(DecadesWriter):
             return
 
         # Coerce datetimes to a date string
-        try:
-            value = value.strftime('%Y-%m-%d')
-        except AttributeError:
-            pass
+        value = self._stringify_if_datetime(value)
 
         # If given a dict, recursively build keys
         if type(value) is dict:
@@ -370,6 +390,9 @@ class NetCDFWriter(DecadesWriter):
                     freq=_freq
                 )
             )
+
+        # Set the ID of the dataset before writing to file
+        self.dataset.data_id = filename.replace('.nc', '')
 
         with Dataset(filename, 'w', format=self._format) as nc:
 

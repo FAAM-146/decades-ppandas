@@ -30,12 +30,14 @@ import pandas as pd
 import ppodd.flags
 
 from ppodd.decades.backends import DefaultBackend
+from ppodd.decades.attrutils import attribute_helpers
 from ppodd.decades.attributes import AttributesCollection, Attribute, ATTR_USE_EXAMPLE
 from ppodd.decades.flags import DecadesClassicFlag
 from ppodd.utils import pd_freq, infer_freq
 from ppodd.writers import NetCDFWriter
 
 logger = logging.getLogger(__name__)
+
 
 
 class Lazy(object):
@@ -543,12 +545,7 @@ class DecadesDataset(object):
         self.flag_modules = []
         self.completed_modules = []
         self.failed_modules = []
-
-        self.globals = AttributesCollection(
-            dataset=self, definition='.'.join((standard, 'GlobalAttributes')),
-            strict=strict
-        )
-
+        self._attribute_helpers = []
         self.writer = writer
         self.pp_group = pp_group
 
@@ -557,8 +554,7 @@ class DecadesDataset(object):
         self.lat = None
         self._garbage_collect = False
         self._qa_dir = None
-        self._takeoff_time = None
-        self._landing_time = None
+   
         self._decache = False
         self._trim = False
         self._standard = standard
@@ -566,6 +562,13 @@ class DecadesDataset(object):
         self.allow_overwrite = False
         self._backend = backend()
 
+        self.globals = AttributesCollection(
+            dataset=self, definition='.'.join((standard, 'GlobalAttributes')),
+            strict=strict
+        )
+
+        for helper in attribute_helpers:
+            self._attribute_helpers.append(helper(self))
 
     def __getitem__(self, item):
         """
@@ -596,6 +599,33 @@ class DecadesDataset(object):
             return lambda: self.time_bounds()[1].strftime('%Y-%m-%dT%H:%M:%SZ')
 
         raise KeyError('Unknown variable: {}'.format(item))
+
+    def __getattr__(self, attr):
+        """
+        Allow the use of helpers to provide additional attributes to the dataset.
+        """
+        for helper in self._attribute_helpers:
+            if attr in helper.attributes:
+                return getattr(helper, attr)
+
+        raise AttributeError(f'{attr!r} is not an attribute of {self!r}')
+
+    def __setattr__(self, name, value):
+        """
+        Intercept attributes that are set, and pass them onto attribute helpers,
+        if required. This would probably be better done with on-the-fly mixins,
+        but never mind...
+        """
+       
+        try:
+            for helper in self.__dict__['_attribute_helpers']:
+                if name in helper.attributes:
+                    setattr(helper, name, value)
+                    return
+        except KeyError:
+            pass
+            
+        super().__setattr__(name, value)
 
     @property
     def coords(self):
@@ -780,6 +810,15 @@ class DecadesDataset(object):
 
             if groups['action'] == 'example':
                 value = ATTR_USE_EXAMPLE
+
+            if groups['action'] == 'attribute':
+                try:
+                    value = getattr(self, groups['value'])
+                except AttributeError:
+                    return
+
+                if value is None:
+                    return
 
             if groups['action'] == 'data':
                 # Data directive: parse the string and delegate to
@@ -1027,55 +1066,7 @@ class DecadesDataset(object):
 
         self._collect_garbage()
 
-    @property
-    def takeoff_time(self):
-        """
-        :term:`datetime-like`: Return the latest takeoff time of the data set,
-        as determined by the last time at which PRTAFT_wow_flag changing 1 -> 0
-        """
-
-        if self._takeoff_time is not None:
-            return self._takeoff_time
-
-        try:
-            wow = self['PRTAFT_wow_flag']()
-        except KeyError:
-            return None
-
-        try:
-            self._takeoff_time = wow.diff().where(
-                wow.diff() == -1
-            ).dropna().tail(1).index[0]
-        except IndexError:
-            return None
-
-        return self._takeoff_time
-
-    @property
-    def landing_time(self):
-        """
-        :term:`datetime-like`: Return the latest landing time of the dataset,
-        as determined by the last time at which PRTAFT_wow_flag changes from
-        0 -> 1
-        """
-
-        if self._landing_time is not None:
-            return self._landing_time
-
-        try:
-            wow = self['PRTAFT_wow_flag']()
-        except KeyError:
-            return None
-
-        try:
-            self._landing_time = wow.diff().where(
-                wow.diff() == 1
-            ).dropna().tail(1).index[0]
-        except IndexError:
-            return None
-
-        return self._landing_time
-
+   
     def _get_required_data(self):
         """
         Get all of the data which may still be required for a processing job.
