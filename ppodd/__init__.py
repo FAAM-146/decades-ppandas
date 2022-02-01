@@ -14,10 +14,10 @@ formatter = logging.Formatter(
 )
 handler = logging.StreamHandler()
 handler.setFormatter(formatter)
-handler.setLevel(logging.DEBUG)
+handler.setLevel(logging.INFO)
 
 package_logger = logging.getLogger(__name__.split('.')[0])
-package_logger.setLevel(logging.DEBUG)
+package_logger.setLevel(logging.INFO)
 package_logger.addHandler(handler)
 
 def version():
