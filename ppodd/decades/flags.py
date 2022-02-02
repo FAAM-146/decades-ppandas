@@ -145,7 +145,9 @@ class DecadesClassicFlag(DecadesFlagABC):
         Implement the cfattrs getter. Returns a dict of attributes which should
         be added to the netCDF flag variable for cf compliance.
         """
-        _cfattrs = {}
+        _cfattrs = {
+            'coverage_content_type': 'qualityInformation'
+        }
 
         if self.meanings:
             if 0 in self.meanings:
@@ -175,6 +177,9 @@ class DecadesClassicFlag(DecadesFlagABC):
         _cfattrs['flag_meanings'] = ' '.join(
             _meanings[i] for i in _cfattrs['flag_values']
         )
+
+        _cfattrs['frequency'] = self.frequency
+        _cfattrs['units'] = '1'
 
         return _cfattrs
 
@@ -308,12 +313,16 @@ class DecadesBitmaskFlag(DecadesFlagABC):
         """
         _valid_range_max = 2 * int(self.masks[-1]) - 1 if self.masks else 0
         _valid_range_min = 1 if self.masks else 0
+
         return {
             'long_name': self._long_name,
             '_FillValue': 0,
             'valid_range': [_valid_range_min, _valid_range_max],
             'flag_masks': [np.int8(i) for i in self.masks],
-            'flag_meanings': ' '.join(self._df.columns)
+            'flag_meanings': ' '.join(self._df.columns),
+            'coverage_content_type': 'qualityInformation',
+            'frequency': self.frequency,
+            'units': '1'
         }
 
     def add_mask(self, data, meaning, description=None):

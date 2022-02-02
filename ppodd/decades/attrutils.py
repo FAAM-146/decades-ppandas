@@ -1,6 +1,10 @@
 import abc
+from re import I
+import uuid
+
 from typing import TYPE_CHECKING
 
+from ppodd.utils.utils import stringify_if_datetime, try_to_call
 
 if TYPE_CHECKING:
     from ppodd.decades import DecadesDataset
@@ -97,7 +101,7 @@ class FlightTime(AttributeHelper):
 class IDProvider(AttributeHelper):
 
     def __post_init__(self):
-        self._data_id = lambda: None
+        self._data_id = None
 
     @property
     def data_id(self):
@@ -106,3 +110,54 @@ class IDProvider(AttributeHelper):
     @data_id.setter
     def data_id(self, data_id):
         self._data_id = data_id
+
+
+@register_attribute_helper
+class UUIDProvider(AttributeHelper):
+
+    @property
+    def uuid(self):
+        def _closure():
+            try:
+                _id = self.dataset.globals['id']
+                _date = stringify_if_datetime(
+                    self.dataset.globals['date_created']
+                ) 
+            except Exception:
+                return str(uuid.uuid4())
+
+            _string = f'{_date}{_id}'
+
+            return str(uuid.uuid3(uuid.NAMESPACE_DNS, _string))
+
+        return _closure
+
+
+@register_attribute_helper
+class DurationProvider(AttributeHelper):
+
+    def _get_duration(self):
+        start = self.dataset.lazy['TIME_MIN_CALL']
+        end = self.dataset.lazy['TIME_MAX_CALL']
+        delta = (end - start).total_seconds()
+
+        hours = int(delta // 3600)
+        minutes = int(delta // 60 % 60)
+        seconds = int(delta % 60)
+
+        a = f'PT{hours}H{minutes}M{seconds}S'
+        return a
+
+    @property
+    def time_coverage_duration(self):
+        def _closure():
+            start = self.dataset.lazy['TIME_MIN_CALL']
+            end = self.dataset.lazy['TIME_MAX_CALL']
+            delta = (end() - start()).total_seconds()
+            hours = int(delta // 3600)
+            minutes = int(delta // 60 % 60)
+            seconds = int(delta % 60)
+
+            return f'PT{hours}H{minutes}M{seconds}S'
+
+        return _closure

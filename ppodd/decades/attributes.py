@@ -1,4 +1,5 @@
 import collections
+import enum
 import importlib
 import warnings
 
@@ -99,11 +100,12 @@ class AttributesCollection(object):
         """
         for g in self._attributes:
             if g.key == key:
+                # return g
                 return self._compliancify(g)
 
-        for _key, _value in self._data_attributes.items():
-            if _key == key:
-                return self._compliancify(Attribute(_key, _value))
+        # for _key, _value in self._data_attributes.items():
+        #     if _key == key:
+        #         return self._compliancify(Attribute(_key, _value))
 
         raise KeyError('{} not an attribute'.format(key))
 
@@ -223,17 +225,17 @@ class AttributesCollection(object):
                 return False
         return True
 
-    def add_data_attribute(self, param, attrs):
-        """
-        Add a data attribute - an attribute that is callable to return its
-        value.
+    # def add_data_attribute(self, param, attrs):
+    #     """
+    #     Add a data attribute - an attribute that is callable to return its
+    #     value.
 
-        Args:
-            param (str): the key of the data attribute.
-            attrs (:term:`callable`): the callable which yields the value of the
-                attribute.
-        """
-        self._data_attributes[param] = attrs
+    #     Args:
+    #         param (str): the key of the data attribute.
+    #         attrs (:term:`callable`): the callable which yields the value of the
+    #             attribute.
+    #     """
+    #     self._data_attributes[param] = attrs
 
     def static_items(self):
         """
@@ -259,39 +261,19 @@ class AttributesCollection(object):
             dict: a dictionary of attributes, optionally excluding those
                 providing their value through a call.
         """
-        from ppodd.decades import DecadesDataset, DecadesVariable
+        
         _dict = {}
+
         for glo in self._attributes:
-            _dict[glo.key] = self._compliancify(glo)
-
-        if not dynamic:
-            return _dict
-
-        for name, _pack in self._data_attributes.items():
-            if isinstance(self._dataset, DecadesDataset):
-                key, attrs = _pack
-                try:
-                    var = self._dataset[key]
-                except KeyError:
-                    if self._compliance:
-                        _dict[name] = STR_DERIVED_FROM_FILE
+            if not dynamic:
+                if glo._context is not None:
                     continue
-            else:
-                var = self._dataset
+            _value = glo.value
 
-            if isinstance(self._dataset, DecadesVariable):
-                attrs = _pack
-                if self._compliance:
-                    _dict[name] = STR_DERIVED_FROM_FILE
-                    continue
+            while callable(_value):
+                _value = _value()
 
-            for _attr in attrs:
-                try:
-                    var = getattr(var, _attr)
-                except AttributeError:
-                    var = getattr(var(), _attr)
-
-            _dict[name] = self._compliancify(Attribute(name, var))
+            _dict[glo.key] = _value
 
         return _dict
 
@@ -324,13 +306,19 @@ class AttributesCollection(object):
         return _sorted
 
 
+class Context(enum.Enum):
+    ITEM = enum.auto()
+    ATTR = enum.auto()
+    DATA = enum.auto()
+   
+
 class Attribute(object):
     """
     An Attribute is a simple wrapper containing a key/value pair, and is
     considered immutable once created.
     """
 
-    def __init__(self, key, value):
+    def __init__(self, key, value, context=None, context_type=Context.ATTR):
         """
         Initialize a class instance.
 
@@ -340,6 +328,8 @@ class Attribute(object):
         """
         self._key = key
         self._value = value
+        self._context = context
+        self._context_type = context_type
 
     def __repr__(self):
         return r'Attribute({!r}, {!r})'.format(self.key, self.value)
@@ -356,4 +346,31 @@ class Attribute(object):
         """
         Object: the Attribute value.
         """
-        return self._value
+        if self._context is None:
+            return self._value
+
+        if self._context_type == Context.ATTR:
+            try:
+                return getattr(self._context, self._value)
+            except AttributeError:
+                return None
+
+        if self._context_type == Context.ITEM:
+            try:
+                return self._context[self._value]
+            except KeyError:
+                return None
+
+        if self._context_type == Context.DATA:
+            key, *attrs = self._value
+            try:
+                value = self._context[key]
+            except KeyError:
+                return None
+
+            for attr in attrs:
+                value = getattr(value, attr)
+                if callable(value):
+                    value = value()
+            
+            return value

@@ -10,7 +10,7 @@ import pandas as pd
 from netCDF4 import Dataset
 import sqlite3
 
-from ..utils import pd_freq, try_to_call, unwrap_array
+from ..utils import pd_freq, try_to_call, unwrap_array, stringify_if_datetime
 from ..decades.attributes import ATTRIBUTE_NOT_SET
 
 __all__ = ['SQLiteWriter', 'NetCDFWriter']
@@ -211,7 +211,14 @@ class NetCDFWriter(DecadesWriter):
                     var.name, attr_key
                 ))
                 continue
-            setattr(ncvar, attr_key, attr_val)
+
+            try:
+                setattr(ncvar, attr_key, attr_val)
+            except TypeError:
+                logger.error(
+                    f'Error setting variable attr {attr_key} = {attr_val} '
+                    f'on {var.name}'
+                )
 
         # Add a few required attributes to the flag variable.
         # ncflag.standard_name = 'status_flag'
@@ -292,6 +299,8 @@ class NetCDFWriter(DecadesWriter):
         self.time.long_name = 'Time of measurement'
         self.time.standard_name = 'time'
         self.time.calendar = 'gregorian'
+        self.time.coverage_content_type = 'coordinate'
+        self.time.frequency = 1
         self.time.units = 'seconds since {} 00:00:00 +0000'.format(
             self.dataset.date.strftime('%Y-%m-%d')
         )
@@ -310,29 +319,6 @@ class NetCDFWriter(DecadesWriter):
                     'sps{0:02d}'.format(self.write_freq), self.write_freq
                 )
 
-    def _stringify_if_datetime(self, dt):
-        """
-        Stringify a datetime like object. An object is assumed to be datetime
-        like if it has a strftime method.
-
-        If dt has an hour attribute, the full time is returned, otherwise just
-        the date.
-
-        Args:
-            dt - on object
-
-        Returns:
-            an iso formatted date/time string if dt supports strftime, otherwise
-            dt
-        """
-        if not (hasattr(dt, 'strftime') and callable(dt.strftime)):
-            return dt
-
-        if hasattr(dt, 'hour'):
-            return dt.strftime('%Y-%m-%dT%H:%M:%SZ')
-        
-        return dt.strftime('%Y-%m-%d')
-
     def _write_global(self, nc, key, value):
         """
         Write a (key, value) pair to a given netCDF handle as global
@@ -345,12 +331,14 @@ class NetCDFWriter(DecadesWriter):
             value: the global attribute value to write to nc
         """
 
+        logger.debug(f'Writing global: {key} = {value}')
+
         if value == ATTRIBUTE_NOT_SET:
             logger.warning(f'Expected global attribute not set: {key}')
             return
 
         # Coerce datetimes to a date string
-        value = self._stringify_if_datetime(value)
+        value = stringify_if_datetime(value)
 
         # If given a dict, recursively build keys
         if type(value) is dict:
@@ -391,9 +379,6 @@ class NetCDFWriter(DecadesWriter):
                 )
             )
 
-        # Set the ID of the dataset before writing to file
-        self.dataset.data_id = filename.replace('.nc', '')
-
         with Dataset(filename, 'w', format=self._format) as nc:
 
             # Init the netCDF file
@@ -423,6 +408,10 @@ class NetCDFWriter(DecadesWriter):
             nc['Time'][:] = [i / 1e9 - _delta_secs for i in
                             dates.values.astype(np.int64)]
 
-            # Write flight constants as global attributes
+            
+            # Set the ID of the dataset before writing to file
+            self.dataset.data_id = filename.replace('.nc', '')
+
+            # Write global attributes.
             for _gkey, _gval in self.dataset.globals().items():
                 self._write_global(nc, _gkey, _gval)

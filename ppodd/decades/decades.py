@@ -31,7 +31,7 @@ import ppodd.flags
 
 from ppodd.decades.backends import DefaultBackend
 from ppodd.decades.attrutils import attribute_helpers
-from ppodd.decades.attributes import AttributesCollection, Attribute, ATTR_USE_EXAMPLE
+from ppodd.decades.attributes import AttributesCollection, Attribute, ATTR_USE_EXAMPLE, Context
 from ppodd.decades.flags import DecadesClassicFlag
 from ppodd.utils import pd_freq, infer_freq
 from ppodd.writers import NetCDFWriter
@@ -166,22 +166,25 @@ class DecadesVariable(object):
 
             # Pop the attribute off the keyword stack, and set it if it has a
             # value
-            _is_data = False
+
+            _context = None
+            _context_type = None
+
             if _default:
                 try:
                     rex = re.compile('^<call (.+)>$')
                     hook = rex.findall(_default)[0]
-                    _default = [i.strip() for i in hook.strip().split()]
-                    _is_data = True
+                    _default = [i.strip() for i in hook.strip().split()][0]
+                    _context = self
+                    _context_type = Context.ATTR
                 except (TypeError, IndexError):
                     pass
 
             _val = kwargs.pop(_attr, _default)
             if _val is not None:
-                if _is_data:
-                    self.attrs.add_data_attribute(_attr, _default)
-                else:
-                    self.attrs.add(Attribute(_attr, _val))
+                self.attrs.add(
+                    Attribute(_attr, _val, context=_context, context_type=_context_type)
+                )
 
         # Create an interim DataFrame, and infer its frequency
         _df = pd.DataFrame(*args, **kwargs)
@@ -483,10 +486,13 @@ class DecadesVariable(object):
         self.t1 = current.index[-1]
 
     def range(self):
-        return [
-            np.nanmin(self.array).astype(np.float32),
-            np.nanmax(self.array).astype(np.float32)
-        ]
+        try:
+            return [
+                np.nanmin(self.array).astype(np.float32),
+                np.nanmax(self.array).astype(np.float32)
+            ]
+        except Exception:
+            return None
 
     def time_bounds(self):
         """
@@ -593,10 +599,10 @@ class DecadesDataset(object):
         # TIME_(MIN/MAX)_CALL return callables when can be used to return the
         # minimum and maximum times of any variable in the dataset.
         if item == 'TIME_MIN_CALL':
-            return lambda: self.time_bounds()[0].strftime('%Y-%m-%dT%H:%M:%SZ')
+            return lambda: self.time_bounds()[0]#.strftime('%Y-%m-%dT%H:%M:%SZ')
 
         if item == 'TIME_MAX_CALL':
-            return lambda: self.time_bounds()[1].strftime('%Y-%m-%dT%H:%M:%SZ')
+            return lambda: self.time_bounds()[1]#.strftime('%Y-%m-%dT%H:%M:%SZ')
 
         raise KeyError('Unknown variable: {}'.format(item))
 
@@ -782,7 +788,7 @@ class DecadesDataset(object):
             key (str): the name of the global attribute to add
             value (Object): the value of the global attribute <key>
         """
-
+        
         # Recursively flatten any dictionaries passed as values
         if isinstance(value, dict):
             for _key, _val in value.items():
@@ -796,6 +802,9 @@ class DecadesDataset(object):
             result = rex.search(value)
         except TypeError:
             result = None
+
+        _context = None
+        _context_type = Context.ATTR
 
         if result:
             # The value is a directive; resolve it
@@ -812,24 +821,23 @@ class DecadesDataset(object):
                 value = ATTR_USE_EXAMPLE
 
             if groups['action'] == 'attribute':
-                try:
-                    value = getattr(self, groups['value'])
-                except AttributeError:
-                    return
+                _context = self
+                _context_type = Context.ATTR
+                value = groups['value']
 
                 if value is None:
                     return
 
             if groups['action'] == 'data':
-                # Data directive: parse the string and delegate to
-                # add_data_global
                 values = [v.strip() for v in groups['value'].split()]
-                iter_vals = (values[0], values[1:])
-                self.globals.add_data_attribute(key, iter_vals)
-                return
+                item, *callables = values
+                _context = self
+                _context_type = Context.DATA
+                value = tuple([item] + callables)
 
-        # Add the global
-        self.globals[key] = value
+        # Add the global 
+        attr = Attribute(key, value, context=_context, context_type=_context_type)
+        self.globals.add(attr)
 
     @property
     def qa_dir(self):

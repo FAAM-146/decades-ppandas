@@ -22,7 +22,6 @@ pd_freq = {
 def infer_freq(index, mode_conf=0.99):
     diff = index[1:] - index[:-1]
     a = mode(diff)
-    print(a.count[0] / len(index))
     if (a.count[0] / len(index)) >= mode_conf:
         return f'{a.mode[0]}N'
 
@@ -253,3 +252,27 @@ class Either(object):
 
     def __contains__(self, item):
         return item in self.options
+
+
+def stringify_if_datetime(dt):
+        """
+        Stringify a datetime like object. An object is assumed to be datetime
+        like if it has a strftime method.
+
+        If dt has an hour attribute, the full time is returned, otherwise just
+        the date.
+
+        Args:
+            dt - on object
+
+        Returns:
+            an iso formatted date/time string if dt supports strftime, otherwise
+            dt
+        """
+        if not (hasattr(dt, 'strftime') and callable(dt.strftime)):
+            return dt
+
+        if hasattr(dt, 'hour'):
+            return dt.strftime('%Y-%m-%dT%H:%M:%SZ')
+        
+        return dt.strftime('%Y-%m-%d')
