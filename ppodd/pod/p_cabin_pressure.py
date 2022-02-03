@@ -34,6 +34,7 @@ class CabinPressure(PPBase):
         """
         return {
             'CALCABP': ('const', [2.75, 3.3e-2, -2.5e-10]),
+            'CABP_SN': ('const', '1234'),
             'CORCON_cabin_p': (
                 'data', _c([_l(30000, 25000, 50), _l(25000, 35000, 50)]), 1
             )
