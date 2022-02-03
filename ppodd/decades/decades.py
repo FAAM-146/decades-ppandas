@@ -513,7 +513,7 @@ class DecadesDataset(object):
     """
     # pylint: disable=too-many-public-methods, too-many-arguments
 
-    def __init__(self, date=None, standard_version=1.0, backend=DefaultBackend,
+    def __init__(self, date=None, backend=DefaultBackend,
                  writer=NetCDFWriter, pp_group='core',
                  standard='faam_data', strict=True, logfile=None):
         """
@@ -525,8 +525,6 @@ class DecadesDataset(object):
                 via a constants file.
             standard (str, optional): the metadata standard to adhere to.
                 Default is `ppodd.standard.core`.
-            standard_version (float, optional): the version of <standard> to
-                apply. Default is 1.0.
             strict (bool, optional): indicates whether the <standard> should be
                 strictly enforced. Default is True.
             backend (ppodd.decades.backends.DecadesBackend): the backend to use
