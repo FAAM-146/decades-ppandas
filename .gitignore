@@ -7,3 +7,4 @@ _build/
 dev_test.py
 build/
 *.egg-info/
+githash_freeze.py
