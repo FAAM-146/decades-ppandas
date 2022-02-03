@@ -16,15 +16,35 @@ from ppodd.decades import DecadesDataset, DecadesVariable
 from ppodd.decades import DecadesBitmaskFlag, DecadesClassicFlag
 from ppodd.decades import flags
 
-pp_register = {}
 logger = logging.getLogger(__name__)
+
+class PPRegister:
+    def __init__(self):
+        self._dict = {}
+
+    def append(self, pp_group, cls):
+        try:
+            self._dict[pp_group].append(cls)
+        except KeyError:
+            self._dict[pp_group] = [cls]
+
+    def modules(self, group_name, date=None):
+        _modules = self._dict[group_name]
+        if date is not None:
+            _modules = [
+                i for i in _modules 
+                if (date > i.VALID_AFTER) and (date < i.DEPRECIATED_AFTER)
+            ]
+        return _modules
+        
+pp_register = PPRegister()
 
 def register_pp(pp_group):
     def inner(cls):
         try:
-            pp_register[pp_group].append(cls)
+            pp_register.append(pp_group, cls)
         except KeyError:
-            pp_register[pp_group] = [cls]
+            pp_register.append(pp_group, cls)
         return cls
     return inner
 
@@ -39,6 +59,9 @@ class PPBase(object):
 
     inputs = []
     test = {}
+
+    VALID_AFTER = datetime.datetime.min
+    DEPRECIATED_AFTER = datetime.datetime.max
 
     def __init__(self, dataset, test_mode=False):
         """

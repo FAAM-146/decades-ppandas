@@ -1061,7 +1061,7 @@ class DecadesDataset(object):
 
         # Initialise postprocessing modules
         _pp_modules = []
-        for pp in pp_register[self.pp_group]:
+        for pp in pp_register.modules(self.pp_group, date=self.date):
             try:
                 _pp_modules.append(pp(self))
             except Exception as err: # pylint: disable=broad-except
@@ -1226,7 +1226,7 @@ class DecadesDataset(object):
         # module.
         if modname is not None:
             # Import all of the processing modules
-            mods = pp_register[self.pp_group]
+            mods = pp_register.modules(self.pp_group, date=self.date)
 
             # Find an run the correct module
             for mod in mods:
@@ -1253,7 +1253,7 @@ class DecadesDataset(object):
 
         # Initialize postprocessing modules
         _pp_modules = []
-        for pp in pp_register[self.pp_group]:
+        for pp in pp_register.modules(self.pp_group, date=self.date):
             try:
                 _pp_modules.append(pp(self))
             except Exception as err: # pylint: disable=broad-except
