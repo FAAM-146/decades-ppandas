@@ -60,8 +60,8 @@ class PPBase(object):
     inputs = []
     test = {}
 
-    VALID_AFTER = datetime.datetime.min
-    DEPRECIATED_AFTER = datetime.datetime.max
+    VALID_AFTER = datetime.date.min
+    DEPRECIATED_AFTER = datetime.date.max
 
     def __init__(self, dataset, test_mode=False):
         """

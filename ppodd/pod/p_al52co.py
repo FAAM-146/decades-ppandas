@@ -42,6 +42,8 @@ class AL52CO(PPBase):
     identify and flag span calibrations.
     """
 
+    DEPRECIATED_AFTER = datetime.date(2021, 12, 1)
+
     inputs = [
         'AL52CO_sens',
         'AL52CO_zero',
