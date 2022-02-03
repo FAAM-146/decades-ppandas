@@ -193,6 +193,12 @@ class AttributesCollection(object):
             if self.strict:
                 raise NonStandardAttributeError(_message)
 
+        if att.value == ATTR_USE_EXAMPLE:
+            att = Attribute(
+                att.key,
+                self._definition.schema()['properties'][att.key]['example']
+            )
+
         # Add the attribute
         self._attributes.append(att)
 
@@ -346,6 +352,7 @@ class Attribute(object):
         """
         Object: the Attribute value.
         """
+        
         if self._context is None:
             return self._value
 
