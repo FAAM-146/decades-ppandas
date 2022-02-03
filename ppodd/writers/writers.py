@@ -295,7 +295,7 @@ class NetCDFWriter(DecadesWriter):
 
         # Create time dimension, variable, and set attributes
         nc.createDimension('Time', None)
-        self.time = nc.createVariable('Time', 'i4', ('Time',))
+        self.time = nc.createVariable('Time', 'i4', ('Time',), fill_value=-9999)
         self.time.long_name = 'Time of measurement'
         self.time.standard_name = 'time'
         self.time.calendar = 'gregorian'
