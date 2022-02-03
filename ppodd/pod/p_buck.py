@@ -165,7 +165,8 @@ class BuckCR2(PPBase):
                        'mixing ratio measured by the Buck CR2'),
             instrument_manufacturer=manufacturer,
             instrument_model=model,
-            instrument_serial_number=self.dataset.lazy['BUCK_SN']
+            instrument_serial_number=self.dataset.lazy['BUCK_SN'],
+            coverage_content_type='auxiliaryInformation'
         )
 
         self.declare(
@@ -187,7 +188,8 @@ class BuckCR2(PPBase):
                        'Mirror Temperature'),
             instrument_manufacturer=manufacturer,
             instrument_model=model,
-            instrument_serial_number=self.dataset.lazy['BUCK_SN']
+            instrument_serial_number=self.dataset.lazy['BUCK_SN'],
+            coverage_content_type='auxiliaryInformation'
         )
 
         self.declare(

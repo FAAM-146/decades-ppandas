@@ -98,6 +98,7 @@ class RecoveryFactor(PPBase):
             long_name=('Uncertainty in recovery factor for deiced '
                        'Rosemount housing'),
             write=False,
+            coverage_content_type='auxiliaryInformation',
             flag=None
         )
 
@@ -107,6 +108,7 @@ class RecoveryFactor(PPBase):
             frequency=32,
             long_name=('Uncertainty in recovery factor for non-deiced '
                        'Rosemount housing'),
+            coverage_content_type='auxiliaryInformation',
             write=False,
             flag=None
         )

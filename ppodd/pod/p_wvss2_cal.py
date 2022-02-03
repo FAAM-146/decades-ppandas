@@ -93,6 +93,7 @@ class WVSS2Calibrated(PPBase):
                        'ratio from WVSS2F'),
             instrument_manufacturer='SpectraSensors',
             instrument_serial_number=self.dataset.lazy['WVSS2_F_SN'],
+            coverage_content_type='auxiliaryInformation',
             flag=None
         )
 
@@ -147,23 +148,23 @@ class WVSS2Calibrated(PPBase):
         )
 
         vmr_corr_cu_out = DecadesVariable(
-            vmr_corr_cu, name='WVSS2F_VMR_C_CU', flag=DecadesBitmaskFlag
+            vmr_corr_cu, name='WVSS2F_VMR_C_CU', flag=None
         )
 
         out_range = self.get_out_range()
         val_range = self.dataset['WVSS2_F_CAL_RANGE']
 
+        vmr_corr_out.flag.add_mask(
+            out_range, flags.OUT_RANGE,
+            (f'VMR is outside calibration range '
+                f'[{val_range[0]} {val_range[1]}]')
+        )
+
+        vmr_corr_out.flag.add_mask(
+            wow, flags.WOW,
+            ('Aircraft is on the ground, as indicated by the '
+                'weight-on-wheels indicator.')
+        )
+
         for var in (vmr_corr_out, vmr_corr_cu_out):
-            var.flag.add_mask(
-                out_range, flags.OUT_RANGE,
-                (f'VMR is outside calibration range '
-                 f'[{val_range[0]} {val_range[1]}]')
-            )
-
-            var.flag.add_mask(
-                wow, flags.WOW,
-                ('Aircraft is on the ground, as indicated by the '
-                 'weight-on-wheels indicator.')
-            )
-
             self.add_output(var)

@@ -79,6 +79,7 @@ class WVSS2RH(PPBase):
             units='%',
             frequency=1,
             long_name='Combined uncertainty estimate for RH_LIQ',
+            coverage_content_type='auxiliaryInformation'
         )
 
         self.declare(
@@ -86,6 +87,7 @@ class WVSS2RH(PPBase):
             units='%',
             frequency=1,
             long_name='Combined uncertainty estimate for RH_ICE',
+            coverage_content_type='auxiliaryInformation'
         )
 
     def process(self):

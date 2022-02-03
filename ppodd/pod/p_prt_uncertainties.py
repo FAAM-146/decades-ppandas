@@ -125,7 +125,8 @@ class PRTTemperatureUncertainties(PPBase):
                 units='K',
                 frequency=32,
                 long_name=('Combined uncertainty estimate for IAT_DI_R'),
-                write=False
+                write=False,
+                coverage_content_type='auxiliaryInformation'
             )
 
             self.declare(
@@ -133,6 +134,7 @@ class PRTTemperatureUncertainties(PPBase):
                 units='K',
                 frequency=32,
                 long_name=('Combined uncertainty estimate for TAT_DI_R'),
+                coverage_content_type='auxiliaryInformation'
             )
 
 
@@ -142,7 +144,8 @@ class PRTTemperatureUncertainties(PPBase):
                 units='K',
                 frequency=32,
                 long_name=('Combined uncertainty estimate for IAT_ND_R'),
-                write=False
+                write=False,
+                coverage_content_type='auxiliaryInformation'
             )
 
             self.declare(
@@ -150,6 +153,7 @@ class PRTTemperatureUncertainties(PPBase):
                 units='K',
                 frequency=32,
                 long_name=('Combined uncertainty estimate for TAT_ND_R'),
+                coverage_content_type='auxiliaryInformation'
             )
 
     def _combine_unc(self, uncs):

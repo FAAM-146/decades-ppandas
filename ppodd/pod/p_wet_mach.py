@@ -103,7 +103,8 @@ class WetMach(PPBase):
             units='1',
             frequency=32,
             long_name='Uncertainty estimate for moist-air Mach',
-            write=False
+            write=False,
+            coverage_content_type='auxiliaryInformation'
         )
 
         self.declare(
@@ -120,7 +121,8 @@ class WetMach(PPBase):
             units='1',
             frequency=32,
             long_name='Uncertainty estimate for SH_GAMMA',
-            write=False
+            write=False,
+            coverage_content_type='auxiliaryInformation'
         )
 
     def process(self):
