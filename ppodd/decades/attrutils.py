@@ -1,4 +1,5 @@
 import abc
+from atexit import register
 from re import I
 import uuid
 
@@ -161,3 +162,45 @@ class DurationProvider(AttributeHelper):
             return f'PT{hours}H{minutes}M{seconds}S'
 
         return _closure
+
+
+@register_attribute_helper
+class GeoBoundsProvider(AttributeHelper):
+
+    def get_map(self, attr):
+        lower = getattr(self, f'{attr}_min')
+        upper = getattr(self, f'{attr}_max')
+        return {
+            'l': lower,
+            'u': upper
+        }
+
+    def point(self, defstr):
+        lon_id, lat_id  = defstr
+
+        lon_map = self.get_map('lon')
+        lat_map = self.get_map('lat')
+
+        try:
+            return f'{lon_map[lon_id]:0.2f} {lat_map[lat_id]:0.2f}'
+        except TypeError:
+            return None
+
+    def get_props(self):
+        self.lat_min = self.dataset.globals['geospatial_lat_min']
+        self.lat_max = self.dataset.globals['geospatial_lat_max']
+        self.lon_min = self.dataset.globals['geospatial_lon_min']
+        self.lon_max = self.dataset.globals['geospatial_lon_max']
+
+    @property
+    def geospatial_bounds(self):
+        self.get_props()
+        p1 = self.point('ll')
+        p2 = self.point('lu')
+        p3 = self.point('uu')
+        p4 = self.point('ul')
+
+        try:
+            return f'POLYGON(({p1}, {p2}, {p3}, {p4}, {p1}))'
+        except TypeError:
+            return None
