@@ -48,7 +48,8 @@ class Heimann(PPBase):
             'SREG': ('data', _z(100), 1),
             'CORCON_heim_t': ('data', 2e5 * _o(100), 4),
             'CORCON_heim_c': ('data', 185e2 * _o(100), 4),
-            'WOW_IND': ('data', _c([_o(20), _z(80)]), 1)
+            'WOW_IND': ('data', _c([_o(20), _z(80)]), 1),
+            'HEIM_SN': ('const', '1234')
         }
 
     def declare_outputs(self):

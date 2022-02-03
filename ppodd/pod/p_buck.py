@@ -130,6 +130,7 @@ class BuckCR2(PPBase):
         """
         return {
             'BUCK': ('const', [0, 1]),
+            'BUCK_SN': ('const', '1234'),
             'AERACK_buck_ppm': ('data', 2000 * _o(100), 1),
             'AERACK_buck_mirr_temp': ('data', -10 * _o(100), 1),
             'AERACK_buck_pressure': ('data', 800 * _o(100), 1),

@@ -42,6 +42,7 @@ class GeneralEastern(PPBase):
         return {
             'GELIMS': ('const', [7000, 5000]),
             'CALGE': ('const', [-80, 4e-3, -2.5e-10]),
+            'GE_SN': ('const', '1234'),
             'CORCON_ge_dew': ('data', 125e2 * _o(100), 4),
             'CORCON_ge_cont': ('data', 5000 * _o(100), 4)
         }

@@ -210,6 +210,7 @@ class Nevzorov(PPBase):
         """
         return {
             'VANETYPE': ('const', '1T2L1R'),
+            'VANE_SN': ('const', '1234'),
             'CLWCIREF': ('const', [-5.8e-2, 3.3e-4, 5e-1]),
             'CLWCVREF': ('const', [-5.8e-2, 3.3e-4, 2.0]),
             'CLWCICOL': ('const', [-5.8e-2, 3.3e-4, 5e-1]),

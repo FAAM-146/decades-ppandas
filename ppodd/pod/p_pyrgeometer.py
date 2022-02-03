@@ -105,6 +105,8 @@ class KippZonenPyrgeometer(PPBase):
         Return dummy input data for testing.
         """
         return {
+            'BBRLIR_SN': ('const', '1234'),
+            'BBRUIR_SN': ('const', '1234'),
             'LOWBBR_radiometer_3_sig': ('data', 5e3 * _o(100), 1),
             'LOWBBR_radiometer_3_temp': ('data', 2e2 * _o(100), 1),
             'UPPBBR_radiometer_3_sig': ('data', 5e3 * _o(100), 1),
@@ -124,8 +126,7 @@ class KippZonenPyrgeometer(PPBase):
             long_name='Corrected downward longwave irradiance',
             instrument_manufacturer='Kipp and Zonen',
             instrument_model='CR4',
-            instrument_serial_number=self.dataset.lazy['BBRUIR_SN'],
-            write=False
+            instrument_serial_number=self.dataset.lazy['BBRUIR_SN']
         )
 
         self.declare(
@@ -135,8 +136,7 @@ class KippZonenPyrgeometer(PPBase):
             long_name='Corrected upward longwave irradiance',
             instrument_manufacturer='Kipp and Zonen',
             instrument_model='CR4',
-            instrument_serial_number=self.dataset.lazy['BBRLIR_SN'],
-            write=False
+            instrument_serial_number=self.dataset.lazy['BBRLIR_SN']
         )
 
     def process(self):

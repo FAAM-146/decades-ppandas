@@ -42,6 +42,7 @@ class CPC(PPBase):
         Return some dummy input data for testing purposes.
         """
         return {
+            'CPC_SN': ('const', '1234'),
             'CPC378_counts': (
                 'data', _c([_z(30), _l(0, 2e4, 15), _l(2e4, 0, 15), _z(40)]),
                 10
