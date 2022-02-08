@@ -1,3 +1,6 @@
+import datetime
+import importlib
+from typing import Sequence
 import numpy as np
 import pandas as pd
 
@@ -276,3 +279,122 @@ def stringify_if_datetime(dt):
             return dt.strftime('%Y-%m-%dT%H:%M:%SZ')
         
         return dt.strftime('%Y-%m-%d')
+
+
+def make_definition(pp_group, standard):
+    
+    from ppodd.pod.base import pp_register
+    from vocal import schema_types
+    from ruamel.yaml import YAML
+    
+    def make_variable(var, flag=False):
+        _meta = {
+            'name': var.name if not flag else f'{var.name}_FLAG',
+            'datatype': schema_types.Float32 if not flag else schema_types.Integer8,
+            'required': False
+        }
+
+        if not flag:
+            
+            _attributes = dict(var.attrs())
+        else:
+            _attributes = dict(var.flag.cfattrs)
+            for item, value in _attributes.items():
+                if isinstance(value, Sequence):
+                    if isinstance(value, str):
+                        continue
+                    value = list(value)
+                    try:
+                        value = [i.item() for i in value]
+                    except Exception:
+                        pass
+                try:
+                    value = value.item()
+                except Exception:
+                    pass
+                _attributes[item] = value
+
+            if 'flag_masks' in _attributes:
+                _attributes['flag_masks'] = '<Array[int8]: derived_from_file>'
+            if 'flag_values' in _attributes:
+                _attributes['flag_values'] = '<Array[int8]: derived_from_file>'
+
+            if 'valid_range' in _attributes:
+                _attributes['valid_range'] = [schema_types.DerivedByte, schema_types.DerivedByte]
+                
+
+        if 'actual_range' in _attributes:
+            _attributes['actual_range'] = [
+                schema_types.DerivedFloat32, schema_types.DerivedFloat32
+            ]
+        if 'coordinates' in _attributes:
+            del _attributes['coordinates']
+
+        var_vars = (
+            'sensor_serial_number', 'instrument_serial_number', 'flag_meanings',
+            'sensor_type'
+        )
+        for var in var_vars:
+            if var in _attributes:
+                _attributes[var] = schema_types.DerivedString
+
+
+        return {
+            'meta': _meta,
+            'attributes': _attributes,
+            'dimensions': ['Time',]
+        }
+    
+    standard = importlib.import_module(standard)
+    
+    _dataset = {
+        'meta': {
+            'file_pattern': 'core'
+        }, 
+        'attributes': {},
+        'variables': [
+            {
+                'meta': {
+                    'name': 'Time',
+                    'datatype': '<int32>'
+                },
+                'dimensions': ['Time'],
+                'attributes': {
+                    'long_name': 'Time of measurement',
+                    'standard_name': 'time',
+                    'calendar': 'gregorian',
+                    'coverage_content_type': 'coordinate',
+                    'frequency': 1,
+                    'units': schema_types.DerivedString
+                }
+            }
+        ],
+        'dimensions': [{
+            'name': 'Time',
+            'size': None
+        }]
+    }
+
+    for module in pp_register.modules(pp_group, date=datetime.date.today()):
+        instance = module.test_instance()
+        instance.process()
+        instance.finalize()
+        for var in instance.dataset.outputs:
+            if var.write:
+                exists = len([i for i in _dataset['variables'] if i['meta']['name']==var.name])
+                if exists:
+                    continue
+                _dataset['variables'].append(make_variable(var))
+
+                if var.flag is not None:
+                    pass
+                    _dataset['variables'].append(make_variable(var, flag=True))
+
+    import pprint
+    pprint.pprint(_dataset)
+    yaml = YAML()
+    yaml.indent(mapping=2, sequence=4, offset=2)
+    with open('decades_definition.yaml', 'w') as f:
+        yaml.dump( _dataset, f)
+
+    
