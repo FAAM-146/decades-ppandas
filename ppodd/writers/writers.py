@@ -402,7 +402,7 @@ class NetCDFWriter(DecadesWriter):
             # Time will natively be nanoseconds from 1970-01-01, so just
             # convert this to seconds.
             _delta_secs = (
-                self.dataset.date - datetime.datetime(1970, 1 ,1)
+                self.dataset.date - datetime.date(1970, 1 ,1)
             ).total_seconds()
 
             nc['Time'][:] = [i / 1e9 - _delta_secs for i in

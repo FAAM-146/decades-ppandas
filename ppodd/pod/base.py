@@ -469,7 +469,7 @@ class PPBase(object):
                 _dt = datetime.timedelta(seconds=1/_freq)
                 freq = '{}N'.format((1/_freq) * 1e9)
 
-                start_time = d.date
+                start_time = datetime.datetime(*d.date.timetuple()[:3])
                 end_time = (
                     start_time + datetime.timedelta(seconds=len(_values)) - _dt
                 )

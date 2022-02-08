@@ -522,7 +522,8 @@ class GinFileReader(TcpFileReader):
         return packet_length
 
     def _time_last_saturday(self):
-        return self.dataset.date - relativedelta.relativedelta(
+        dset_date =  datetime.datetime(*self.dataset.date.timetuple()[:3])
+        return dset_date - relativedelta.relativedelta(
             weekday=relativedelta.SU(-1)
         )
 

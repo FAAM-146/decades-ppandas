@@ -747,12 +747,12 @@ class DecadesDataset(object):
         if self._date:
             return datetime.datetime.combine(
                 self._date, datetime.datetime.min.time()
-            )
+            ).date()
 
         try:
             return datetime.datetime.combine(
                 self.globals['date'], datetime.datetime.min.time()
-            )
+            ).date()
         except KeyError:
             pass
 
