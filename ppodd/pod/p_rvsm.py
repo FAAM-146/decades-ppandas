@@ -91,7 +91,6 @@ class Rvsm(PPBase):
             'Q_RVSM',
             units='hPa',
             frequency=32,
-            standard_name=None,
             long_name=('Pitot static pressure inverted from RVSM (air data) '
                        'system indicated airspeed'),
             instrument_manufacturer='BAE Systems'

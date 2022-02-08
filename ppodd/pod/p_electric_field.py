@@ -35,7 +35,6 @@ class ElectricFieldJci140(PPBase):
             'EXX_JCI',
             units='1',
             frequency=1,
-            standard_name=None,
             long_name=('Raw data from the Fwd Core Console JCI static '
                        'monitor, static signal')
         )

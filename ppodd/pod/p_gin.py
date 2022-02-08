@@ -113,7 +113,6 @@ class Gin(PPBase):
             units='m s-1',
             frequency=32,
             long_name=f'Aircraft velocity north from {gin_name}',
-            standard_name=None,
             instrument_manufacturer=gin_manufacturer,
             instrument_model=gin_model
         )
@@ -123,7 +122,6 @@ class Gin(PPBase):
             units='m s-1',
             frequency=32,
             long_name=f'Aircraft velocity east from {gin_name}',
-            standard_name=None,
             instrument_manufacturer=gin_manufacturer,
             instrument_model=gin_model
         )
@@ -133,7 +131,6 @@ class Gin(PPBase):
             units='m s-1',
             frequency=32,
             long_name=f'Aircraft velocity down from {gin_name}',
-            standard_name=None,
             instrument_manufacturer=gin_manufacturer,
             instrument_model=gin_model
         )
@@ -174,7 +171,6 @@ class Gin(PPBase):
             units='degree s-1',
             frequency=32,
             long_name=f'Wander angle from {gin_name}',
-            standard_name=None,
             instrument_manufacturer=gin_manufacturer,
             instrument_model=gin_model,
             circular=True
@@ -237,7 +233,6 @@ class Gin(PPBase):
             frequency=32,
             long_name=('Acceleration along the aircraft longitudinal axis '
                        f'from {gin_name} (positive forward)'),
-            standard_name=None,
             instrument_manufacturer=gin_manufacturer,
             instrument_model=gin_model
         )
@@ -248,7 +243,6 @@ class Gin(PPBase):
             frequency=32,
             long_name=('Acceleration along the aircraft transverse axis from '
                        f'{gin_name} (positive starboard)'),
-            standard_name=None,
             instrument_manufacturer=gin_manufacturer,
             instrument_model=gin_model
         )
@@ -259,7 +253,6 @@ class Gin(PPBase):
             frequency=32,
             long_name=('Acceleration along the aircraft vertical axis from '
                        f'{gin_name} (positive down)'),
-            standard_name=None,
             instrument_manufacturer=gin_manufacturer,
             instrument_model=gin_model
         )
@@ -269,7 +262,6 @@ class Gin(PPBase):
             frequency=32,
             units='1',
             long_name=f'Solution status from {gin_name}',
-            standard_name=None,
             instrument_manufacturer=gin_manufacturer,
             instrument_model=gin_model
         )

@@ -27,8 +27,7 @@ class WeightOnWheels(PPBase):
             'WOW_IND',
             frequency=1,
             units='1',
-            long_name='Weight on wheels indicator',
-            standard_name=None
+            long_name='Weight on wheels indicator'
         )
 
     def process(self):
