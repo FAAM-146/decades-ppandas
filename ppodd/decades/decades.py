@@ -143,7 +143,7 @@ class DecadesVariable(object):
 
         _flag = kwargs.pop('flag', DecadesClassicFlag)
         _standard = kwargs.pop('standard', 'faam_data')
-        _strict = kwargs.pop('strict', True)
+        _strict = kwargs.pop('strict', False)
         _tolerance = kwargs.pop('tolerance', 0)
         _flag_postfix = kwargs.pop('flag_postfix', 'FLAG')
 
