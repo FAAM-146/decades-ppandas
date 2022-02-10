@@ -297,6 +297,7 @@ def make_definition(pp_group, standard):
         if not flag:
             
             _attributes = dict(var.attrs())
+            _attributes['coordinates'] = schema_types.DerivedString
         else:
             _attributes = dict(var.flag.cfattrs)
             for item, value in _attributes.items():
@@ -327,25 +328,29 @@ def make_definition(pp_group, standard):
             _attributes['actual_range'] = [
                 schema_types.DerivedFloat32, schema_types.DerivedFloat32
             ]
-        if 'coordinates' in _attributes:
-            del _attributes['coordinates']
+
 
         var_vars = (
             'sensor_serial_number', 'instrument_serial_number', 'flag_meanings',
             'sensor_type'
         )
-        for var in var_vars:
-            if var in _attributes:
-                _attributes[var] = schema_types.DerivedString
+        for _var in var_vars:
+            if _var in _attributes:
+                _attributes[_var] = schema_types.DerivedString
 
+        _dimensions = ['Time']
+        if var.frequency > 1:
+            _dimensions.append(f'sps{var.frequency:02d}')
 
         return {
             'meta': _meta,
             'attributes': _attributes,
-            'dimensions': ['Time',]
+            'dimensions': _dimensions
         }
     
     standard = importlib.import_module(standard)
+
+    dimensions_to_add = {}
     
     _dataset = {
         'meta': {
@@ -380,6 +385,12 @@ def make_definition(pp_group, standard):
         instance.process()
         instance.finalize()
         for var in instance.dataset.outputs:
+            dim_name = f'sps{var.frequency:02d}'
+            if dim_name not in dimensions_to_add:
+                dimensions_to_add[dim_name] = {
+                    'name': dim_name,
+                    'size': var.frequency
+                }
             if var.write:
                 exists = len([i for i in _dataset['variables'] if i['meta']['name']==var.name])
                 if exists:
@@ -389,6 +400,11 @@ def make_definition(pp_group, standard):
                 if var.flag is not None:
                     pass
                     _dataset['variables'].append(make_variable(var, flag=True))
+
+    for dim_to_add in dimensions_to_add.values():
+        _dataset['dimensions'].append(dim_to_add)
+
+    _dataset['dimensions'].sort(key=lambda x: x['size'] if x['size'] is not None else -9e99)
 
     import pprint
     pprint.pprint(_dataset)
