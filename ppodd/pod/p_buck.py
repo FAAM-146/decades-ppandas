@@ -155,7 +155,10 @@ class BuckCR2(PPBase):
                        'CR2'),
             instrument_manufacturer=manufacturer,
             instrument_model=model,
-            instrument_serial_number=self.dataset.lazy['BUCK_SN']
+            instrument_serial_number=self.dataset.lazy['BUCK_SN'],
+            calibration_date=self.dataset.lazy['BUCK_CALINFO_DATE'],
+            calibration_information=self.dataset.lazy['BUCK_CALINFO_INFO'],
+            calibration_url=self.dataset.lazy['BUCK_CALINFO_URL'],
         )
 
         self.declare(
@@ -178,7 +181,10 @@ class BuckCR2(PPBase):
             standard_name='dew_point_temperature',
             instrument_manufacturer=manufacturer,
             instrument_model=model,
-            instrument_serial_number=self.dataset.lazy['BUCK_SN']
+            instrument_serial_number=self.dataset.lazy['BUCK_SN'],
+            calibration_date=self.dataset.lazy['BUCK_CALINFO_DATE'],
+            calibration_information=self.dataset.lazy['BUCK_CALINFO_INFO'],
+            calibration_url=self.dataset.lazy['BUCK_CALINFO_URL'],
         )
 
         self.declare(
@@ -202,7 +208,10 @@ class BuckCR2(PPBase):
             standard_name='dew_point_temperature',
             instrument_manufacturer=manufacturer,
             instrument_model=model,
-            instrument_serial_number=self.dataset.lazy['BUCK_SN']
+            instrument_serial_number=self.dataset.lazy['BUCK_SN'],
+            calibration_date=self.dataset.lazy['BUCK_CALINFO_DATE'],
+            calibration_information=self.dataset.lazy['BUCK_CALINFO_INFO'],
+            calibration_url=self.dataset.lazy['BUCK_CALINFO_URL'],
         )
 
     @staticmethod

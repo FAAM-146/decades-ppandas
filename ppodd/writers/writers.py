@@ -213,7 +213,7 @@ class NetCDFWriter(DecadesWriter):
                 continue
 
             try:
-                setattr(ncvar, attr_key, attr_val)
+                setattr(ncvar, attr_key, stringify_if_datetime(attr_val))
             except TypeError:
                 logger.error(
                     f'Error setting variable attr {attr_key} = {attr_val} '

@@ -177,6 +177,7 @@ class ThermistorV1Temperatures(PPBase):
                 standard_name='air_temperature',
                 sensor_type=self.dataset.lazy['DITSENS'][1],
                 sensor_serial_number=self.dataset.lazy['DITSENS'][0],
+                calibration_date=self.dataset.lazy['RM_CALINFO_DI_DATE'],
                 calibration_information=self.dataset.lazy['RM_CALINFO_DI_INFO'],
                 calibration_url=self.dataset.lazy['RM_CALINFO_DI_URL'],
                 comment=sampling.format(nddi='deiced')
@@ -190,6 +191,7 @@ class ThermistorV1Temperatures(PPBase):
                            'temperature sensor'),
                 sensor_type=self.dataset.lazy['DITSENS'][1],
                 sensor_serial_number=self.dataset.lazy['DITSENS'][0],
+                calibration_date=self.dataset.lazy['RM_CALINFO_DI_DATE'],
                 calibration_information=self.dataset.lazy['RM_CALINFO_DI_INFO'],
                 calibration_url=self.dataset.lazy['RM_CALINFO_DI_URL'],
                 comment=sampling.format(nddi='deiced'),
@@ -206,6 +208,7 @@ class ThermistorV1Temperatures(PPBase):
                 standard_name='air_temperature',
                 sensor_type=self.dataset.lazy['NDTSENS'][1],
                 sensor_serial_number=self.dataset.lazy['NDTSENS'][0],
+                calibration_date=self.dataset.lazy['RM_CALINFO_ND_DATE'],
                 calibration_information=self.dataset.lazy['RM_CALINFO_ND_INFO'],
                 calibration_url=self.dataset.lazy['RM_CALINFO_ND_URL'],
                 comment=sampling.format(nddi='non-deiced')
@@ -219,6 +222,7 @@ class ThermistorV1Temperatures(PPBase):
                            'non-deiced temperature sensor'),
                 sensor_type=self.dataset.lazy['NDTSENS'][1],
                 sensor_serial_number=self.dataset.lazy['NDTSENS'][0],
+                calibration_date=self.dataset.lazy['RM_CALINFO_ND_DATE'],
                 calibration_information=self.dataset.lazy['RM_CALINFO_ND_INFO'],
                 calibration_url=self.dataset.lazy['RM_CALINFO_ND_URL'],
                 comment=sampling.format(nddi='non-deiced'),
