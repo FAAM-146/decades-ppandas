@@ -68,10 +68,16 @@ class Lazy(object):
             either <item> got from parent, or a callable deferring this
             operation.
         """
+        def _callable():
+            try:
+                return self.parent[item]
+            except KeyError:
+                return None
+
         try:
             return self.parent[item]
         except KeyError:
-            return lambda: self.parent[item]
+            return _callable
 
     def __getattr__(self, attr):
         """
