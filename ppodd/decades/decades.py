@@ -1327,6 +1327,18 @@ class DecadesDataset(object):
         bounds = self.time_bounds()
         self._trim_data(start_cutoff=bounds[0], end_cutoff=bounds[1])
 
+        self._finalize()
+
+    def _finalize(self):
+        """
+        Finalization tasks
+        """
+        for output in [i.name for i in self._backend.outputs if i.name.endswith('_CU')]:
+            print(output)
+            var_name = output.replace('_CU', '')
+            flag = self[var_name].flag()
+            self[output].array[flag > 0] = np.nan
+
     def write(self, *args, **kwargs):
         """
         Write data to file, by instantiating the self.writer injected class.
