@@ -347,7 +347,10 @@ class NetCDFWriter(DecadesWriter):
                 self._write_global(nc, _key, _val)
             return
 
-        setattr(nc, key, value)
+        try:
+            setattr(nc, key, value)
+        except Exception:
+            logger.error(f'Error setting global attribute {key} = {value}')
 
     def write(self, filename=None, freq=None):
         """
