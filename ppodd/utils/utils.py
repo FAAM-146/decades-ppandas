@@ -82,7 +82,8 @@ def unwrap_array(ang):
 
 
 def flagged_avg(df, flag_col, data_col, fill_nan=None, flag_value=1,
-                skip_start=0, skip_end=0, out_name=None, interp=False):
+                skip_start=0, skip_end=0, out_name=None, interp=False,
+                interp_method='linear'):
     """
     Average a variable where a corresponding flag has a given value
 
@@ -141,7 +142,7 @@ def flagged_avg(df, flag_col, data_col, fill_nan=None, flag_value=1,
         df[out_name] = (
             means.reindex(
                 df.index.union(means.index).sort_values()
-            ).interpolate().loc[df.index]
+            ).interpolate(method=interp_method).loc[df.index]
         )
 
     else:
