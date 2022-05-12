@@ -315,10 +315,8 @@ def make_definition(pp_group, standard):
                     pass
                 _attributes[item] = value
 
-            if 'flag_masks' in _attributes:
+            if 'flag_masks' in _attributes or 'flag_values' in _attributes:
                 _attributes['flag_masks'] = '<Array[int8]: derived_from_file>'
-            if 'flag_values' in _attributes:
-                _attributes['flag_values'] = '<Array[int8]: derived_from_file>'
 
             if 'valid_range' in _attributes:
                 _attributes['valid_range'] = [schema_types.DerivedByte, schema_types.DerivedByte]
@@ -329,10 +327,13 @@ def make_definition(pp_group, standard):
                 schema_types.DerivedFloat32, schema_types.DerivedFloat32
             ]
 
+        _attributes['comment'] = '<str: derived_from_file optional>'
+
 
         var_vars = (
             'sensor_serial_number', 'instrument_serial_number', 'flag_meanings',
-            'sensor_type'
+            'sensor_type', 'sensor_manufacturer', 'sensor_model', 'calibration_date',
+            'calibration_information', 'calibration_url'
         )
         for _var in var_vars:
             if _var in _attributes:
