@@ -121,8 +121,6 @@ class CSVReader(FileReader):
             df = pd.read_csv(_file.filepath, index_col=[0], parse_dates=[0])
             _freq = int(1 / (df.index[1] - df.index[0]).total_seconds())
 
-            df.columns = [f'CSV_{i}' for i in df.columns]
-
             for variable_name in df.columns:
                 variable = DecadesVariable(
                     df[variable_name],
@@ -486,7 +484,8 @@ class TcpFileReader(FileReader):
                     frequency=frequency,
                     tolerance=self.tolerance,
                     write=False,
-                    flag=None
+                    flag=None,
+                    # dtype=_var_dtype
                 )
 
                 _file.dataset.add_input(variable)
