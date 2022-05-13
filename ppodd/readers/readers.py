@@ -1,6 +1,7 @@
 import abc
 import csv
 import datetime
+from email import header
 import glob
 import json
 import logging
@@ -120,7 +121,8 @@ class CSVReader(FileReader):
         for _file in self.files:
             df = pd.read_csv(_file.filepath, index_col=[0], parse_dates=[0])
             _freq = int(1 / (df.index[1] - df.index[0]).total_seconds())
-
+            print(df)
+            print(type(df.index[0]))
             for variable_name in df.columns:
                 variable = DecadesVariable(
                     df[variable_name],
