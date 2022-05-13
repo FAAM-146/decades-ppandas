@@ -1337,7 +1337,10 @@ class DecadesDataset(object):
             print(output)
             var_name = output.replace('_CU', '')
             flag = self[var_name].flag()
-            self[output].array[flag > 0] = np.nan
+            try:
+                self[output].array[flag > 0] = np.nan
+            except Exception:
+                logger.error(f'Failed to NaN uncertainty for {var_name}')
 
     def write(self, *args, **kwargs):
         """
