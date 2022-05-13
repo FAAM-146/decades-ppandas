@@ -54,8 +54,10 @@ class WVSS2(object):
                 '{}_ident'.format(self.unit)
             ]().dropna().iloc[0]
 
-            if type(self._ident) is bytes:
+            try:
                 self._ident = self._ident.decode()
+            except AttributeError:
+                pass
 
         except KeyError:
             if not self.test_mode:
