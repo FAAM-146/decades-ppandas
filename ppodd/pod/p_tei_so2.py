@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import date, timedelta
 
 import numpy as np
 
@@ -32,6 +32,8 @@ class TecoSO2(PPBase):
 
     Flagging is based on valve states and the instrument status flag.
     """
+
+    DEPRECIATED_AFTER = date(2022, 1, 1)
 
     inputs = [
         'CHTSOO_conc',
