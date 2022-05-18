@@ -1334,13 +1334,13 @@ class DecadesDataset(object):
         Finalization tasks
         """
         for output in [i.name for i in self._backend.outputs if i.name.endswith('_CU')]:
-            print(output)
             var_name = output.replace('_CU', '')
-            flag = self[var_name].flag()
-            try:
-                self[output].array[flag > 0] = np.nan
-            except Exception:
-                logger.error(f'Failed to NaN uncertainty for {var_name}')
+            if self[var_name] is not None:
+                flag = self[var_name].flag()
+                try:
+                    self[output].array[flag > 0] = np.nan
+                except Exception:
+                    logger.error(f'Failed to NaN uncertainty for {var_name}')
 
     def write(self, *args, **kwargs):
         """

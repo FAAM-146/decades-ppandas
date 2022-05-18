@@ -136,7 +136,7 @@ class RecoveryFactor(PPBase):
         )**0.5
 
         # Add outputs
-        self.add_output(DecadesVariable(eta_nd, name='ETA_ND'))
-        self.add_output(DecadesVariable(eta_di, name='ETA_DI'))
-        self.add_output(DecadesVariable(u_eta_nd, name='ETA_ND_CU'))
-        self.add_output(DecadesVariable(u_eta_di, name='ETA_DI_CU'))
+        self.add_output(DecadesVariable(eta_nd, name='ETA_ND', flag=None))
+        self.add_output(DecadesVariable(eta_di, name='ETA_DI', flag=None))
+        self.add_output(DecadesVariable(u_eta_nd, name='ETA_ND_CU', flag=None))
+        self.add_output(DecadesVariable(u_eta_di, name='ETA_DI_CU', flag=None))
