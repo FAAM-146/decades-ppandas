@@ -116,7 +116,12 @@ class FlaggingBase(abc.ABC):
         need to add or modify a dependency_is_flagged flag to all of the
         downstream variables.
         """
-        var = self.dataset[var]
+        try:
+            var = self.dataset[var]
+        except KeyError:
+            logger.debug(f'{var} not in dataset')
+            return
+            
         for _ds in downstream:
             ds = self.dataset[_ds]
             logger.debug(f'reflagging {_ds} from {var}')
