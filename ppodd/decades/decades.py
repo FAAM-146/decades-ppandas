@@ -1335,12 +1335,21 @@ class DecadesDataset(object):
         """
         for output in [i.name for i in self._backend.outputs if i.name.endswith('_CU')]:
             var_name = output.replace('_CU', '')
+
             if self[var_name] is not None:
                 flag = self[var_name].flag()
                 try:
                     self[output].array[flag > 0] = np.nan
                 except Exception:
                     logger.error(f'Failed to NaN uncertainty for {var_name}')
+
+            if self[var_name].flag is not None:
+                try:
+                    flag = self[var_name].flag()
+                    self[output].array[flag > 0] = np.nan
+                except Exception:
+                    logger.error('Failed to nan flag for output',
+                                 exc_info=True)
 
     def write(self, *args, **kwargs):
         """

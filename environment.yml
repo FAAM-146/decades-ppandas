@@ -140,6 +140,8 @@ dependencies:
   - yaml=0.2.5=h7f98852_2
   - zlib=1.2.11=h36c2ea0_1013
   - zstd=1.5.2=ha95c52a_0
+  - fpdf
+  - pylatex
   - pip:
     - git+https://github.com/davesproson/gribgrab.git
     - alabaster==0.7.12
@@ -164,3 +166,5 @@ dependencies:
     - sphinxcontrib-qthelp==1.0.3
     - sphinxcontrib-serializinghtml==1.1.5
     - urllib3==1.26.8
+    - google-api-python-client
+    - google-auth-oauthlib
