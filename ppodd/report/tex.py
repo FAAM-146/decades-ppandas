@@ -285,6 +285,7 @@ class ReportCompiler(object):
 
         cwd = os.getcwd()
         outputs = []
+        text_files = []
         for _root, _dirs, _files in os.walk(self.flight_folder):
             for _file in _files:
                 if ' ' in _file:
@@ -295,11 +296,26 @@ class ReportCompiler(object):
                     _file = _file.replace(' ', '_')
 
                 _filepath = os.path.join(_root, _file)
+
                 if _file[-3:].lower() in ['png', 'jpg']:
                     outputs.append(_filepath)
 
-        _retstr = ''
-        for _op in outputs:
+                if _file[-3:].lower() == 'txt':
+                    if _file.lower().startswith('ms') and 'log' in _file.lower():
+                        text_files.append(_filepath)
+                    if 'wx' in _file.lower():
+                        text_files.append(_filepath)
+
+
+        _retstr = r'\section{Appendix}'
+
+        for _txt in sorted(text_files):
+            _retstr += r'\subsection{' + _el(os.path.basename(_txt)) + r'}' + '\n'
+            with open(_txt, 'r') as f:
+                _retstr += _el(f.read())
+
+        _retstr += r'\subsection{Flight Folder Images}' + '\n'
+        for _op in sorted(outputs):
             _retstr += r'\begin{center}' + '\n'
             _retstr += r'\begin{figure}' + '\n'
             _retstr += r'\includegraphics[width=.8\pagewidth]{' + _op + '}\n'
@@ -367,7 +383,7 @@ class ReportCompiler(object):
         cmd = ['lualatex', '-interaction', 'nonstopmode', self.filename]
         with open(os.devnull, 'w') as devnull:
             for i in range(2):
-                subprocess.call(cmd, stdout=devnull, stderr=devnull)
+                subprocess.call(cmd)#, stdout=devnull, stderr=devnull)
 
         shutil.move(
             self.filename.replace('.tex', '.pdf'),
