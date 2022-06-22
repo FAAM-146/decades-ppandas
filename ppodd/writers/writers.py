@@ -411,9 +411,10 @@ class NetCDFWriter(DecadesWriter):
             nc['Time'][:] = [i / 1e9 - _delta_secs for i in
                             dates.values.astype(np.int64)]
 
-            
             # Set the ID of the dataset before writing to file
-            self.dataset.data_id = filename.replace('.nc', '')
+            self.dataset.data_id = os.path.basename(
+                filename.replace('.nc', '')
+            )
 
             # Write global attributes.
             for _gkey, _gval in self.dataset.globals().items():
