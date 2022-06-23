@@ -78,7 +78,7 @@ class QAFigure(object):
             self.flightnum = 'nXXX'
 
         try:
-            self.flight_date = self.dataset.globals['date']
+            self.flight_date = self.dataset.date
         except KeyError:
             raise
 
