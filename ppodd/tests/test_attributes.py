@@ -164,12 +164,12 @@ class TestAttributes(unittest.TestCase):
 
     def test_add_data_attribute(self):
         a = AttributesCollection()
-        a.add_data_attribute('key', lambda: 'value')
+        a.add(Attribute('key', lambda: 'value'))
         self.assertEquals(a['key'], 'value')
 
     def test_static_items(self):
         a = AttributesCollection()
-        a.add_data_attribute('key1', lambda: 'value1')
+        a.add(Attribute('key1', lambda: 'value1'))
         a.add(Attribute('key2', 'value2'))
         self.assertEquals(len(a.static_items()), 1)
 

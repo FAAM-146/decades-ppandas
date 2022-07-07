@@ -106,7 +106,7 @@ class TestDecades(unittest.TestCase):
     def test_dataset_date_attribute(self):
         today = datetime.date.today()
         d = DecadesDataset(today)
-        self.assertEqual(d.date.date(), today)
+        self.assertEqual(d.date, today)
 
     def test_calling_variable_name(self):
         v = self._get_var_1()()
@@ -351,9 +351,8 @@ class TestDecades(unittest.TestCase):
         self.d.add_constant('LTUAE', 42)
         self.assertEqual(self.d['LTUAE'], 42)
 
-    def test_lazy_constant(self):
+    def test_lazy_constant_item(self):
         value = self.d.lazy['LTUAE']
-        self.assertRaises(KeyError, value)
         self.d.add_constant('LTUAE', 42)
         self.assertEqual(value(), 42)
         self.assertEqual(self.d.lazy['LTUAE'], 42)

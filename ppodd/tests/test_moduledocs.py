@@ -1,9 +1,7 @@
 import unittest
 
 from ppodd.pod.base import pp_register
-pp_modules = []
-for key, value in pp_register.items():
-    pp_modules += value
+pp_modules = pp_register.modules('core')
 
 class TestDocStr(unittest.TestCase):
     """

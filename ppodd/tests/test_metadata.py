@@ -9,9 +9,7 @@ from cfunits import Units
 
 from ppodd.decades import DecadesDataset, DecadesVariable
 from ppodd.pod.base import pp_register
-pp_modules = []
-for key, value in pp_register.items():
-    pp_modules += value
+pp_modules = pp_register.modules('core')
 
 
 STANDARD_NAMES_URL = ('http://cfconventions.org/Data/cf-standard-names'
