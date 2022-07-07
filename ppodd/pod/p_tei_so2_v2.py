@@ -42,9 +42,9 @@ class TecoSO2V2(PPBase):
     def test():
         return {
             'CHTSOO_concentration': ('data', _o(100), 1),
-            'CHTSOO_V7': ('data', _z(100), 1),
+            'CHTSOO_V7': ('data', _c([_z(10), _o(10), _z(10), _o(70)]), 1),
             'CHTSOO_flags': ('data', [b'cc0000'] * 100, 1),
-            'WOW_IND': ('data', _c(_o(20), _z(70), _o(10)), 1),
+            'WOW_IND': ('data', _c([_o(20), _z(70), _o(10)]), 1),
             'CHTSOO_SENS': ('const', 1)
         }
 
@@ -54,7 +54,7 @@ class TecoSO2V2(PPBase):
             units='ppb',
             frequency=1,
             long_name='Mole fraction of Sulphur Dioxide in air from TECO 43 instrument',
-            standard_name='mole_fraction_of_sulphur_dioxide_in_air',
+            standard_name='mole_fraction_of_sulfur_dioxide_in_air',
             instrument_manufacturer='Thermo Fisher Scientific, Inc.',
             instrument_model='43i TLE pulsed fluorescence SO2 spectrometer',
             instrument_serial_number='1505564557'
