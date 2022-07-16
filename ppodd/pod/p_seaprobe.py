@@ -51,7 +51,7 @@ def get_instr_fault_mask(el_temps=None, temp_limits=(100, 180)):
 
 
 
-def get_cloud_mask(el_temperature, var_thresh=0.6, set_temp=140, var_temp=1):
+def get_cloud_mask(el_temperature, var_thresh=0.6, set_temp=140, var_temp=2):
     """
     Return a cloud mask, indicating whether the aircraft is in or out of cloud.
     Assumned in cloud whenever the temp range in a rolling window exceeds a
