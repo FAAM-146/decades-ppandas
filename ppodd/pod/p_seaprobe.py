@@ -802,7 +802,7 @@ class SeaProbe(PPBase):
             df['SEAPROBE_d0_TWC_T'],
             **{'var_thresh': 0.5,
                'set_temp': self.dataset['SEA_SETPOINT_TEMP'],
-               'var_temp': 1.}
+               'var_temp': 2.}
         )
 
         # Mask for dry air calcs: must be slr, out of cloud, and instruments in
