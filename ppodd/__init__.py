@@ -6,7 +6,7 @@ import subprocess
 
 import ppodd
 
-__version__ = '0.14.9'
+__version__ = '0.14.10'
 URL = 'https://github.com/faam-146/decades-ppandas'
 
 formatter = logging.Formatter(

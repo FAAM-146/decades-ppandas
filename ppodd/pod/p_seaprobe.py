@@ -260,7 +260,10 @@ def dryair_calc_comp(p_sense, p_comp, cloud_mask=None, rtn_func=False,
 
     # Check whether entire array is masked
     if np.all(mask):
-        return np.empty_like(mask) * np.nan
+        arr = np.empty_like(mask) * np.nan
+        if rtn_goodness:
+            return arr, -inf
+        return arr
 
     # Fit compensation power to sense power
     # Interpolations don't accept masked arrays so delete masked elements
@@ -800,7 +803,7 @@ class SeaProbe(PPBase):
 
         df['cloud_mask'] = get_cloud_mask(
             df['SEAPROBE_d0_TWC_T'],
-            **{'var_thresh': 0.5,
+            **{'var_thresh': 1.5,
                'set_temp': self.dataset['SEA_SETPOINT_TEMP'],
                'var_temp': 2.}
         )
