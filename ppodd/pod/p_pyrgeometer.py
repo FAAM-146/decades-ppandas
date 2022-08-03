@@ -183,11 +183,11 @@ class KippZonenPyrgeometer(PPBase):
 
         # Create output variables
         ir_up = DecadesVariable(
-            upp_l_d, name='IR_UP_C', flag=DecadesBitmaskFlag
+            low_l_d, name='IR_UP_C', flag=DecadesBitmaskFlag
         )
 
         ir_dn = DecadesVariable(
-            low_l_d, name='IR_DN_C', flag=DecadesBitmaskFlag
+            upp_l_d, name='IR_DN_C', flag=DecadesBitmaskFlag
         )
 
         for var in (ir_up, ir_dn):
