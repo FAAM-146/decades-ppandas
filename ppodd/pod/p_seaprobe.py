@@ -11,8 +11,11 @@ import pandas as pd
 
 from scipy.optimize import curve_fit
 
+from vocal.schema_types import DerivedString
+
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..decades import flags
+from ..decades.attributes import DocAttribute
 from ..utils import slrs
 from .base import PPBase, register_pp
 from .shortcuts import _o, _r, _z
@@ -646,7 +649,7 @@ class SeaProbe(PPBase):
             'SEA_EFF_083': ('const', [1, 0]),
             'SEA_SETPOINT_TEMP': ('const', 120),
             'SEA_TEMP_LIMS': ('const', [100, 180]),
-            'SEA_SN': ('const', 'XXXX'),
+            'SEA_SN': ('const', DocAttribute(value='1234', doc_value=DerivedString)),
             'WOW_IND': ('data', _z(n), 1),
             'PS_RVSM': ('data', 800 * _o(n), 32),
             'TAS_RVSM': ('data', 200 * _o(n), 32),

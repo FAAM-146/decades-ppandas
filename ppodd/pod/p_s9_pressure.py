@@ -5,9 +5,12 @@ from the S9 fuselage port. See class docstring for more info.
 
 import numpy as np
 
+from vocal.schema_types import DerivedString
+
 from ..utils.calcs import sp_mach
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..decades import flags
+from ..decades.attributes import DocAttribute
 from .base import PPBase, register_pp
 from .shortcuts import _o
 
@@ -51,7 +54,7 @@ class S9Pressure(PPBase):
         """
         return {
             'CALS9SP': ('const', [-130, .035, 1.85e-9]),
-            'S9SP_SN': ('const', '1234'),
+            'S9SP_SN': ('const', DocAttribute(value='1234', doc_value=DerivedString)),
             'S9_PE_C': ('const', [1, 1]),
             'CORCON_s9_press': ('data', 850 * _o(100), 32),
             'PS_RVSM': ('data', 850 * _o(100), 32),

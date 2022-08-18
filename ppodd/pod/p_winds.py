@@ -1,12 +1,15 @@
 import numpy as np
+import datetime
 
 from ..decades import DecadesVariable
 from ..decades.flags import DecadesBitmaskFlag
 from .base import PPBase
 from .shortcuts import _o, _z
 
+# TODO: Should we reregister this for docs, or not?
+class TurbWinds(PPBase):
 
-class TurbWinds():
+    DEPRECIATED_AFTER = datetime.date(2020, 10, 1)
 
     inputs = [
         'INSPOSN',
@@ -43,7 +46,6 @@ class TurbWinds():
         }
 
     def declare_outputs(self):
-        return
         self.declare(
             'V_C',
             units='m s-1',
@@ -116,7 +118,6 @@ class TurbWinds():
         return A1, A2, A3
 
     def process(self):
-        return
         self.get_dataframe()
         d = self.d
 

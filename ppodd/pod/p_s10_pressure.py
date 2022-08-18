@@ -4,8 +4,11 @@ docstring for more info.
 """
 import numpy as np
 
+from vocal.schema_types import DerivedString
+
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..decades import flags
+from ..decades.attributes import DocAttribute
 from .base import PPBase, register_pp
 from .shortcuts import _o
 
@@ -37,7 +40,7 @@ class S10Pressure(PPBase):
         """
         return {
             'CALS10SP': ('const', [-130, .035, 1.85e-9]),
-            'S10SP_SN': ('const', 'xxxx'),
+            'S10SP_SN': ('const', DocAttribute(value='1234', doc_value=DerivedString)),
             'CORCON_s10_press': ('data', 850 * _o(100), 32),
         }
 

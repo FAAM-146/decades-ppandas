@@ -13,8 +13,11 @@ import pandas as pd
 
 from scipy.optimize import curve_fit
 
+from vocal.schema_types import DerivedString
+
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..decades import flags
+from ..decades.attributes import DocAttribute
 from .base import PPBase, register_pp
 from .shortcuts import _o, _z
 
@@ -210,7 +213,7 @@ class Nevzorov(PPBase):
         """
         return {
             'VANETYPE': ('const', '1T2L1R'),
-            'VANE_SN': ('const', '1234'),
+            'VANE_SN': ('const', DocAttribute(value='SN123', doc_value=DerivedString)),
             'CLWCIREF': ('const', [-5.8e-2, 3.3e-4, 5e-1]),
             'CLWCVREF': ('const', [-5.8e-2, 3.3e-4, 2.0]),
             'CLWCICOL': ('const', [-5.8e-2, 3.3e-4, 5e-1]),

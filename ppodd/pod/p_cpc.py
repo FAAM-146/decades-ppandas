@@ -2,8 +2,11 @@
 Provides a processing modules for the TSI3786 condensation particle counter.
 See the class doc-string for more info.
 """
+from vocal.schema_types import DerivedString
+
 # pylint: disable=invalid-name
 from ..decades import DecadesVariable, DecadesBitmaskFlag
+from ..decades.attributes import DocAttribute
 from .base import PPBase, register_pp
 from .shortcuts import _c, _l, _o, _z
 
@@ -42,7 +45,7 @@ class CPC(PPBase):
         Return some dummy input data for testing purposes.
         """
         return {
-            'CPC_SN': ('const', '1234'),
+            'CPC_SN': ('const', DocAttribute(value='1234', doc_value=DerivedString)),
             'CPC378_counts': (
                 'data', _c([_z(30), _l(0, 2e4, 15), _l(2e4, 0, 15), _z(40)]),
                 10

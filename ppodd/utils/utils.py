@@ -330,7 +330,8 @@ def make_definition(pp_group, standard):
 
         _attributes['comment'] = '<str: derived_from_file optional>'
 
-
+        # These are variable attributes which we expect to be derived from file
+        # on a case-by-case basis
         var_vars = (
             'sensor_serial_number', 'instrument_serial_number', 'flag_meanings',
             'sensor_type', 'sensor_manufacturer', 'sensor_model', 'calibration_date',

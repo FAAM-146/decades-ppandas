@@ -333,6 +333,9 @@ class TurbulenceProbe(PPBase):
     two iterations after the initial calculations are performed.    
     """
 
+    # TODO: Is it OK this module replace p_turb and p_winds for old flights, or
+    # should we implement VALID_AFTER (1/10/2020)??
+
     inputs = [
         'AOA_A0',
         'AOA_A1',

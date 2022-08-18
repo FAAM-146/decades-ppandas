@@ -5,7 +5,10 @@ mirror hygrometer. See class docstring for more information.
 # pylint: disable=invalid-name
 import numpy as np
 
+from vocal.schema_types import DerivedString
+
 from ..decades import DecadesVariable, DecadesBitmaskFlag
+from ..decades.attributes import DocAttribute
 from ..utils import get_range_flag
 from ..utils.conversions import celsius_to_kelvin
 from .base import PPBase, register_pp
@@ -42,7 +45,7 @@ class GeneralEastern(PPBase):
         return {
             'GELIMS': ('const', [7000, 5000]),
             'CALGE': ('const', [-80, 4e-3, -2.5e-10]),
-            'GE_SN': ('const', '1234'),
+            'GE_SN': ('const', DocAttribute(value='1234', doc_value=DerivedString)),
             'CORCON_ge_dew': ('data', 125e2 * _o(100), 4),
             'CORCON_ge_cont': ('data', 5000 * _o(100), 4)
         }

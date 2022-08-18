@@ -5,8 +5,10 @@ docstring for more information.
 
 import numpy as np
 
-from ..decades import DecadesVariable, DecadesBitmaskFlag
-from ..decades import flags
+from vocal.schema_types import DerivedString
+
+from ..decades import DecadesVariable, DecadesBitmaskFlag, flags
+from ..decades.attributes import DocAttribute
 from ..utils.conversions import celsius_to_kelvin
 from .base import PPBase, register_pp
 from .shortcuts import _c, _o, _z
@@ -49,7 +51,7 @@ class Heimann(PPBase):
             'CORCON_heim_t': ('data', 2e5 * _o(100), 4),
             'CORCON_heim_c': ('data', 185e2 * _o(100), 4),
             'WOW_IND': ('data', _c([_o(20), _z(80)]), 1),
-            'HEIM_SN': ('const', '1234')
+            'HEIM_SN': ('const', DocAttribute(value='1234', doc_value=DerivedString))
         }
 
     def declare_outputs(self):

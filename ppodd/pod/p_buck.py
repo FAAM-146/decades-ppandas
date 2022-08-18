@@ -4,14 +4,17 @@ BuckCR2. See the class docstring for further information.
 """
 # pylint: disable=invalid-name
 
+import datetime
 import warnings
 
 import numpy as np
 import pandas as pd
 
 from scipy.optimize import fsolve
+from vocal.schema_types import DerivedString, OptionalDerivedString
 
 from ..decades import DecadesVariable
+from ..decades.attributes import DocAttribute
 from .base import PPBase, register_pp
 from .shortcuts import _o, _z
 
@@ -20,6 +23,8 @@ from .shortcuts import _o, _z
 class BuckCR2(PPBase):
     r"""
     This documentation adapted from FAAM document FAAM010015A (H. Price, 2016).
+
+    For further details see the `FAAM Met. Handbook <https://doi.org/10.5281/zenodo.5846962>`_.
 
     The core processed data for the Buck CR2 includes the mirror temperature
     and the volume mixing ratio of water vapour. Prior to September 2016, the water
@@ -130,13 +135,26 @@ class BuckCR2(PPBase):
         """
         return {
             'BUCK': ('const', [0, 1]),
-            'BUCK_SN': ('const', '1234'),
+            'BUCK_SN': ('const', DocAttribute(value='1234', doc_value=DerivedString)),
             'AERACK_buck_ppm': ('data', 2000 * _o(100), 1),
             'AERACK_buck_mirr_temp': ('data', -10 * _o(100), 1),
             'AERACK_buck_pressure': ('data', 800 * _o(100), 1),
             'AERACK_buck_dewpoint_flag': ('data', _o(100), 1),
             'AERACK_buck_mirr_cln_flag': ('data', _z(100), 1),
-            'PS_RVSM': ('data', 800 * _o(100), 32)
+            'PS_RVSM': ('data', 800 * _o(100), 32),
+            # Optional info constants
+            'BUCK_CALINFO_DATE': ('const', DocAttribute(
+                value=datetime.date(2000, 1, 1),
+                doc_value=OptionalDerivedString
+            )),
+            'BUCK_CALINFO_INFO': ('const', DocAttribute(
+                value='Calibrated in a lab',
+                doc_value=OptionalDerivedString
+            )),
+            'BUCK_CALINFO_URL': ('const', DocAttribute(
+                value='https://some.url',
+                doc_value=OptionalDerivedString
+            )),
         }
 
     def declare_outputs(self):

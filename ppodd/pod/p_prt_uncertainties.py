@@ -18,6 +18,8 @@ PRT_SENSORS = ('plate', 'loom')
 @register_pp('core')
 class PRTTemperatureUncertainties(PPBase):
     r"""
+    For further details see the `FAAM Met. Handbook <https://doi.org/10.5281/zenodo.5846962>`_.
+
     This module calculates combined uncertainty estimates for indicated and
     true air temperatures, when these are recorded with platinum resistance
     thermometers.

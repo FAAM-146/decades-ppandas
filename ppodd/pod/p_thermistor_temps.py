@@ -4,7 +4,10 @@ import pandas as pd
 from scipy import interpolate
 from scipy.interpolate import CubicSpline
 
+from vocal.schema_types import DerivedString
+
 from ..decades import DecadesVariable, DecadesBitmaskFlag
+from ..decades.attributes import DocAttribute
 from ..exceptions import EM_CANNOT_INIT_MODULE
 from ..utils.calcs import sp_mach, true_air_temp_variable
 from ..utils.conversions import celsius_to_kelvin
@@ -101,8 +104,14 @@ class ThermistorV1Temperatures(PPBase):
     def test():
         return {
             'RM_RECFAC': ('const', {'DI': 1., 'ND': 1.}),
-            'NDTSENS': ('const', [lambda: 'xxx', 'thermistor']),
-            'DITSENS': ('const', [lambda: 'xxx', 'thermistor']),
+            'NDTSENS': ('const', [
+                DocAttribute(value='12345A', doc_value=DerivedString),
+                'thermistor'
+            ]),
+            'DITSENS': ('const', [
+                DocAttribute(value='12345A', doc_value=DerivedString),
+                'thermistor'
+            ]),
             'TH_DISS_MUL': ('const', {'ND': 1.8, 'DI': 1.8}),
             'TH_CIRCUIT_TYPE': ('const', 'V1'),
             'TH_RESISTANCE': ('const', {

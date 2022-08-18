@@ -1,7 +1,10 @@
 import collections
 import enum
 import importlib
+from typing import Any
 import warnings
+
+from dataclasses import dataclass
 
 import pydantic
 
@@ -21,6 +24,11 @@ class NonStandardAttributeError(Exception):
     An exception which may be raised if an attribute is added to an
     AttributesCollection which is not defined in a standard.
     """
+
+@dataclass
+class DocAttribute:
+    value: Any
+    doc_value: Any
 
 
 class AttributesCollection(object):
@@ -142,6 +150,11 @@ class AttributesCollection(object):
 
     def _compliancify(self, att):
         if callable(att.value):
+            if getattr(self._dataset, 'doc_mode', False):
+                try:
+                    return att.doc_value
+                except AttributeError:
+                    pass
             try:
                 return att.value()
             except Exception:
@@ -274,7 +287,16 @@ class AttributesCollection(object):
             if not dynamic:
                 if glo._context is not None:
                     continue
-            _value = glo.value
+
+            doc_mode = getattr(self._dataset, 'doc_mode', False)
+
+            if doc_mode:
+                try:
+                    _value = glo.doc_value
+                except AttributeError:
+                    _value = glo.value
+            else:
+                _value = glo.value
 
             while callable(_value):
                 _value = _value()
@@ -333,7 +355,11 @@ class Attribute(object):
             value (Object): the attribute value.
         """
         self._key = key
-        self._value = value
+        if isinstance(value, DocAttribute):
+            self._value = value.value
+            self.doc_value = value.doc_value
+        else:
+            self._value = value
         self._context = context
         self._context_type = context_type
 

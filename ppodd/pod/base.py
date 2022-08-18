@@ -226,6 +226,9 @@ class PPBase(object):
 
                     output.flag.add_flag(input_flag)
 
+            if self.test_mode:
+                output.doc_mode = True
+
             # And append the output to the dataset
             self.dataset.add_output(output)
 

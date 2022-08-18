@@ -1,3 +1,4 @@
+import datetime
 import importlib
 import os
 import shutil
@@ -119,7 +120,18 @@ def get_module_doc(module):
     m = module.test_instance()
     m.process()
     m.finalize()
-    _doc = module.__doc__
+
+    _doc = ''
+
+    if module.DEPRECIATED_AFTER != datetime.date.max:
+        sdate = module.DEPRECIATED_AFTER.strftime('%Y-%d-%m')
+        _doc += f'.. note:: \n\tThis module depreciated for flights after {sdate}\n\n'
+
+    if module.VALID_AFTER != datetime.date.min:
+        sdate = module.VALID_AFTER.strftime('%Y-%d-%m')
+        _doc += f'.. note:: \n\tThis module only active for flights after {sdate}\n\n'
+
+    _doc += '\n' + module.__doc__
     if _doc is None:
         _doc = 'No module documentation has been provided.'
 
@@ -198,9 +210,13 @@ def get_module_vardoc(module):
 
     for out_var in module.dataset.outputs:
         # out_var.attrs.set_compliance_mode(True)
-        output += f'* ``{out_var.name}``\n'
-        for attr in out_var.attrs().items():
-            output += f'    * ``{attr[0]}``: {attr[1]}\n'
+        output += f'* {out_var.name}\n'
+        for attr_name, attr_value in out_var.attrs().items():
+            try:
+                attr_value = attr_value.doc_value
+            except AttributeError:
+                pass
+            output += f'    * ``{attr_name}``: {attr_value}\n'
 
     output += '\n'
     return output
@@ -420,50 +436,52 @@ if __name__ == '__main__':
         get_variables = get_variables_web
 
     # The standard to use is specified in the environment variable
-    # PPODD_STANDARD, which should be of the format
-    # <standard_name>@<standard_version>, for example PPODD_STANDARD=core@1.0
-    standard = os.environ['PPODD_STANDARD']
+    # PPODD_STANDARD, which should be a library implementing vocal
+    try:
+        standard = os.environ['PPODD_STANDARD']
+    except KeyError:
+        print('No standard (PPODD_STANDARD) specified, using \'faam_data\'')
+        standard = 'faam_data'
     # standard_name, standard_version = standard.split('@')
     # standard_version = float(standard_version)
     standard = importlib.import_module(standard)
 
     # The module group to document should be specified in the environment group
     # PP_GROUP, for example PP_GROUP=core
-    module_group = os.environ['PP_GROUP']
+    try:
+        module_group = os.environ['PP_GROUP']
+    except KeyError:
+        print('No module group (PP_GROUP) given, using \'core\'')
+        module_group = 'core'
     pp_modules = pp_register.modules(module_group)
 
 
     replace_tag(
         core, 'TAG_REQUIRED_GLOBAL_ATTRIBUTES',
-        get_global_attrs_string(True, standard)#_name=standard_name,
-                                # standard_version=standard_version)
+        get_global_attrs_string(True, standard)                         
     )
 
     replace_tag(
         core, 'TAG_OPTIONAL_GLOBAL_ATTRIBUTES',
-        get_global_attrs_string(False, standard)#=standard_name,
-                                # standard_version=standard_version)
+        get_global_attrs_string(False, standard)
     )
 
     replace_tag(
         core, 'TAG_REQUIRED_VARIABLE_ATTRIBUTES',
-        get_variable_attrs_string(True, standard)#, standard_name=standard_name,
-                                #   standard_version=standard_version)
+        get_variable_attrs_string(True, standard)
     )
 
     replace_tag(
         core, 'TAG_OPTIONAL_VARIABLE_ATTRIBUTES',
-        get_variable_attrs_string(False, standard)#, standard_name=standard_name,
-                                #   standard_version=standard_version)
+        get_variable_attrs_string(False, standard)
     )
 
     replace_tag(core, 'TAG_SPS_DIMENSIONS', get_dimensions())
-
     replace_tag(core, 'TAG_DEFAULT_VARIABLES', get_variables())
     replace_tag(core, 'TAG_OPTIONAL_VARIABLES', get_variables(False))
 
     # Create rst files with processing module level documentation
-    for mod in pp_modules:
+    for mod in sorted(pp_modules, key=lambda x: x.__name__):
         append(modules, get_module_doc(mod))
 
     # Create rst files with flagging module level documentation

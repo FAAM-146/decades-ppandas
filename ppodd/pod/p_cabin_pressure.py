@@ -5,7 +5,10 @@ class docstring for more info.
 
 import numpy as np
 
+from vocal.schema_types import DerivedString
+
 from ..decades import DecadesVariable
+from ..decades.attributes import DocAttribute
 from .base import PPBase, register_pp
 from .shortcuts import _c, _l
 
@@ -34,7 +37,7 @@ class CabinPressure(PPBase):
         """
         return {
             'CALCABP': ('const', [2.75, 3.3e-2, -2.5e-10]),
-            'CABP_SN': ('const', '1234'),
+            'CABP_SN': ('const', DocAttribute(value='1234', doc_value=DerivedString)),
             'CORCON_cabin_p': (
                 'data', _c([_l(30000, 25000, 50), _l(25000, 35000, 50)]), 1
             )

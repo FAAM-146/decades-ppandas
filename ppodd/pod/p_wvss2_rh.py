@@ -6,8 +6,11 @@ WVSS2 and Rosemount temperatures.
 import numpy as np
 import pandas as pd
 
+from vocal.schema_types import DerivedString
+
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..decades import flags
+from ..decades.attributes import DocAttribute
 from ..utils.constants import ZERO_C_IN_K
 from .base import PPBase, register_pp
 from .shortcuts import _o
@@ -19,7 +22,12 @@ RH_VALID_MAX = 150
 @register_pp('core')
 class WVSS2RH(PPBase):
     """
-    Relative humidity from the WVSS2
+    This module provides estimates of relative humidity with respect to both
+    water and ice, along with their combined uncertainty estimates, derived from
+    the WVSS2 water vapour mixing ratio and Rosemount temperatures.
+    
+    For full details of the methodology, see the
+    `FAAM Met. Handbook <https://doi.org/10.5281/zenodo.5846962>`_.
     """
 
     inputs = [
@@ -47,7 +55,10 @@ class WVSS2RH(PPBase):
             'TAT_ND_R': ('data', 250*_o(n), 32),
             'WVSS2F_VMR_C': ('data', 5000*_o(n), 1),
             'WVSS2F_VMR_C_CU': ('data', 500*_o(n), 1),
-            'DITSENS': ('const', ['xxxx', 'plate']),
+            'DITSENS': ('const', [
+                DocAttribute(value='1234', doc_value=DerivedString),
+                'plate'
+            ]),
             'WVSS2_LAG': ('const', {'plate': 1, 'loom': 1}),
             'WVSS2_LAG_STD': ('const', {'plate': .1, 'loom': .5}),
         }

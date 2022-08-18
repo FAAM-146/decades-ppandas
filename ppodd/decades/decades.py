@@ -27,6 +27,8 @@ from pydoc import locate
 import numpy as np
 import pandas as pd
 
+from vocal.schema_types import DerivedFloat32
+
 import ppodd.flags
 
 from ppodd.decades.backends import DefaultBackend
@@ -145,6 +147,8 @@ class DecadesVariable(object):
             flag_postfix (str, optional): the postfix to add to a
                 variable when output to indicate it is a quality flag. Default
                 is `FLAG`.
+            doc_mode (bool, optional): If true, put the variable in documentation
+                mode, which may affect the value of attributes
         """
 
         _flag = kwargs.pop('flag', DecadesClassicFlag)
@@ -160,6 +164,7 @@ class DecadesVariable(object):
         self.dtype = kwargs.pop('dtype', None)
         self.name = kwargs.pop('name', None)
         self.write = kwargs.pop('write', True)
+        self.doc_mode = kwargs.pop('doc_mode', False)
 
         # Set attributes given as keyword arguments
         _attrs = self.attrs.REQUIRED_ATTRIBUTES + self.attrs.OPTIONAL_ATTRIBUTES
@@ -492,6 +497,9 @@ class DecadesVariable(object):
         self.t1 = current.index[-1]
 
     def range(self):
+        if self.doc_mode:
+            return [DerivedFloat32, DerivedFloat32]
+            
         try:
             return [
                 np.nanmin(self.array).astype(np.float32),

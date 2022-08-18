@@ -1,3 +1,5 @@
+import datetime
+
 import numpy as np
 import pandas as pd
 
@@ -10,7 +12,10 @@ from .shortcuts import _o, _z
 
 MAX_ITERS = 5
 
-class TurbProbe():
+# TODO: Should probably reregister this, so we have the docs for the old data.
+class TurbProbe(PPBase):
+
+    DEPRECIATED_AFTER = datetime.date(2020, 10, 1)
 
     inputs = [
         'AOA_A0',    # (const) Coeffs of 2nd-o poly in Mach to calc AOA offset
@@ -56,7 +61,6 @@ class TurbProbe():
         }
 
     def declare_outputs(self):
-        return
         self.declare(
             'AOA',
             units='degree',
@@ -109,7 +113,6 @@ class TurbProbe():
         dcp_s10 = a0 + amach * (a1 + amach * a2)
 
     def process(self):
-        return
         self.get_dataframe()
         d = self.d
 

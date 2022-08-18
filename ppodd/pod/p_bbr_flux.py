@@ -6,9 +6,12 @@ radiative fluxes from these. See the class docstring for mor information.
 # pylint: disable=invalid-name
 import numpy as np
 
+from vocal.schema_types import DerivedString
+
 from .base import PPBase, register_pp
 from .shortcuts import _l, _o, _z, _c
 from ..decades import DecadesVariable, DecadesBitmaskFlag
+from ..decades.attributes import DocAttribute
 
 # Limits for flagging
 ROLL_LIMIT = 7.
@@ -116,10 +119,10 @@ class BBRFlux(PPBase):
             'CALCLCF': ('const', [0, 0, 0, 0, 0, 1]),
             'CALCLRF': ('const', [0, 0, 0, 0, 0, 1]),
             'CALCLIF': ('const', [0, 0, 0, 0, 0, 1]),
-            'BBRUP1_SN': ('const', '1234'),
-            'BBRUP2_SN': ('const', '1234'),
-            'BBRLP1_SN': ('const', '1234'),
-            'BBRLP2_SN': ('const', '1234'),
+            'BBRUP1_SN': ('const', DocAttribute(value='1234', doc_value=DerivedString)),
+            'BBRUP2_SN': ('const', DocAttribute(value='1234', doc_value=DerivedString)),
+            'BBRLP1_SN': ('const', DocAttribute(value='1234', doc_value=DerivedString)),
+            'BBRLP2_SN': ('const', DocAttribute(value='1234', doc_value=DerivedString)),
             'UP1S': ('data', 600 * _o(100), 1),
             'UP2S': ('data', 300 * _o(100), 1),
             'UIRS': ('data', _z(100), 1),

@@ -5,8 +5,11 @@ pyrgeometers.
 # pylint: disable=invalid-name, too-many-locals
 import numpy as np
 
+from vocal.schema_types import DerivedString
+
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..decades import flags
+from ..decades.attributes import DocAttribute
 from .base import PPBase, register_pp
 from .shortcuts import _c, _o, _z
 from ..utils.constants import STEF_BOLTZ
@@ -105,8 +108,8 @@ class KippZonenPyrgeometer(PPBase):
         Return dummy input data for testing.
         """
         return {
-            'BBRLIR_SN': ('const', '1234'),
-            'BBRUIR_SN': ('const', '1234'),
+            'BBRLIR_SN': ('const', DocAttribute(value='1234', doc_value=DerivedString)),
+            'BBRUIR_SN': ('const', DocAttribute(value='1234', doc_value=DerivedString)),
             'LOWBBR_radiometer_3_sig': ('data', 5e3 * _o(100), 1),
             'LOWBBR_radiometer_3_temp': ('data', 2e2 * _o(100), 1),
             'UPPBBR_radiometer_3_sig': ('data', 5e3 * _o(100), 1),

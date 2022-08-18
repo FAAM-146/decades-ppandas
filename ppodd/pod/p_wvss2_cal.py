@@ -6,8 +6,11 @@ air.
 import numpy as np
 import pandas as pd
 
+from vocal.schema_types import DerivedString
+
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..decades import flags
+from ..decades.attributes import DocAttribute
 from ..utils.calcs import sp_mach
 from .base import PPBase, register_pp
 from .shortcuts import _o, _z
@@ -66,7 +69,7 @@ class WVSS2Calibrated(PPBase):
             'WOW_IND': ('data', _z(n), 1),
             'WVSS2_F_CAL': ('const', [1, 0, 0]),
             'WVSS2_F_CAL_RANGE': ('const', [0, 20000]),
-            'WVSS2_F_SN': ('const', lambda: 'xxxx'),
+            'WVSS2_F_SN': ('const', DocAttribute(value='1234', doc_value=DerivedString)),
             'WVSS2_F_UNC_FITPARAMS': ('const', [1, 0, 0, 0, 0, 0]),
             'WVSS2_F_UNC_BUCK': ('const', [5, 0]),
             'WVSS2_F_UNC_FITRES': ('const', [8, 0, 1])

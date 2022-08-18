@@ -4,16 +4,11 @@ probes, when fitted with a platinum resistance thermometer. See class docstring
 for more information.
 """
 # pylint: disable=invalid-name
-import datetime
-
 import numpy as np
 
-from vocal.schema_types import DerivedString, OptionalDerivedString
-
 from ..decades import DecadesVariable, DecadesBitmaskFlag
-from ..decades.attributes import DocAttribute
 from ..exceptions import EM_CANNOT_INIT_MODULE
-from ..utils.calcs import sp_mach, true_air_temp_variable
+from ..utils.calcs import sp_mach, true_air_temp
 from ..utils.conversions import celsius_to_kelvin
 from .base import PPBase, register_pp
 from .shortcuts import _a, _o, _c, _z
@@ -22,10 +17,8 @@ MACH_VALID_MIN = 0.05
 
 
 @register_pp('core')
-class PRTTemperatures(PPBase):
+class PRTTemperaturesOLD(PPBase):
     r"""
-    For further details see the `FAAM Met. Handbook <https://doi.org/10.5281/zenodo.5846962>`_.
-
     Calculate indicated and true (static)  air temperatures from the deiced and
     non-deiced Rosemount housings, when fitted with platinum resistance
     thermometer sensors. Indicated temperatures are calculated with a
@@ -55,7 +48,8 @@ class PRTTemperatures(PPBase):
         T_\text{TAT} = \frac{T_\text{IAT}}{1 + \left(0.2 R_f M^2\right)},
 
     where :math:`M` is the Mach number and :math:`R_f` the recovery factor.
-    Recovery factors are calculated in the processing module `RecoveryFactor`.
+    Recovery factors are currently considered constant, and are specified in the
+    flight constants parameters ``RM_RECFAC/DI`` and ``RM_RECFAC/ND``.
 
     A flag is applied to the data when the Mach number is out of range. **Further
     flags may be added by standalone flagging modules**.
@@ -67,10 +61,6 @@ class PRTTemperatures(PPBase):
         'CALNDT',                   #  Non deiced calibrations (Const)
         'NDTSENS',                  #  Non deiced sensor type (Const)
         'DITSENS',                  #  Deiced sensor type (Const)
-        'SH_GAMMA',
-        'MACH',
-        'ETA_ND',
-        'ETA_DI',
         'PS_RVSM',                  #  Static pressure (derived)
         'Q_RVSM',                   #  Pitot-static pressure (derived)
         'CORCON_di_temp',           #  Deiced temperature counts (DLU)
@@ -87,44 +77,15 @@ class PRTTemperatures(PPBase):
             'RM_RECFAC': ('const', {'DI': 1., 'ND': 1.}),
             'CALDIT': ('const', [0, 0, 0]),
             'CALNDT': ('const', [0, 0, 0]),
-            'NDTSENS': ('const', [
-                DocAttribute(value='12345A', doc_value=DerivedString),
-                DocAttribute(value='plate', doc_value=DerivedString)
-            ]),
-            'DITSENS': ('const', [
-                DocAttribute(value='12345A', doc_value=DerivedString),
-                DocAttribute(value='plate', doc_value=DerivedString)
-            ]),
+            'NDTSENS': ('const', [lambda :'xxxxxx', lambda: 'plate or loom']),
+            'DITSENS': ('const', [lambda: 'xxxxxx', lambda: 'plate or loom']),
             'PS_RVSM': ('data', _a(1000, 300, -1), 32),
             'Q_RVSM': ('data', 250*(_o(700)), 32),
-            'SH_GAMMA': ('data', _o(700), 32),
-            'MACH': ('data', .5*_o(700), 32),
-            'ETA_ND': ('data', _z(700), 32),
-            'ETA_DI': ('data', _z(700), 32),
             'CORCON_di_temp': ('data', _a(225, 245, .0286)*1000, 32),
             'CORCON_ndi_temp': ('data', _a(225, 245, .0286)*1000, 32),
             'PRTAFT_deiced_temp_flag': (
                 'data', _c([_z(200), _o(300), _z(200)]), 32
-            ),
-            # Optional calibration info...
-            'RM_CALINFO_DI_DATE': ('const', DocAttribute(
-                value=datetime.date(2000, 1, 1), doc_value=OptionalDerivedString
-            )),
-            'RM_CALINFO_DI_INFO': ('const', DocAttribute(
-                value='Calibrated in a lab', doc_value=OptionalDerivedString
-            )),
-            'RM_CALINFO_DI_URL': ('const', DocAttribute(
-                value='https://some.url', doc_value=OptionalDerivedString
-            )),
-            'RM_CALINFO_ND_DATE': ('const', DocAttribute(
-                value=datetime.date(2000, 1, 1), doc_value=OptionalDerivedString
-            )),
-            'RM_CALINFO_ND_INFO': ('const', DocAttribute(
-                value='Calibrated in a lab', doc_value=OptionalDerivedString
-            )),
-            'RM_CALINFO_ND_URL': ('const', DocAttribute(
-                value='https://some.url', doc_value=OptionalDerivedString
-            ))
+            )
         }
 
     def declare_outputs(self):
@@ -148,66 +109,69 @@ class PRTTemperatures(PPBase):
 
         if self.test_mode or self.dataset['DITSENS'][1].lower() != 'thermistor':
             self.declare(
-                'TAT_DI_R',
-                units='K',
+                'TAT_DI_R_OLD',
+                units='degK',
                 frequency=32,
                 long_name=('True air temperature from the Rosemount deiced '
                            'temperature sensor'),
                 standard_name='air_temperature',
                 sensor_type=self.dataset.lazy['DITSENS'][1],
                 sensor_serial_number=self.dataset.lazy['DITSENS'][0],
-                calibration_date=self.dataset.lazy['RM_CALINFO_DI_DATE'],
-                calibration_information=self.dataset.lazy['RM_CALINFO_DI_INFO'],
-                calibration_url=self.dataset.lazy['RM_CALINFO_DI_URL'],
                 comment=sampling.format(nddi='deiced')
+
             )
 
             self.declare(
-                'IAT_DI_R',
+                'IAT_DI_R_OLD',
                 units='K',
                 frequency=32,
                 long_name=('Indicated air temperature from the Rosemount deiced '
                            'temperature sensor'),
                 sensor_type=self.dataset.lazy['DITSENS'][1],
                 sensor_serial_number=self.dataset.lazy['DITSENS'][0],
-                calibration_date=self.dataset.lazy['RM_CALINFO_DI_DATE'],
-                calibration_information=self.dataset.lazy['RM_CALINFO_DI_INFO'],
-                calibration_url=self.dataset.lazy['RM_CALINFO_DI_URL'],
                 comment=sampling.format(nddi='deiced'),
                 write=False
             )
 
         if self.test_mode or self.dataset['NDTSENS'][1].lower() != 'thermistor':
             self.declare(
-                'TAT_ND_R',
-                units='K',
+                'TAT_ND_R_OLD',
+                units='degK',
                 frequency=32,
                 long_name=('True air temperature from the Rosemount non-deiced '
                            'temperature sensor'),
                 standard_name='air_temperature',
                 sensor_type=self.dataset.lazy['NDTSENS'][1],
                 sensor_serial_number=self.dataset.lazy['NDTSENS'][0],
-                calibration_date=self.dataset.lazy['RM_CALINFO_ND_DATE'],
-                calibration_information=self.dataset.lazy['RM_CALINFO_ND_INFO'],
-                calibration_url=self.dataset.lazy['RM_CALINFO_ND_URL'],
                 comment=sampling.format(nddi='non-deiced')
             )
 
             self.declare(
-                'IAT_ND_R',
+                'IAT_ND_R_OLD',
                 units='K',
                 frequency=32,
                 long_name=('Indicated air temperature from the Rosemount '
                            'non-deiced temperature sensor'),
                 sensor_type=self.dataset.lazy['NDTSENS'][1],
                 sensor_serial_number=self.dataset.lazy['NDTSENS'][0],
-                calibration_date=self.dataset.lazy['RM_CALINFO_ND_DATE'],
-                calibration_information=self.dataset.lazy['RM_CALINFO_ND_INFO'],
-                calibration_url=self.dataset.lazy['RM_CALINFO_ND_URL'],
                 comment=sampling.format(nddi='non-deiced'),
                 write=False
             )
 
+    def calc_mach(self):
+        """
+        Calculate Mach number, from RVSM derived static and dynamic pressures,
+        which are assumed to be in the instance dataframe.
+        """
+        d = self.d
+
+        d['MACHNO'], d['MACHNO_FLAG'] = sp_mach(
+            d['Q_RVSM'], d['PS_RVSM'], flag=True
+        )
+
+        d.loc[d['MACHNO'] < MACH_VALID_MIN, 'MACHNO_FLAG'] = 1
+        d.loc[~np.isfinite(d['MACHNO']), 'MACHNO_FLAG'] = 1
+        d.loc[d['MACHNO'] < MACH_VALID_MIN, 'MACHNO'] = MACH_VALID_MIN
 
     def calc_heating_correction(self):
         """
@@ -229,7 +193,7 @@ class PRTTemperatures(PPBase):
         corr = 0.1 * (
             np.exp(
                 np.exp(
-                    1.171 + (np.log(d['MACH']) + 2.738) *
+                    1.171 + (np.log(d['MACHNO']) + 2.738) *
                     (-0.000568 * (d['Q_RVSM'] + d['PS_RVSM']) - 0.452)
                 )
             )
@@ -287,8 +251,8 @@ class PRTTemperatures(PPBase):
         Sets: TAT_ND_R
         """
         d = self.d
-        d['TAT_ND_R'] = true_air_temp_variable(
-            d.IAT_ND_R, d.MACH, d.ETA_ND, d.SH_GAMMA
+        d['TAT_ND_R'] = true_air_temp(
+            d['IAT_ND_R'], d['MACHNO'], self.dataset['RM_RECFAC']['ND']
         )
 
     def calc_di_tat(self):
@@ -299,9 +263,10 @@ class PRTTemperatures(PPBase):
         Sets: TAT_DI_R
         """
         d = self.d
-        d['TAT_DI_R'] = true_air_temp_variable(
-            d.IAT_DI_R, d.MACH, d.ETA_DI, d.SH_GAMMA
+        d['TAT_DI_R'] = true_air_temp(
+            d['IAT_DI_R'], d['MACHNO'], self.dataset['RM_RECFAC']['DI']
         )
+
 
     def process(self):
         """
@@ -312,6 +277,7 @@ class PRTTemperatures(PPBase):
         proc_dit = self.dataset['DITSENS'][1] != 'thermistor'
 
         self.get_dataframe()
+        self.calc_mach()
 
         if proc_dit:
             self.calc_heating_correction()
@@ -326,20 +292,32 @@ class PRTTemperatures(PPBase):
         iats = []
 
         if proc_ndt:
-            tat_nd = DecadesVariable(self.d['TAT_ND_R'], flag=DecadesBitmaskFlag)
-            iat_nd = DecadesVariable(self.d['IAT_ND_R'], flag=DecadesBitmaskFlag)
+            tat_nd = DecadesVariable(
+                self.d['TAT_ND_R'], flag=DecadesBitmaskFlag,
+                name='TAT_ND_R_OLD'
+            )
+            iat_nd = DecadesVariable(
+                self.d['IAT_ND_R'], flag=DecadesBitmaskFlag,
+                name='IAT_ND_R_OLD'
+            )
             tats.append(tat_nd)
             iats.append(iat_nd)
 
         if proc_dit:
-            tat_di = DecadesVariable(self.d['TAT_DI_R'], flag=DecadesBitmaskFlag)
-            iat_di = DecadesVariable(self.d['IAT_DI_R'], flag=DecadesBitmaskFlag)
+            tat_di = DecadesVariable(
+                self.d['TAT_DI_R'], flag=DecadesBitmaskFlag,
+                name='TAT_DI_R_OLD'
+            )
+            iat_di = DecadesVariable(
+                self.d['IAT_DI_R'], flag=DecadesBitmaskFlag,
+                name='IAT_DI_R_OLD'
+            )
             tats.append(tat_di)
             iats.append(iat_di)
 
         for at in tats + iats:
             at.flag.add_mask(
-                self.d.MACH < MACH_VALID_MIN, 'mach_out_of_range',
+                self.d['MACHNO_FLAG'], 'mach_out_of_range',
                 f'Mach number is below acceptable minimum of {MACH_VALID_MIN}'
             )
             self.add_output(at)
