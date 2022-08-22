@@ -33,3 +33,11 @@
     background: #3c3c3b;
     z-index: 200;
 }
+
+.wy-table-responsive {
+    overflow: visible !important;
+}
+
+.wy-nav-content-wrap {
+    background-color: white !important;
+}
