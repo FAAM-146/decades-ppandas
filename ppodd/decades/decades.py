@@ -27,7 +27,7 @@ from pydoc import locate
 import numpy as np
 import pandas as pd
 
-from vocal.schema_types import DerivedFloat32
+from vocal.schema_types import DerivedFloat32, OptionalDerivedString
 
 import ppodd.flags
 
@@ -499,7 +499,7 @@ class DecadesVariable(object):
     def range(self):
         if self.doc_mode:
             return [DerivedFloat32, DerivedFloat32]
-            
+
         try:
             return [
                 np.nanmin(self.array).astype(np.float32),
@@ -939,7 +939,10 @@ class DecadesDataset(object):
         Args:
             variable: the DecadesVariable to add as an output.
         """
-        variable.attrs.add(Attribute('coordinates', lambda: self.coords))
+        coord_var = (
+            OptionalDerivedString if variable.doc_mode else lambda: self.coords
+        )
+        variable.attrs.add(Attribute('coordinates', coord_var))
         self._backend.add_output(variable)
 
     @property
