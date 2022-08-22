@@ -16,7 +16,6 @@ from .shortcuts import _a, _o, _c, _z
 MACH_VALID_MIN = 0.05
 
 
-@register_pp('core')
 class PRTTemperaturesOLD(PPBase):
     r"""
     Calculate indicated and true (static)  air temperatures from the deiced and
