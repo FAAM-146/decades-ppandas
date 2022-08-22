@@ -25,7 +25,8 @@ class RadAlt(PPBase):
     valid value of :math:`(((2^{16} / 2) - 1) / 4)`.
 
     Data are flagged when below 10 feet or above 5000 feet, which is the
-    nominal maximum range of the instrument.
+    nominal maximum range of the instrument, though altitude is reported up to
+    8000 ft.
     """
 
     inputs = [

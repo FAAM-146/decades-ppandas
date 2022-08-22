@@ -14,6 +14,8 @@ from .shortcuts import _o
 @register_pp('core')
 class RecoveryFactor(PPBase):
     r"""
+    For further details see the `FAAM Met. Handbook <https://doi.org/10.5281/zenodo.5846962>`_.
+    
     This module produces a Mach dependent recovery factor for the deiced and
     non-deiced Rosemount housings, which house the temperature probes.
 

@@ -19,6 +19,8 @@ from .shortcuts import _o, _z
 @register_pp('core')
 class WVSS2Calibrated(PPBase):
     r"""
+    For further details see the `FAAM Met. Handbook <https://doi.org/10.5281/zenodo.5846962>`_.
+    
     This module provides a calibrated WVSS2 volume mixing ratio, along with its
     uncertainty estimate, from the flush mounted instrument. The calibration is
     a polynomial in VMR, with coefficients provided in the constants parameter

@@ -161,8 +161,9 @@ class Nevzorov(PPBase):
     the flight constants as ``CALNVL``.
 
     The baseline, :math:`K`, is not a true constant, but varies with the ambient
-    conditions. Abel et al. (2014) parameterise :math:`K` as a function of
-    indicated air speed, :math:`V_\text{IAS}` and ambient pressure, :math:`P`,
+    conditions. `Abel et al. (2014) <https://doi.org/10.5194/amt-7-3007-2014>`_
+    parameterise :math:`K` as a function of indicated air speed,
+    :math:`V_\text{IAS}` and ambient pressure, :math:`P`,
 
     .. math::
         K = \alpha_\text{IAS}\frac{1}{V_\text{IAS}} + \alpha_P\log_{10}(P).

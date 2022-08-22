@@ -17,7 +17,7 @@ from .shortcuts import _o
 @register_pp('core')
 class DryMach(PPBase):
     r"""
-    This module calculate a drt-air Mach number using RVSM pressure
+    This module calculate a dry-air Mach number using RVSM pressure
     measurements.
 
     Dry-air Mach number, :math:`M`, is given by

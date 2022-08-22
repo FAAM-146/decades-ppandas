@@ -42,7 +42,6 @@ class Nephelometer(PPBase):
         Provide dummy input data for testing.
         """
 
-        # Instrument U/S, no thought put into test data
         return {
             'AERACK_neph_total_blue': ('data', _z(100), 1),
             'AERACK_neph_total_green': ('data', _z(100), 1),
@@ -62,8 +61,6 @@ class Nephelometer(PPBase):
         Declare output variables.
         """
 
-        # Instrument is perm U/S, but we're going to hold on the the code until
-        # we get a new one
         # pylint: disable=unreachable
         neph_manufacturer='TSI'
         neph_model='3563'
