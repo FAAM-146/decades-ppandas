@@ -265,7 +265,7 @@ def dryair_calc_comp(p_sense, p_comp, cloud_mask=None, rtn_func=False,
     if np.all(mask):
         arr = np.empty_like(mask) * np.nan
         if rtn_goodness:
-            return arr, -inf
+            return arr, -np.inf
         return arr
 
     # Fit compensation power to sense power
@@ -591,8 +591,99 @@ def calc_wc(W_twc, W_lwc, k, e_liqT=1, e_iceT=1, e_liqL=1, beta_iceL=0):
 
 @register_pp('core')
 class SeaProbe(PPBase):
-    """
+    r"""
     Calculates bulk water contents from the SEA WCM-2000 sensor.
+
+    **Element Power**
+
+    First element powers :math:`P = V*I` are derived from recorded voltages and
+    currents for each element (TWC, 083, 021, CMP, DCE).
+
+    **Cloud mask**
+
+    A cloud mask is derived using a rolling window applied to the TWC element
+    temperature, with the aircraft assumed to be in cloud whenever the
+    temperature range within the rolling window exceeds a specified range, or
+    where the temperature withing the window exceeds a specified high or low
+    value.
+
+    **Parameters**
+
+    Temperature of evaporation, :math:`T_{\text{evap}}`, and latent heat of
+    evaporation, :math:`L_{\text{evap}}`, are given by 
+
+    .. math::
+        T_{\text{evap}} &= 32.16 + 0.1901 P - 2.391\times 10^{-4} P^2 + 
+                          1.785\times 10^{-7} P^3 - 5.19\times 10^4, \\
+        L_\text{evap} &= 4.1868\left(
+            594.4 - 0.484 T_\text{evap} - 7\times 10^{-4} T_\text{evap}^2
+            \right),
+
+    where :math:`P` is the static pressure from the aircraft's air data system.
+
+    The specific energies for evaporation and sublimination, :math:`L_\text{liq}`
+    and :math:`L_\text{ice}`, are given by 
+
+    .. math::
+        L_\text{liq} = C_\text{liq}(T_\text{evap} - T_a) + L_\text{evap},
+
+    where :math:`T_a` is the ambient air temperature, and
+
+    .. math::
+        C_\text{liq}\left(T\right) = 4.169828  +
+        (0.000364(T+100)^{5.26})\cdot10^{-10} + 0.046709 \cdot 10^{-0.036 T},
+
+    and
+
+    .. math::
+         L_\text{ice} = C_\text{ice}(T) + L_\text{ice} + C_\text{liq}(T_\text{evap}) + L_\text{evap},
+
+    where :math:`L_\text{ice} = 333.5`, and :math:`C_\text{ice}` is given by
+    an interpolant between :math:`T = [77, 173, 273]` and :math:`C = [0.686, 1.372, 2.097]`.
+
+    **Dry air term**
+
+    The dry air compensation term is calculated in two methods, with the method
+    which gives the best fit meing used
+
+    * Method 1: Calculate dry air power term by fitting constants for 1st principles.
+
+    The calculation of the dry air power term is based on method three
+    as described on page 58 of the WCM-2000 manual. This uses a fit
+    between the theoretical and measured (in cloud-free conditions)
+    sense powers to find the fitting constants :math:`k_1` and :math:`k_2`
+    (:math:`k_2\approx0.5`).
+
+    .. math::
+        P_\text{sense,dry} &= k_1 (T - T_a) (P \times \text{TAS})^{k_2} \\
+        P_\text{sense,total} &= P_\text{sense,dry} + P_\text{sense,wet} \\
+        &\rightarrow P_\text{sense,total} - P_\text{sense,dry} = 0 \text{ in cloud-free conditions.}
+
+    * Method 2: Calculate dry air power term from compensation element measurements.
+
+    The calculation of the dry air power term (DAT) is based on the use of
+    the compensation element as described on page 56 of the WCM-2000 manual.
+    This finds the slope and offset for conversion of the compensation
+    power to dry air sense element power.
+
+    .. math::
+        P_\text{sense,dry} &= P0 + K P_\text{comp} \\
+        P_\text{sense,total} &= P0 + K P_\text{comp} \text{ when in clear air}
+
+    This will be TAS and :math:`P` dependent (possibly :math:`T_a`). This
+    function determines optimum fitting parameters for the entire dataset,
+    thus any baseline drift shall be lost.
+
+    **Sense element water content**
+
+    The water content for an element is given by
+
+    .. math::
+        W = \frac{(2.389 \times 10^5) P_\text{sense}}
+            {L_\text{evap} + (T_\text{evap} - T_a) \times \text{TAS} \times w \times h},
+
+    where :math:`P_\text{sense}` is the (wet) sense element power, and :math:`w`
+    and :math:`h` are the width and height of the sense element, respectively.
     """
 
     inputs = [
