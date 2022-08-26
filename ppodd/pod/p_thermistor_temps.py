@@ -1,10 +1,12 @@
+import datetime
+
 import numpy as np
 import pandas as pd
 
 from scipy import interpolate
 from scipy.interpolate import CubicSpline
 
-from vocal.schema_types import DerivedString
+from vocal.schema_types import DerivedString, OptionalDerivedString
 
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..decades.attributes import DocAttribute
@@ -157,6 +159,25 @@ class ThermistorV1Temperatures(PPBase):
             'SH_GAMMA': ('data', 1.6 * _o(700), 32),
             'ETA_DI': ('data', _o(700), 32),
             'ETA_ND': ('data', _o(700), 32),
+            # Optional calibration info...
+            'RM_CALINFO_DI_DATE': ('const', DocAttribute(
+                value=datetime.date(2000, 1, 1), doc_value=OptionalDerivedString
+            )),
+            'RM_CALINFO_DI_INFO': ('const', DocAttribute(
+                value='Calibrated in a lab', doc_value=OptionalDerivedString
+            )),
+            'RM_CALINFO_DI_URL': ('const', DocAttribute(
+                value='https://some.url', doc_value=OptionalDerivedString
+            )),
+            'RM_CALINFO_ND_DATE': ('const', DocAttribute(
+                value=datetime.date(2000, 1, 1), doc_value=OptionalDerivedString
+            )),
+            'RM_CALINFO_ND_INFO': ('const', DocAttribute(
+                value='Calibrated in a lab', doc_value=OptionalDerivedString
+            )),
+            'RM_CALINFO_ND_URL': ('const', DocAttribute(
+                value='https://some.url', doc_value=OptionalDerivedString
+            ))
         }
 
     def declare_outputs(self):
