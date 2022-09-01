@@ -297,8 +297,8 @@ def make_definition(pp_group, standard):
 
         if not flag:
             
-            _attributes = dict(var.attrs())
-            _attributes['coordinates'] = schema_types.DerivedString
+            _attributes = var.attrs()
+            #_attributes['coordinates'] = schema_types.DerivedString
         else:
             _attributes = dict(var.flag.cfattrs)
             for item, value in _attributes.items():
@@ -317,25 +317,24 @@ def make_definition(pp_group, standard):
                 _attributes[item] = value
 
             if 'flag_masks' in _attributes or 'flag_values' in _attributes:
-                _attributes['flag_masks'] = '<Array[int8]: derived_from_file>'
+                _attributes['flag_masks'] = schema_types.DerivedByteArray
 
             if 'valid_range' in _attributes:
                 _attributes['valid_range'] = [schema_types.DerivedByte, schema_types.DerivedByte]
                 
 
-        if 'actual_range' in _attributes:
-            _attributes['actual_range'] = [
-                schema_types.DerivedFloat32, schema_types.DerivedFloat32
-            ]
+        #if 'actual_range' in _attributes:
+        #    _attributes['actual_range'] = [
+        #        schema_types.DerivedFloat32, schema_types.DerivedFloat32
+        #    ]
 
-        _attributes['comment'] = '<str: derived_from_file optional>'
+        _attributes['comment'] = schema_types.OptionalDerivedString
 
         # These are variable attributes which we expect to be derived from file
         # on a case-by-case basis
         var_vars = (
             'sensor_serial_number', 'instrument_serial_number', 'flag_meanings',
-            'sensor_type', 'sensor_manufacturer', 'sensor_model', 'calibration_date',
-            'calibration_information', 'calibration_url'
+            'sensor_type', 'sensor_manufacturer', 'sensor_model'
         )
         for _var in var_vars:
             if _var in _attributes:
@@ -401,13 +400,14 @@ def make_definition(pp_group, standard):
                 _dataset['variables'].append(make_variable(var))
 
                 if var.flag is not None:
-                    pass
                     _dataset['variables'].append(make_variable(var, flag=True))
 
     for dim_to_add in dimensions_to_add.values():
         _dataset['dimensions'].append(dim_to_add)
 
     _dataset['dimensions'].sort(key=lambda x: x['size'] if x['size'] is not None else -9e99)
+    
+    
 
     import pprint
     pprint.pprint(_dataset)
