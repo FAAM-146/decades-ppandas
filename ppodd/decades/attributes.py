@@ -8,6 +8,10 @@ from dataclasses import dataclass
 
 import pydantic
 
+from vocal.schema_types import DerivedString, OptionalDerivedString
+
+from ppodd import URL as PPODD_URL, DOI as PPODD_DOI
+
 STR_DERIVED_FROM_FILE = '<derived from file>'
 ATTRIBUTE_NOT_SET = 'ATTRIBUTE_NOT_SET'
 ATTR_USE_EXAMPLE = '<example>'
@@ -407,3 +411,28 @@ class Attribute(object):
                     value = value()
             
             return value
+
+GLOBALS = {
+    'core': {
+        'comment': OptionalDerivedString,
+        'constants_file': DerivedString,
+        'creator_url': 'https://www.faam.ac.uk',
+        'processing_software_commit': DerivedString,
+        'processing_software_version': DerivedString,
+        'processing_software_doi': PPODD_DOI,
+        'processing_software_url': PPODD_URL,
+        'project_acronym': DerivedString,
+        'project_name': DerivedString,
+        'project_principal_investigator': DerivedString,
+        'project_principal_investigator_email': DerivedString,
+        'project_principal_investigator_url': DerivedString,
+        'revision_comment': OptionalDerivedString,
+        'time_coverage_start': DerivedString,
+        'time_coverage_end': DerivedString,
+        'time_coverage_duration': DerivedString,
+        'metadata_link': 'https://github.com/FAAM-146/faam-data/'
+
+
+
+    }
+}
