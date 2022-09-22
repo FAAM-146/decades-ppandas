@@ -6,7 +6,7 @@ import subprocess
 
 import ppodd
 
-__version__ = '0.15.1'
+__version__ = '0.15.2'
 URL = 'https://github.com/faam-146/decades-ppandas'
 DOI = '10.5281/zenodo.5711136'
 

@@ -138,6 +138,35 @@ class CSVReader(FileReader):
                 _file.dataset.add_input(variable)
 
 
+@register(patterns=[
+    'TWBOZO01_[0-9]{8}_[0-9]{6}_[A-Z][0-9]{3}\.txt',
+    'CHTSOO02_[0-9]{8}_[0-9]{6}_[A-Z][0-9]{3}\.txt',
+    'AL55CO01_[0-9]{8}_[0-9]{6}_[A-Z][0-9]{3}\.txt'
+])
+class ChemistryTxtReader(FileReader):
+    level = 2
+    def read(self):
+        for _file in self.files:
+            df = pd.read_csv(
+                _file.filepath, index_col=[2],
+                parse_dates=[2],
+                date_parser=lambda t: datetime.datetime.utcfromtimestamp(float(t))
+            )
+            _freq = int(1 / (df.index[1] - df.index[0]).total_seconds())
+            for variable_name in df.columns:
+                variable = DecadesVariable(
+                    df[variable_name],
+                    index=df.index,
+                    name=variable_name,
+                    long_name=variable_name,
+                    units='RAW',
+                    frequency=_freq,
+                    write=False,
+                    flag=None
+                )
+                _file.dataset.add_input(variable)
+
+
 @register(patterns=['core_faam_.*\.nc', '.*\.nc'])
 class CoreNetCDFReader(FileReader):
     level = 2
