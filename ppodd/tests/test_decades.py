@@ -22,7 +22,10 @@ TEST_FILE_PATTERNS = {
     'flight-cst_faam_20010101_r0_c123.json': r.JsonConstantsReader,
     'SEAPROBE_20010101_000000_c123.wcm': r.WcmFileReader,
     'faam-fgga_faam_20010101_r0_c123.na': r.FGGAReader,
-    'CCN-200 data 010101010000.csv': r.CCNReader
+    'CCN-200 data 010101010000.csv': r.CCNReader,
+    'TWBZOZ01_20000101_0000_C123.txt': r.ChemistryTxtReader,
+    'CHTSOO02_20000101_0000_C123.txt': r.ChemistryTxtReader,
+    'AL55CO01_20000101_0000_C123.txt': r.ChemistryTxtReader
 }
 
 
