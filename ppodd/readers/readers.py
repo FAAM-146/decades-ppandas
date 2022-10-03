@@ -139,9 +139,9 @@ class CSVReader(FileReader):
 
 
 @register(patterns=[
-    'TWBOZO01_[0-9]{8}_[0-9]{6}_[A-Z][0-9]{3}\.txt',
-    'CHTSOO02_[0-9]{8}_[0-9]{6}_[A-Z][0-9]{3}\.txt',
-    'AL55CO01_[0-9]{8}_[0-9]{6}_[A-Z][0-9]{3}\.txt'
+    'TWBOZO01_[0-9]{8}_[0-9]{6}_[a-zA-Z][0-9]{3}\.txt',
+    'CHTSOO02_[0-9]{8}_[0-9]{6}_[a-zA-Z][0-9]{3}\.txt',
+    'AL55CO01_[0-9]{8}_[0-9]{6}_[a-zA-Z][0-9]{3}\.txt'
 ])
 class ChemistryTxtReader(FileReader):
     level = 2

@@ -49,7 +49,7 @@ class TecoSO2V2(PPBase):
     def test():
         return {
             'CHTSOO_concentration': ('data', _o(100), 1),
-            'CHTSOO_flags': ('data', [b'cc0000'] * 100, 1),
+            'CHTSOO_flags': ('data', _o(100) * 40000000, 1),
             'CHTSOO_pmt_volt': ('data', _o(100) * -700, 1),
             'CHTSOO_MFM': ('data', _o(100) * 1.2, 1),
             'CHTSOO_MFC3_mass_flow': ('data', _o(100) * 1.9, 1),
@@ -86,7 +86,12 @@ class TecoSO2V2(PPBase):
     def get_wow_flag(self):
         d = self.d
         wow = self.d['WOW_IND'] == 1
+
+        # Get the takeoff time - emulate this if we're in test mode.
         to = self.dataset.takeoff_time
+        if self.test_mode:
+            to = self.d.index[20]
+
         wow.loc[[to + datetime.timedelta(seconds=i) for i in range(WOW_FLAG_BUFFER)]] = 1
         d['wow_flag'] = wow
 
