@@ -109,6 +109,3 @@ class TEiSO2V2QA(QAMod):
             self.make_figure_5(fig)
             self.make_figure_6(fig)
             self.make_figure_7(fig)
-
-        import matplotlib.pyplot as plt
-        plt.show()
