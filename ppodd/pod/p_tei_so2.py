@@ -33,7 +33,7 @@ class TecoSO2(PPBase):
     Flagging is based on valve states and the instrument status flag.
     """
 
-    DEPRECIATED_AFTER = date(2022, 1, 1)
+    DEPRECIATED_AFTER = date(2021, 9, 1)
 
     inputs = [
         'CHTSOO_conc',
