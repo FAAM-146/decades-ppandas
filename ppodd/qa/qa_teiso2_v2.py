@@ -62,7 +62,7 @@ class TEiSO2V2QA(QAMod):
         ax1.set_ylabel('React. press. (hPa)')
 
         ax2.plot(self.dataset['CHTSOO_MFC3_absolute_pressure'], label='MFC3 abs. press', color='tab:orange')
-        ax2.set_ylabel('MFC abs press. (hPa)')
+        ax2.set_ylabel('MFC abs press. (psi)')
 
         ax1.legend(loc='lower left', fontsize=6)
         ax2.legend(loc='lower right', fontsize=6)
