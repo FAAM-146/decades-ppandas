@@ -1,8 +1,6 @@
-from turtle import position
 import numpy as np
 
 from .base import QAMod, QAFigure
-from ppodd.utils.calcs import sp_mach
 
 
 class TEiSO2V2QA(QAMod):
