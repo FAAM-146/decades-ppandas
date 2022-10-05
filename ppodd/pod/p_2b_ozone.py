@@ -1,6 +1,9 @@
 import datetime
 
+from vocal.schema_types import OptionalDerivedString
+
 from ..decades import DecadesVariable
+from ..decades.attributes import DocAttribute
 from .base import PPBase, register_pp
 from .shortcuts import _o, _z, _c
 
@@ -44,6 +47,16 @@ class TwoBOzone(PPBase):
             'TWBOZO_ZERO': ('const', 0.),
             'TWBOZO_SENS': ('const', 1.),
             'WOW_IND': ('data', _c([_o(20), _z(70), _o(10)]), 1),
+            # Optional calibration info...
+            'TWBOZO_CALINFO_DATE': ('const', DocAttribute(
+                value=datetime.date(2000, 1, 1), doc_value=OptionalDerivedString
+            )),
+            'TWBOZO_CALINFO_INFO': ('const', DocAttribute(
+                value='Calibrated in a lab', doc_value=OptionalDerivedString
+            )),
+            'TWBOZO_CALINFO_URL': ('const', DocAttribute(
+                value='https://some.url', doc_value=OptionalDerivedString
+            ))
         }
 
 
@@ -59,9 +72,9 @@ class TwoBOzone(PPBase):
             instrument_model='205',
             instrument_serial_number='1034DB',
             instrument_description='Motherboard PCB version "l"',
-            calibration_information=self.dataset.lazy['2B_OZONE_CALINFO_INFO'],
-            calibration_date=self.dataset.lazy['2B_OZONE_CALINFO_DATE'],
-            calibration_url=self.dataset.lazy['2B_OZONE_CALINFO_URL']
+            calibration_information=self.dataset.lazy['TWBOZO_CALINFO_INFO'],
+            calibration_date=self.dataset.lazy['TWBOZO_CALINFO_DATE'],
+            calibration_url=self.dataset.lazy['TWBOZO_CALINFO_URL']
         )
 
     def get_wow_flag(self):

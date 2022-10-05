@@ -1,9 +1,12 @@
 import datetime
-import numpy as np
-from .base import PPBase, register_pp
+
+from vocal.schema_types import OptionalDerivedString
+
 from ..utils import flagged_avg
-from ..decades import DecadesVariable, DecadesBitmaskFlag, flags
+from ..decades import DecadesVariable, DecadesBitmaskFlag
+from ..decades.attributes import DocAttribute
 from .shortcuts import _z, _c, _o
+from .base import PPBase, register_pp
 
 CAL_FLUSH_START = 3
 CAL_FLUSH_END = 5
@@ -57,7 +60,17 @@ class TecoSO2V2(PPBase):
             'CHTSOO_V7': ('data', _c([_z(10), _o(10), _z(10), _o(70)]), 1),
             'CHTSOO_V8': ('data', _c([_z(10), _o(10), _z(10), _o(70)]), 1),
             'WOW_IND': ('data', _c([_o(20), _z(70), _o(10)]), 1),
-            'CHTSOO_SENS': ('const', 1)
+            'CHTSOO_SENS': ('const', 1),
+            # Optional calibration info...
+            'CHTSOO_CALINFO_DATE': ('const', DocAttribute(
+                value=datetime.date(2000, 1, 1), doc_value=OptionalDerivedString
+            )),
+            'CHTSOO_CALINFO_INFO': ('const', DocAttribute(
+                value='Calibrated in a lab', doc_value=OptionalDerivedString
+            )),
+            'CHTSOO_CALINFO_URL': ('const', DocAttribute(
+                value='https://some.url', doc_value=OptionalDerivedString
+            ))
         }
 
     def declare_outputs(self):
@@ -69,7 +82,10 @@ class TecoSO2V2(PPBase):
             standard_name='mole_fraction_of_sulfur_dioxide_in_air',
             instrument_manufacturer='Thermo Fisher Scientific, Inc.',
             instrument_model='43i Trace Level-Enhanced pulsed fluorescence SO2 spectrometer',
-            instrument_serial_number='1505564557'
+            instrument_serial_number='1505564557',
+            calibration_information=self.dataset.lazy['TWBOZO_CALINFO_INFO'],
+            calibration_date=self.dataset.lazy['TWBOZO_CALINFO_DATE'],
+            calibration_url=self.dataset.lazy['TWBOZO_CALINFO_URL']
         )
 
         self.declare(
@@ -80,6 +96,9 @@ class TecoSO2V2(PPBase):
             instrument_manufacturer='Thermo Fisher Scientific, Inc.',
             instrument_model='43i Trace Level-Enhanced pulsed fluorescence SO2 spectrometer',
             instrument_serial_number='1505564557',
+            calibration_information=self.dataset.lazy['TWBOZO_CALINFO_INFO'],
+            calibration_date=self.dataset.lazy['TWBOZO_CALINFO_DATE'],
+            calibration_url=self.dataset.lazy['TWBOZO_CALINFO_URL'],
             write=False
         )
 
