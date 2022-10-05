@@ -1,8 +1,10 @@
 import datetime
+import numpy as np
 
 from vocal.schema_types import OptionalDerivedString
 
 from ..decades import DecadesVariable
+from ..decades.flags import DecadesBitmaskFlag
 from ..decades.attributes import DocAttribute
 from .base import PPBase, register_pp
 from .shortcuts import _o, _z, _c
@@ -31,9 +33,12 @@ class TwoBOzone(PPBase):
     Flagging information is provided based on instrument and aircraft status.
     """
 
+    VALID_AFTER = datetime.date(2021, 9, 1)
+
     inputs = [
         'TWBOZO_conc',
         'TWBOZO_MFM',
+        'TWBOZO_flow',
         'TWBOZO_ZERO',
         'TWBOZO_SENS',
         'WOW_IND'
@@ -44,6 +49,8 @@ class TwoBOzone(PPBase):
         return {
             'TWBOZO_conc': ('data', _o(100), 1),
             'TWBOZO_MFM': ('data', _o(100) * 1.2, 1),
+            'TWBOZO_flow': ('data', _o(100) * 1500, 1),
+            'TWBOZO_V6': ('data', _z(100), 1),
             'TWBOZO_ZERO': ('const', 0.),
             'TWBOZO_SENS': ('const', 1.),
             'WOW_IND': ('data', _c([_o(20), _z(70), _o(10)]), 1),
@@ -94,12 +101,31 @@ class TwoBOzone(PPBase):
         self.d.loc[self.d['TWBOZO_MFM'] < 1.2, 'mfm_flag'] = 1
 
     def get_flow_flag(self):
-        pass
+        flow_out_range = self.d['TWBOZO_flow'] < 1500
+        flag = 0 * flow_out_range
 
+        groups = (flow_out_range != flow_out_range.shift()).cumsum()
+        groups[flow_out_range != 1] = np.nan
+        groups.dropna(inplace=True)
+
+        g = self.d['TWBOZO_flow'].groupby(groups)
+
+        for _, df in g:
+            if len(df) > 5:
+                flag.loc[df.index] = 1
+
+        self.d['flow_flag'] = flag
+
+    def get_zero_flag(self):
+        if 'TWBOZO_V6' not in self.d.columns:
+            return
+        self.d['zero_flag'] = (self.d['TWBOZO_V6'] == 1)
+        
     def flag(self, var):
         self.get_wow_flag()
         self.get_flow_flag()
         self.get_mfm_flag()
+        self.get_zero_flag()
 
         flag_info = {
             'wow_flag': (
@@ -124,7 +150,10 @@ class TwoBOzone(PPBase):
         }
 
         for col, (short, long) in flag_info.items():
-            var.flag.add_mask(self.d[col], short, long)
+            try:
+                var.flag.add_mask(self.d[col], short, long)
+            except KeyError:
+                continue
 
     def process(self):
         self.get_dataframe()
@@ -132,6 +161,7 @@ class TwoBOzone(PPBase):
         sens = self.dataset['TWBOZO_SENS']
         conc = (self.d['TWBOZO_conc'] - zero) / sens
 
-        conc_out = DecadesVariable(conc, name='O3_2BTECH', flag=None)
+        conc_out = DecadesVariable(conc, name='O3_2BTECH', flag=DecadesBitmaskFlag)
+        self.flag(conc_out)
 
         self.add_output(conc_out)
