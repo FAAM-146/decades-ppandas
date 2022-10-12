@@ -3,9 +3,9 @@ from atexit import register
 from re import I
 import uuid
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Callable, Optional
 
-from ppodd.utils.utils import stringify_if_datetime, try_to_call
+from ppodd.utils.utils import stringify_if_datetime
 
 if TYPE_CHECKING:
     from ppodd.decades import DecadesDataset
@@ -16,17 +16,22 @@ def register_attribute_helper(cls):
     return cls
 
 
-class AttributeHelper(abc.ABC):   
+class AttributeHelper(abc.ABC):
+    """
+    An abstract class which should be implemented to produce an attrubute
+    helper. Implementations should be decorated with @register_attribute_helper
+    to ensure that they are attached to DecadesDatasets.
+    """   
 
-    def __init__(self, dataset):
+    def __init__(self, dataset: 'DecadesDataset') -> None:
         self.dataset = dataset
         self.__post_init__()
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         pass
 
     @property
-    def attributes(self):
+    def attributes(self) -> list[property]:
         _attrs = []
         for attr in dir(self):
             if attr == 'attributes':
@@ -43,6 +48,9 @@ class AttributeHelper(abc.ABC):
     
 @register_attribute_helper
 class FlightTime(AttributeHelper):
+    """
+    Provides `takeoff_time` and `landing_time` attributes
+    """
 
     def __post_init__(self):
         self._takeoff_time = None
@@ -100,25 +108,45 @@ class FlightTime(AttributeHelper):
 
 @register_attribute_helper
 class IDProvider(AttributeHelper):
+    """
+    Provides a `data_id` attribute. This is expected to be set at some point
+    during the processing chain - canonically when the filename of the 
+    resulting output has been set.
+    """
 
     def __post_init__(self):
         self._data_id = None
 
     @property
-    def data_id(self):
+    def data_id(self) -> str:
+        """
+        Return the `data_id`
+        """
         return lambda: self._data_id
 
     @data_id.setter
-    def data_id(self, data_id):
+    def data_id(self, data_id: str) -> None:
+        """
+        Set the `data_id`
+        """
         self._data_id = data_id
 
 
 @register_attribute_helper
 class UUIDProvider(AttributeHelper):
+    """
+    Provides a `uuid` attribute
+    """
 
     @property
-    def uuid(self):
-        def _closure():
+    def uuid(self) -> Callable[[], str]:
+        """
+        Provide a UUID, factored as a callable. If the dataset globals `id`
+        and `date_created` attributes are available, returns a UUID3 of 
+        id+date_created, hashed with `NAMESPACE_DNS`, otherwise returns a
+        random UUID4.
+        """
+        def _closure() -> str:
             try:
                 _id = self.dataset.globals['id']
                 _date = stringify_if_datetime(
@@ -136,8 +164,12 @@ class UUIDProvider(AttributeHelper):
 
 @register_attribute_helper
 class DurationProvider(AttributeHelper):
+    """
+    Provides a `time_coverage_duration` atttibute, giving the length of the 
+    dataset in ISO format (e.g. PT1H23M12S).
+    """
 
-    def _get_duration(self):
+    def _get_duration(self) -> str:
         start = self.dataset.lazy['TIME_MIN_CALL']
         end = self.dataset.lazy['TIME_MAX_CALL']
         delta = (end - start).total_seconds()
@@ -150,7 +182,12 @@ class DurationProvider(AttributeHelper):
         return a
 
     @property
-    def time_coverage_duration(self):
+    def time_coverage_duration(self) -> Callable[[], str]:
+        """
+        Provide `time_coverage_duration`. This is calculated as the difference
+        between `TIME_MAX_CALL` and `TIME_MIN_CALL`, formatted in ISO8601
+        timedelta format.
+        """
         def _closure():
             start = self.dataset.lazy['TIME_MIN_CALL']
             end = self.dataset.lazy['TIME_MAX_CALL']
@@ -166,8 +203,11 @@ class DurationProvider(AttributeHelper):
 
 @register_attribute_helper
 class GeoBoundsProvider(AttributeHelper):
+    """
+    Provides a `geospatial_bounds` attribute.
+    """
 
-    def get_map(self, attr):
+    def get_map(self, attr: str) -> dict[str, float]:
         lower = getattr(self, f'{attr}_min')
         upper = getattr(self, f'{attr}_max')
         return {
@@ -175,7 +215,7 @@ class GeoBoundsProvider(AttributeHelper):
             'u': upper
         }
 
-    def point(self, defstr):
+    def point(self, defstr: str) -> Optional[str]:
         lon_id, lat_id  = defstr
 
         lon_map = self.get_map('lon')
@@ -186,14 +226,18 @@ class GeoBoundsProvider(AttributeHelper):
         except TypeError:
             return None
 
-    def get_props(self):
+    def get_props(self) -> None:
         self.lat_min = self.dataset.globals['geospatial_lat_min']
         self.lat_max = self.dataset.globals['geospatial_lat_max']
         self.lon_min = self.dataset.globals['geospatial_lon_min']
         self.lon_max = self.dataset.globals['geospatial_lon_max']
 
     @property
-    def geospatial_bounds(self):
+    def geospatial_bounds(self) -> Optional[str]:
+        """
+        Provides a WKT representation of the flight envelope, as a rectangle
+        with upper and lower lat/lon bounds.
+        """
         self.get_props()
         p1 = self.point('ll')
         p2 = self.point('lu')
