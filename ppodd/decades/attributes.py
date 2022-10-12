@@ -289,7 +289,7 @@ class AttributesCollection(object):
 
         for glo in self._attributes:
             if not dynamic:
-                if glo._context is not None:
+                if (glo._context is not None) or callable(glo.value):
                     continue
 
             doc_mode = getattr(self._dataset, 'doc_mode', False)
