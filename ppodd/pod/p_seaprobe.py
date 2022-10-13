@@ -684,6 +684,11 @@ class SeaProbe(PPBase):
 
     where :math:`P_\text{sense}` is the (wet) sense element power, and :math:`w`
     and :math:`h` are the width and height of the sense element, respectively.
+
+    .. note::
+        The flags on upstream variables ``TAT_DI_R`` and ``TAS_RVSM`` are not included in
+        the ``dependency_is_flagged`` flag of this variable, as these are likely to be
+        flagged whenever the aircraft is in cloud.
     """
 
     inputs = [
@@ -727,6 +732,8 @@ class SeaProbe(PPBase):
         'SEA_SETPOINT_TEMP',
         'SEA_SN'
     ]
+
+    ignored_upstream_flags = ['TAT_DI_R', 'TAS_RVSM']
 
     @staticmethod
     def test():

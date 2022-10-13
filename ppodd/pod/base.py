@@ -59,6 +59,7 @@ class PPBase(object):
 
     inputs = []
     test = {}
+    ignored_upstream_flags = []
 
     VALID_AFTER = datetime.date.min
     DEPRECIATED_AFTER = datetime.date.max
@@ -201,7 +202,9 @@ class PPBase(object):
 
             if type(output.flag) is DecadesBitmaskFlag:
                 if np.any(~np.isnan(input_flag)):
-                    input_flag = input_flag.reindex(output.index).fillna(0)
+                    input_flag = input_flag.reindex(output.index)
+                    input_flag = input_flag.fillna(method='bfill')
+                    input_flag = input_flag.fillna(method='ffill')
                     output.flag.add_mask(
                         input_flag, flags.DEPENDENCY,
                         ('A dependency, used in the derivation of this '
@@ -215,7 +218,9 @@ class PPBase(object):
                     flag_value = 1
 
                 if np.any(~np.isnan(input_flag)) and np.any(input_flag):
-                    input_flag = input_flag.reindex(output.index).fillna(0)
+                    input_flag = input_flag.reindex(output.index)
+                    input_flag = input_flag.fillna(method='bfill')
+                    input_flag = input_flag.fillna(method='ffill')
                     input_flag[input_flag > 0] = flag_value
 
                     output.flag.add_meaning(
@@ -263,6 +268,8 @@ class PPBase(object):
     def get_input_flag(self, index):
         cflag = pd.Series(dtype=np.int8)
         for _input in self.inputs:
+            if _input in self.ignored_upstream_flags:
+                continue
             try:
                 flag = self.dataset[_input].flag()
                 flag = flag[flag > 0].dropna()
@@ -274,7 +281,9 @@ class PPBase(object):
 
             # TODO: we probably don't want to fill with 0 in the case of
             # differing frequencies
-            cflag = cflag.reindex(cindex).fillna(0)
+            cflag = cflag.reindex(cindex)
+            cflag = cflag.fillna(method='bfill')
+            cflag = cflag.fillna(method='ffill')
             cflag.loc[flag.index] = np.maximum(
                 flag, cflag.loc[flag.index]
             )
