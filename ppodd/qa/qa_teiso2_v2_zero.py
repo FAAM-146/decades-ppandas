@@ -24,16 +24,22 @@ class TEiSO2V2ZeroQA(QAMod):
         ax, ax2 = fig.timeseries_axes([.1, .8, .8, .12], twinx=True)
         
         ax.plot(in_zero, alpha=.5)
-        conc = self.dataset['CHTSOO_concentration']()
+        conc = self.dataset['CHTSOO_concentration']().copy()
+        conc2 = conc.copy()
         conc[in_zero == 0] = np.nan
+        conc2[in_zero != 0] = np.nan
+        ax2.plot(conc2, color='gray')
         ax2.plot(conc, color='tab:orange')
+
+        ax.set_ylabel('Zero state')
+        ax2.set_ylabel('[SO2]')
 
     def run(self):
         """
         Entry hook
         """
         in_zero = (self.dataset['CHTSOO_V6']() == 1) | (self.dataset['CHTSOO_V7']() == 1)
-        conc = self.dataset['CHTSOO_concentration']()
+        conc = self.dataset['CHTSOO_concentration']().copy()
 
         with QAFigure(self.dataset, 'TEi 43i SO2 Zero') as fig:
             self.plot_timeseries(in_zero, fig)
@@ -62,6 +68,8 @@ class TEiSO2V2ZeroQA(QAMod):
             
             ax.fill_between(bt,b,-np.array(b), alpha=.2)
             ax.axhline(0, color='k', linewidth=.5)
+            ax.set_ylabel('[SO2] zero')
+            
 
             # Get a normal distribution
             norm = NormalDist.from_samples(a)
@@ -84,4 +92,7 @@ class TEiSO2V2ZeroQA(QAMod):
             hax.fill_between([-std, std], y1=0, y2=the_max, alpha=.5)
             hax.set_ylim([0, the_max])
             hax.set_xlim([-n_lim, n_lim])
+            hax.set_ylabel('Density')
+            hax.set_xlabel('Zero value (mean corrected)')
+            
             hax.set_title(f'Mean = {mean:0.3f}, Std. dev. = {std:0.3f}')

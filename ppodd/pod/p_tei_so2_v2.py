@@ -191,7 +191,17 @@ class TecoSO2V2(PPBase):
         self.get_dataframe()
         sens = self.dataset['CHTSOO_SENS']
 
-        self.d['zero_flag'] = (self.d['CHTSOO_V7'] == 1)
+        # The zero flag is
+        # - when ev7 is active (in a zero)
+        # - ev8 is inactive (not in a cal)
+        # - ev8 has been inactive for at least CAL_FLAG_BUFFER secs
+        ev8 = self.d['CHTSOO_V8']
+        ev8_buffered = ev8.copy()
+
+        for i in ev8[ev8.diff()==-1].index:
+            ev8_buffered.loc[i:i+datetime.timedelta(seconds=CAL_FLAG_BUFFER)] = 1
+
+        self.d['zero_flag'] = (self.d['CHTSOO_V7'] == 1) & (~(ev8_buffered==1))
 
         flagged_avg(self.d, 'zero_flag', 'CHTSOO_concentration', out_name='zero',
                     interp=True, skip_start=CAL_FLUSH_START, skip_end=CAL_FLUSH_END)
