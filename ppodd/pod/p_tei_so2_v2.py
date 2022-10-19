@@ -51,14 +51,16 @@ class TecoSO2V2(PPBase):
     @staticmethod
     def test():
         return {
-            'CHTSOO_concentration': ('data', _o(100), 1),
+            'CHTSOO_concentration': ('data', _c([
+                _o(10), _z(10), _o(10), _z(10), _o(60)
+            ]), 1),
             'CHTSOO_flags': ('data', _o(100) * 40000000, 1),
             'CHTSOO_pmt_volt': ('data', _o(100) * -700, 1),
             'CHTSOO_MFM': ('data', _o(100) * 1.2, 1),
             'CHTSOO_MFC3_mass_flow': ('data', _o(100) * 1.9, 1),
-            'CHTSOO_V6': ('data', _c([_z(10), _o(10), _z(10), _o(70)]), 1),
-            'CHTSOO_V7': ('data', _c([_z(10), _o(10), _z(10), _o(70)]), 1),
-            'CHTSOO_V8': ('data', _c([_z(10), _o(10), _z(10), _o(70)]), 1),
+            'CHTSOO_V6': ('data', _c([_z(10), _o(10), _z(10), _o(10), _z(60)]), 1),
+            'CHTSOO_V7': ('data', _c([_z(10), _o(10), _z(10), _o(10), _z(60)]), 1),
+            'CHTSOO_V8': ('data', _z(100), 1),
             'WOW_IND': ('data', _c([_o(20), _z(70), _o(10)]), 1),
             'CHTSOO_SENS': ('const', 1),
             # Optional calibration info...
