@@ -148,6 +148,6 @@ list of a processing module.
 
 .. csv-table:: Flight Constants
     :file: flight-constants.csv
-    :widths: 20, 10, 70
+    :widths: 30, 20, 50
     :header-rows: 1
 

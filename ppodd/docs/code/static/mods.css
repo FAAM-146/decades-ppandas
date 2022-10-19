@@ -1,5 +1,5 @@
 .wy-nav-content {
-    max-width: none !important;
+    max-width: 800px !important;
 }
 
 .wy-side-nav-search {
@@ -8,11 +8,15 @@
     padding: .809em;
     margin-bottom: .809em;
     z-index: 200;
-    background-color: #252243;
+    background-color: #3c3c3b;
     text-align: center;
     color: #252243;
-    border: 5px solid #0abbef;
-    border-radius: 30px;
+    border-bottom: 5px solid #0abbef;
+    border-top: 5px solid #0abbef;
+}
+
+.wy-side-nav-search .a {
+    font-color: black
 }
 
 .wy-nav-side {
@@ -28,4 +32,12 @@
     color: #9b9b9b;
     background: #3c3c3b;
     z-index: 200;
+}
+
+.wy-table-responsive {
+    overflow: visible !important;
+}
+
+.wy-nav-content-wrap {
+    background-color: white !important;
 }

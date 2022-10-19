@@ -1,0 +1,62 @@
+Constant,Module(s),Description
+TASCORR,AirSpeed,TAS correction term for TAS from RVSM data
+CALCUCF,BBRFlux,Pitch and roll corrections (upper clear)
+CALCURF,BBRFlux,Pitch and roll corrections (upper red)
+CALCUIF,BBRFlux,Pitch and roll corrections (upper IR)
+CALCLCF,BBRFlux,Pitch and roll corrections (lower clear)
+CALCLRF,BBRFlux,Pitch and roll corrections (lower red)
+CALCLIF,BBRFlux,Pitch and roll corrections (lower IR)
+CALUP1S,BBRSols,Sensitivity and temperature calibrations (upper clear)
+CALUP2S,BBRSols,Sensitivity and temperature calibrations (upper red)
+CALUIRS,BBRSols,Sensitivity and temperature calibrations (upper IR)
+CALLP1S,BBRSols,Sensitivity and temperature calibrations (lower clear)
+CALLP2S,BBRSols,Sensitivity and temperature calibrations (lower red)
+CALLIRS,BBRSols,Sensitivity and temperature calibrations (lower IR)
+BBRUP1_SN,BBRFlux,BBR Serial number (upper clear)
+BBRUP2_SN,BBRFlux,BBR Serial number (upper red)
+BBRUIR_SN,BBRFlux,BBR Serial number (upper IR)
+BBRLP1_SN,BBRFlux,BBR Serial number (lower clear)
+BBRLP2_SN,BBRFlux,BBR Serial number (lower red)
+BBRLIR_SN,BBRFlux,BBR Serial number (lower IR)
+BUCK,BuckCR2,Polynomial calibration curve x0..xn
+BUCK_SN,BuckCR2,Buck CR2 Serial number
+BUCK_CALINFO_DATE,BuckCR2,Buck CR2 calibration date (yyyy-mm-dd)
+BUCK_CALINFO_INFO,BuckCR2,Buck CR2 calibration information
+BUCK_CALINFO_URL,BuckCR2,Buck CR2 calibration URL
+CALCABP,CabinPressure,Cabin pressure transducer calibration x0..xn
+CABP_SN,CabinPressure,Cabin pressure transducer serial number
+CALCABT,CabinTemperature,Cabin temperature calibration x0..xn
+GELIMS,GeneralEastern,GE balance limits
+CALGE,GeneralEastern,GE calibration curve x0..xn
+GE_SN,GeneralEastern,GE Serial number
+GIN_TIME_OFFSET,Gin,GIN time offset in seconds. Generally should be 0.
+GIN_HDG_OFFSET,GinWinds,Heading offset used for calculation of non-turbulent winds
+GINWIND_TASCOR,GinWinds,TAS correction term used when calculating non-turbulent winds
+PRTCCAL,Heimann,DRS calibration curve for Heimann PRT
+HEIMCAL,Heimann,DRS calibration curve for Heimann
+HEIM_SN,Heimann,Heimann serial number
+VANETYPE,Nevzorov,Type of Nevzorov vane fitted. 1T2L1R or 1T1L2R.
+VANE_SN,Nevzorov,Vane serial number
+CLWCIREF,Nevzorov,DRS calibration curve Nevz. voltage and current
+CLWCVREF,Nevzorov,DRS calibration curve Nevz. voltage and current
+CLWCICOL,Nevzorov,DRS calibration curve Nevz. voltage and current
+CLWCVCOL,Nevzorov,DRS calibration curve Nevz. voltage and current
+CTWCIREF,Nevzorov,DRS calibration curve Nevz. voltage and current
+CTWCVREF,Nevzorov,DRS calibration curve Nevz. voltage and current
+CTWCICOL,Nevzorov,DRS calibration curve Nevz. voltage and current
+CTWCVCOL,Nevzorov,DRS calibration curve Nevz. voltage and current
+CALNVTWC,Nevzorov,TWC k estimate and cross-section
+CALNVLWC1,Nevzorov,LWC1 k estimate and cross-section
+CALNVLWC2,Nevzorov,LWC2 k estimate and cross-section
+CALNVL,Nevzorov,Energy to melt/evaporate water
+RM_RECFAC,PRTTemperatures ThermistorV1Temperatures,A map with keys DI and ND giving the constant deiced and non-deiced recovery factors
+RM_CALINFO_ND_DATE,PRTTemperatures,Calibration date for non-deiced temperature probe (yyyy-mm-dd format)
+RM_CALINFO_ND_INFO,PRTTemperatures,Calibration information for non-deiced temperature probe
+RM_CALINFO_ND_URL,PRTTemperatures,Calibration URL for non-deiced temperature probe
+RM_CALINFO_DI_DATE,PRTTemperatures,Calibration date for deiced temperature probe (yyyy-mm-dd format)
+RM_CALINFO_DI_INFO,PRTTemperatures,Calibration information for deiced temperature probe
+RM_CALINFO_DI_URL,PRTTemperatures,Calibration URL for deiced temperature probe
+NDTSENS,PRTTemperatures ThermistorV1Temperatures,A two element list giving serial number and type of non-deiced temperature sensor
+DITSENS,PRTTemperatures ThermistorV1Temperatures,A two element list giving serial number and type of deiced temperature sensor
+CALNDT,PRTTemperatures,Calibration curve for non-deiced temperature sensor
+CALDIT,PRTTemperatures,Calibration curve for deiced temperature sensor
