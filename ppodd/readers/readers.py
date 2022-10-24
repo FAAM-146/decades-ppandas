@@ -299,23 +299,24 @@ class PythonHookReader(FileReader):
                 dir_name = '.'
             mod_name = os.path.basename(mod_name)
 
-            with flipdir(dir_name):
-                mod_py = importlib.import_module(mod_name)
+            # This is upsettingly hacky, but seems to work better in practice.
+            sys.path.append(dir_name)
+            mod_py = importlib.import_module(mod_name)
 
             try:
                 hook = getattr(mod_py, 'post_load_hook')
                 _file.dataset.load_hooks.append(hook)
+                logger.info(f'Added post_load_hook {mod_name}')
                 continue
             except AttributeError:
-                raise
                 pass
 
             try:
                 hook = getattr(mod_py, 'post_process_hook')
                 _file.dataset.process_hooks.append(hook)
+                logger.info(f'Added post_process_hook {mod_name}')
                 continue
             except AttributeError:
-                raise
                 pass
 
 
