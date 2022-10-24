@@ -3,6 +3,7 @@ import csv
 import datetime
 from email import header
 import glob
+import importlib
 import json
 import logging
 import os
@@ -19,6 +20,7 @@ import numpy as np
 import pandas as pd
 import yaml
 
+from ppodd import flipdir
 from ppodd.decades import DecadesVariable
 from ppodd.readers import register
 from ppodd.decades.flags import (DecadesBitmaskFlag, DecadesClassicFlag)
@@ -283,6 +285,39 @@ class ZipFileReader(FileReader):
 
         for _file in glob.glob(os.path.join(_tempdir, '*')):
             _dataset.add_file(_file)
+
+
+@register(patterns=['.*\.py'])
+class PythonHookReader(FileReader):
+    level = 0
+
+    def read(self):
+        for _file in self.files:
+            mod_name = _file.filepath.replace('.py', '')
+            dir_name = os.path.dirname(mod_name)
+            if not dir_name:
+                dir_name = '.'
+            mod_name = os.path.basename(mod_name)
+
+            with flipdir(dir_name):
+                mod_py = importlib.import_module(mod_name)
+
+            try:
+                hook = getattr(mod_py, 'post_load_hook')
+                _file.dataset.load_hooks.append(hook)
+                continue
+            except AttributeError:
+                raise
+                pass
+
+            try:
+                hook = getattr(mod_py, 'post_process_hook')
+                _file.dataset.process_hooks.append(hook)
+                continue
+            except AttributeError:
+                raise
+                pass
+
 
 @register(patterns=['(^SEAPROBE|.{8})_.+_\w\d{3}'])
 class TcpFileReader(FileReader):
@@ -601,6 +636,7 @@ class DefinitionReader(FileReader):
             )
 
         return typestr
+
 
 @register(patterns=['.+_TCP_?.*\.csv'])
 class CrioDefinitionReader(DefinitionReader):

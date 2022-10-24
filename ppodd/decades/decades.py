@@ -563,6 +563,8 @@ class DecadesDataset(object):
         self.flag_modules = []
         self.completed_modules = []
         self.failed_modules = []
+        self.load_hooks = []
+        self.process_hooks = []
         self._attribute_helpers = []
         self.writer = writer
         self.pp_group = pp_group
@@ -1052,6 +1054,20 @@ class DecadesDataset(object):
         except ValueError:
             logger.error('failed to add {}'.format(filename))
 
+    def run_load_hooks(self):
+        for hook in self.load_hooks:
+            try:
+                hook(self)
+            except Exception:
+                logger.error('Error running post-load hook')
+
+    def run_process_hooks(self):
+        for hook in self.process_hooks:
+            try:
+                hook(self)
+            except Exception:
+                logger.error('Error running post-process hook')
+
     def load(self):
         """
         Load all of the data from files associated with readers in this
@@ -1088,6 +1104,8 @@ class DecadesDataset(object):
         self._interpolate_globals()
 
         self._collect_garbage()
+
+        self.run_load_hooks()
 
    
     def _get_required_data(self):
@@ -1339,6 +1357,8 @@ class DecadesDataset(object):
         self._trim_data(start_cutoff=bounds[0], end_cutoff=bounds[1])
 
         self._finalize()
+
+        self.run_process_hooks()
 
     def _finalize(self):
         """
