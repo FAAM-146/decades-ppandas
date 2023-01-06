@@ -54,7 +54,10 @@ class TwoBOzone(PPBase):
             'TWBOZO_ZERO': ('const', 0.),
             'TWBOZO_SENS': ('const', 1.),
             'WOW_IND': ('data', _c([_o(20), _z(70), _o(10)]), 1),
-            # Optional calibration info...
+            # Optional calibration & instrument info...
+            'TWBOZO_DESCRIPTION': ('const', DocAttribute(
+                value="TWOB Ozone Photometer", doc_value=OptionalDerivedString
+            )),
             'TWBOZO_CALINFO_DATE': ('const', DocAttribute(
                 value=datetime.date(2000, 1, 1), doc_value=OptionalDerivedString
             )),
@@ -78,7 +81,7 @@ class TwoBOzone(PPBase):
             instrument_manufacturer='2B Technologies Inc.',
             instrument_model='205',
             instrument_serial_number='1034DB',
-            instrument_description='Motherboard PCB version "l"',
+            instrument_description=self.dataset.lazy['TWBOZO_DESCRIPTION'],
             calibration_information=self.dataset.lazy['TWBOZO_CALINFO_INFO'],
             calibration_date=self.dataset.lazy['TWBOZO_CALINFO_DATE'],
             calibration_url=self.dataset.lazy['TWBOZO_CALINFO_URL']
