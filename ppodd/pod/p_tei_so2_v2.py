@@ -85,9 +85,9 @@ class TecoSO2V2(PPBase):
             instrument_manufacturer='Thermo Fisher Scientific, Inc.',
             instrument_model='43i Trace Level-Enhanced pulsed fluorescence SO2 spectrometer',
             instrument_serial_number='1505564557',
-            calibration_information=self.dataset.lazy['TWBOZO_CALINFO_INFO'],
-            calibration_date=self.dataset.lazy['TWBOZO_CALINFO_DATE'],
-            calibration_url=self.dataset.lazy['TWBOZO_CALINFO_URL']
+            calibration_information=self.dataset.lazy['CHTSOO_CALINFO_INFO'],
+            calibration_date=self.dataset.lazy['CHTSOO_CALINFO_DATE'],
+            calibration_url=self.dataset.lazy['CHTSOO_CALINFO_URL']
         )
 
         self.declare(
@@ -98,9 +98,9 @@ class TecoSO2V2(PPBase):
             instrument_manufacturer='Thermo Fisher Scientific, Inc.',
             instrument_model='43i Trace Level-Enhanced pulsed fluorescence SO2 spectrometer',
             instrument_serial_number='1505564557',
-            calibration_information=self.dataset.lazy['TWBOZO_CALINFO_INFO'],
-            calibration_date=self.dataset.lazy['TWBOZO_CALINFO_DATE'],
-            calibration_url=self.dataset.lazy['TWBOZO_CALINFO_URL'],
+            calibration_information=self.dataset.lazy['CHTSOO_CALINFO_INFO'],
+            calibration_date=self.dataset.lazy['CHTSOO_CALINFO_DATE'],
+            calibration_url=self.dataset.lazy['CHTSOO_CALINFO_URL'],
             write=False
         )
 
