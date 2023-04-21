@@ -34,6 +34,18 @@ class DocAttribute:
     value: Any
     doc_value: Any
 
+    def __getattr__(self, name: str) -> Any:
+        """
+        Pass any attribute requests to the value of the attribute.
+
+        Args:
+            name: the name of the attribute to get
+
+        Returns:
+            the value of the attribute
+        """
+        return getattr(self.value, name)
+
 
 class AttributesCollection(object):
     """

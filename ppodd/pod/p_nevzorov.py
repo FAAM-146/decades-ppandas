@@ -205,6 +205,7 @@ class Nevzorov(PPBase):
     instruments = {
         '1t1l2r': ('twc', 'lwc'),
         '1t2l1r': ('twc', 'lwc1', 'lwc2'),
+        'all': ('twc', 'lwc', 'lwc1', 'lwc2')
     }
 
     @staticmethod
@@ -213,7 +214,7 @@ class Nevzorov(PPBase):
         Return dummy input data for testing.
         """
         return {
-            'VANETYPE': ('const', '1T2L1R'),
+            'VANETYPE': ('const', DocAttribute(value='1t2l1r', doc_value=DerivedString)),
             'VANE_SN': ('const', DocAttribute(value='SN123', doc_value=DerivedString)),
             'CLWCIREF': ('const', [-5.8e-2, 3.3e-4, 5e-1]),
             'CLWCVREF': ('const', [-5.8e-2, 3.3e-4, 2.0]),
@@ -458,9 +459,12 @@ class Nevzorov(PPBase):
             self.dataset.constants['VANETYPE'] = '1t2l1r'
             _vanetype = '1t2l1r'
 
+        if self.test_mode:
+            _vanetype = 'all'
+
         if _vanetype in ('1t1l2r', 'all'):
             self._declare_outputs_1t1l2r()
-        elif _vanetype in ('1t2l1r', 'all'):
+        if _vanetype in ('1t2l1r', 'all'):
             self._declare_outputs_1t2l1r()
         else:
             raise ValueError(
@@ -477,8 +481,10 @@ class Nevzorov(PPBase):
         """
 
         _vanetype = self.dataset['VANETYPE'].lower()
+        if self.test_mode:
+            _vanetype = 'all'
 
-        if _vanetype != '1t2l1r':
+        if _vanetype not in ('1t2l1r', 'all'):
             return
 
         var_map = (
