@@ -6,6 +6,8 @@ import pandas as pd
 
 from scipy.stats import mode
 
+from ppodd import URL, DOI
+
 pd_freq = {
     1: '1S',
     2: '500L',
@@ -282,7 +284,7 @@ def stringify_if_datetime(dt):
         return dt.strftime('%Y-%m-%d')
 
 
-def make_definition(pp_group, standard):
+def make_definition(pp_group, standard, one_hz=False):
     
     from ppodd.pod.base import pp_register
     from vocal import schema_types
@@ -296,7 +298,6 @@ def make_definition(pp_group, standard):
         }
 
         if not flag:
-            
             _attributes = var.attrs()
             #_attributes['coordinates'] = schema_types.DerivedString
         else:
@@ -316,13 +317,15 @@ def make_definition(pp_group, standard):
                     pass
                 _attributes[item] = value
 
-            if 'flag_masks' in _attributes or 'flag_values' in _attributes:
+            if 'flag_masks' in _attributes:
                 _attributes['flag_masks'] = schema_types.DerivedByteArray
+
+            if 'flag_values' in _attributes:
+                _attributes['flag_values'] = schema_types.DerivedByteArray
 
             if 'valid_range' in _attributes:
                 _attributes['valid_range'] = [schema_types.DerivedByte, schema_types.DerivedByte]
                 
-
         #if 'actual_range' in _attributes:
         #    _attributes['actual_range'] = [
         #        schema_types.DerivedFloat32, schema_types.DerivedFloat32
@@ -341,8 +344,11 @@ def make_definition(pp_group, standard):
                 _attributes[_var] = schema_types.DerivedString
 
         _dimensions = ['Time']
-        if var.frequency > 1:
+        if var.frequency > 1 and not one_hz:
             _dimensions.append(f'sps{var.frequency:02d}')
+
+        if one_hz:
+            _attributes['frequency'] = 1
 
         return {
             'meta': _meta,
@@ -388,7 +394,7 @@ def make_definition(pp_group, standard):
         instance.finalize()
         for var in instance.dataset.outputs:
             dim_name = f'sps{var.frequency:02d}'
-            if dim_name not in dimensions_to_add:
+            if dim_name not in dimensions_to_add and not one_hz:
                 dimensions_to_add[dim_name] = {
                     'name': dim_name,
                     'size': var.frequency
@@ -406,14 +412,30 @@ def make_definition(pp_group, standard):
         _dataset['dimensions'].append(dim_to_add)
 
     _dataset['dimensions'].sort(key=lambda x: x['size'] if x['size'] is not None else -9e99)
-    
-    
 
-    import pprint
-    pprint.pprint(_dataset)
+    # Attributes which we require for this file, but which are not required in the FAAM 
+    # standard.
+    _dataset['attributes']['constants_file'] = schema_types.DerivedString
+    _dataset['attributes']['creator_url'] = schema_types.OptionalDerivedString
+    _dataset['attributes']['processing_software_commit'] = schema_types.DerivedString
+    _dataset['attributes']['processing_software_url'] = URL
+    _dataset['attributes']['processing_software_version'] = schema_types.DerivedString
+    _dataset['attributes']['processing_software_doi'] = DOI
+    _dataset['attributes']['project_name'] = schema_types.DerivedString
+    _dataset['attributes']['project_acronym'] = schema_types.DerivedString
+    _dataset['attributes']['project_principal_investigator'] = schema_types.DerivedString
+    _dataset['attributes']['project_principal_investigator_email'] = schema_types.DerivedString
+    _dataset['attributes']['project_principal_investigator_url'] = schema_types.OptionalDerivedString
+    
     yaml = YAML()
     yaml.indent(mapping=2, sequence=4, offset=2)
-    with open('decades_definition.yaml', 'w') as f:
+
+    one_hz_str = ''
+    if one_hz:
+        one_hz_str = '_1hz'
+
+    output_filename = f'core_faam_YYYYmmdd_v005_rN_xNNN{one_hz_str}.yaml'
+    with open(output_filename, 'w') as f:
         yaml.dump( _dataset, f)
 
     

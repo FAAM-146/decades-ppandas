@@ -172,9 +172,12 @@ class Nevzorov(PPBase):
     outputs, using a constant :math:`K` specified in the flight constants, are
     written to file.
 
-    The outputs listed here are for the new ``1T2L1R`` vane type. If an
-    old ``1T1L2R`` vane is flown, the outputs ``_LWC1_`` and ``_LWC2_`` will be
-    replaced by ``_LWC_``.
+    The outputs listed produced by this module depend on the type of Nevzorov
+    vane fitted to the aircraft. If an old-style ``1T1L2R`` vane is fitted,
+    then the default outputs are 
+    `NV_TWC_U`, `NV_TWC_C`, `NV_LWC_U`, `NV_LWC_C`. If a new-style ``1T2L1R``
+    vane is fitted, then the default outputs are `NV_TWC_U`, `NV_TWC_C`,
+    `NV_LWC1_U`, `NV_LWC1_C`, `NV_LWC2_U`, `NV_LWC2_C`.
     """
 
     TEST_SETUP = {'VANETYPE': 'all'}
@@ -548,6 +551,8 @@ class Nevzorov(PPBase):
         self._remap_1t2l1r()
 
         _vanetype = self.dataset['VANETYPE'].lower()
+        if self.test_mode:
+            _vanetype = 'all'
 
         # Measurements are collector current, collector voltage, reference
         # current, reference voltage
@@ -603,10 +608,14 @@ class Nevzorov(PPBase):
             except (RuntimeError, ValueError) as e:
                 # If the fit has failed, we only want to write
                 # uncorrected variables
-                logger.warning('Failed to baseline correct Nevzorov')
-                logger.warning(str(e))
-                fitted_K = 0
-                fit_success = False
+                if self.test_mode:
+                    fit_success = True
+                    fitted_K = K
+                else:
+                    logger.warning('Failed to baseline correct Nevzorov')
+                    logger.warning(str(e))
+                    fitted_K = 0
+                    fit_success = False
 
             # Create and write output variables
             w_c = DecadesVariable(
@@ -629,32 +638,36 @@ class Nevzorov(PPBase):
                 flag=DecadesBitmaskFlag
             )
 
-            ref_power = DecadesVariable(
-                ref_p, name='NV_{ins}_REF_P'.format(ins=ins.upper()),
-                flag=DecadesBitmaskFlag
-            )
-
             for _var in (w_c, w_u, col_power):
                 _var.flag.add_mask(
                     self.d['flag'], flags.WOW, 'The aircraft is on the ground'
                 )
                 self.add_output(_var)
 
-            if _vanetype == '1t1l2r':
+            if _vanetype in ('1t1l2r', 'all'):
+                if ins in ('lwc1', 'lwc2'):
+                    continue
+
+                ref_power = DecadesVariable(
+                    ref_p, name='NV_{ins}_REF_P'.format(ins=ins.upper()),
+                    flag=DecadesBitmaskFlag
+                )
+
                 _var = ref_power
                 _var.flag.add_mask(
                     self.d['flag'], flags.WOW, 'The aircraft is on the ground'
                 )
                 self.add_output(_var)
 
-            elif ins == 'twc':
-                _var = DecadesVariable(
-                   ref_p, name='NV_REF_P', flag=DecadesBitmaskFlag
-                )
-                _var.flag.add_mask(
-                    self.d['flag'], flags.WOW, 'The aircraft is on the ground'
-                )
-                self.add_output(_var)
+            if _vanetype in ('1t2l1r', 'all'):
+                if ins == 'twc':
+                    _var = DecadesVariable(
+                    ref_p, name='NV_REF_P', flag=DecadesBitmaskFlag
+                    )
+                    _var.flag.add_mask(
+                        self.d['flag'], flags.WOW, 'The aircraft is on the ground'
+                    )
+                    self.add_output(_var)
 
         self.add_output(
             DecadesVariable(clear_air, name='NV_CLEAR_AIR_MASK',
