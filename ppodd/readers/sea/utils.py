@@ -200,7 +200,7 @@ def to_dataframe(ifile, rtn_all=False):
             # This new Index starts on a full second and is the correct frequency
             newIndex = pd.date_range(start=np.datetime64(ts_start, 's'),
                                      end=np.datetime64(ts_end, 's'),
-                                     freq='%ims' % (1000/freq,), closed='left')
+                                     freq='%ims' % (1000/freq,), inclusive='left')
 
             df = df.reindex(index=newIndex, method='nearest')
 

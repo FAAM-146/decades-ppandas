@@ -371,7 +371,7 @@ class DecadesVariable(object):
         """
         dc = 'float'
         try:
-            if np.all(array == array.astype(int)):
+            if np.all(array[np.isfinite(array)] == array[np.isfinite(array)].astype(int)):
                 dc = 'integer'
         except (ValueError, TypeError):
             pass
@@ -501,6 +501,10 @@ class DecadesVariable(object):
             return [DerivedFloat32, DerivedFloat32]
 
         try:
+            if not self.isnumeric:
+                return None
+            if not np.any(np.isfinite(self.array)):
+                return None
             return [
                 np.nanmin(self.array).astype(np.float32),
                 np.nanmax(self.array).astype(np.float32)

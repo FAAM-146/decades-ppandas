@@ -354,7 +354,7 @@ class BuckCR2(PPBase):
         DT = 0
         timing = 0
 
-        buck_mirror_control = np.zeros(buck_mirr_temp.size, dtype=np.int)-9999
+        buck_mirror_control = np.zeros(buck_mirr_temp.size, dtype=np.int32)-9999
         for i in range(interval+1, buck_mirr_temp.size-interval-1):
             DT = np.mean(
                 buck_mirr_temp[i:i+interval] - buck_mirr_temp[i-1:i+interval-1]
@@ -596,7 +596,7 @@ class BuckCR2(PPBase):
         Returns:
             flag: a composite flag built from the two inputs.
         """
-        flag = np.zeros(buck_mirr_flag.size, dtype=np.int)
+        flag = np.zeros(buck_mirr_flag.size, dtype=np.int32)
         flag[buck_dewpoint_flag == 0] = 1
         flag[buck_mirr_flag == 1] = 2
         flag[buck_dewpoint_flag == 2] = 3
