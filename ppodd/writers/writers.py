@@ -226,6 +226,9 @@ class NetCDFWriter(DecadesWriter):
             for attr_key, attr_val in var.flag.cfattrs.items():
                 if 'FillValue' in attr_key or attr_val is None:
                     continue
+                if attr_key == 'frequency' and self.write_freq is not None:
+                    setattr(ncflag, f'{attr_key}', self.write_freq)
+                    continue
                 setattr(ncflag, attr_key, attr_val)
 
         # Create a new DatetimeIndex to interpolate to, given frequency
