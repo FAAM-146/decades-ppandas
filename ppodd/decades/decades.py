@@ -268,7 +268,11 @@ class DecadesVariable(object):
             freq=self._get_freq()
         )
 
-        return pd.Series(self.array, index=i, name=self.name)
+        kwargs = {}
+        if self.dtype:
+            kwargs['dtype'] = self.dtype
+
+        return pd.Series(self.array, index=i, name=self.name, **kwargs)
 
     def __len__(self):
         """
