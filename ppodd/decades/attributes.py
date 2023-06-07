@@ -260,18 +260,6 @@ class AttributesCollection(object):
                 return False
         return True
 
-    # def add_data_attribute(self, param, attrs):
-    #     """
-    #     Add a data attribute - an attribute that is callable to return its
-    #     value.
-
-    #     Args:
-    #         param (str): the key of the data attribute.
-    #         attrs (:term:`callable`): the callable which yields the value of the
-    #             attribute.
-    #     """
-    #     self._data_attributes[param] = attrs
-
     def static_items(self):
         """
         Returns:
