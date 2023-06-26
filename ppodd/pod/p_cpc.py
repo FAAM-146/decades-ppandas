@@ -28,6 +28,12 @@ class CPC(PPBase):
     Reports particle counts from the TSI 3786 condensation particle counter.
     Counts are reported as-is from the instrument; this module only provides
     flagging information.
+
+    .. note::
+        Prior to v23.3.0, the CPC included flags for both sample flow and 
+        sheath flow. These have been combined into a single flag, and a
+        cloud flag has been added, as CPC data are not valid in cloud. **The
+        cloud flag is added by a separate flagging module**.
     """
 
     inputs = [
@@ -146,14 +152,10 @@ class CPC(PPBase):
              f'[{OPTICS_TEMP_VALID_MIN}, {OPTICS_TEMP_VALID_MAX}] C')
         )
         dv.flag.add_mask(
-            d['SAMPLE_FLOW_FLAG'], 'sample flow out of range',
-            ('Sample flow is outside the valid range '
+            d['SAMPLE_FLOW_FLAG'] + d['SHEATH_FLOW_FLAG'],
+            'sample or sheath flow out of range',
+            ('Sample or sheath flows are outside the valid range '
              f'[{SAMPLE_FLOW_VALID_MIN}, {SAMPLE_FLOW_VALID_MAX}]')
-        )
-        dv.flag.add_mask(
-            d['SHEATH_FLOW_FLAG'], 'sheath flow out of range',
-            ('Sheath flow is outside the valid range '
-             f'[{SHEATH_FLOW_VALID_MIN}, {SHEATH_FLOW_VALID_MAX}]')
         )
         dv.flag.add_mask(
             d['SATURATED_FLAG'], 'counter saturated',
