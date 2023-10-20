@@ -4,7 +4,7 @@ docstring for more info.
 """
 import numpy as np
 
-from vocal.schema_types import DerivedString
+from vocal.types import DerivedString
 
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..decades import flags

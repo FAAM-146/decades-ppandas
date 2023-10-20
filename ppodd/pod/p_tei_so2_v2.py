@@ -1,6 +1,6 @@
 import datetime
 
-from vocal.schema_types import OptionalDerivedString
+from vocal.types import OptionalDerivedString
 
 from ..utils import flagged_avg
 from ..decades import DecadesVariable, DecadesBitmaskFlag

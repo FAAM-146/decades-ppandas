@@ -2,7 +2,7 @@
 Provides a processing modules for the TSI3786 condensation particle counter.
 See the class doc-string for more info.
 """
-from vocal.schema_types import DerivedString
+from vocal.types import DerivedString
 
 # pylint: disable=invalid-name
 from ..decades import DecadesVariable, DecadesBitmaskFlag

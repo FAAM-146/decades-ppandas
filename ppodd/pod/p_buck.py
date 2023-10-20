@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 
 from scipy.optimize import fsolve
-from vocal.schema_types import DerivedString, OptionalDerivedString
+from vocal.types import DerivedString, OptionalDerivedString
 
 from ..decades import DecadesVariable
 from ..decades.attributes import DocAttribute

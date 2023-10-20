@@ -324,3 +324,4 @@ class Gin(PPBase):
 
         self.dataset.lon = 'LON_GIN'
         self.dataset.lat = 'LAT_GIN'
+        self.dataset.alt = 'ALT_GIN'

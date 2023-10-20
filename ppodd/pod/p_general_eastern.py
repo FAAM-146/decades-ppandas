@@ -5,7 +5,7 @@ mirror hygrometer. See class docstring for more information.
 # pylint: disable=invalid-name
 import numpy as np
 
-from vocal.schema_types import DerivedString
+from vocal.types import DerivedString
 
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..decades.attributes import DocAttribute

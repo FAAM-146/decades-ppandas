@@ -11,7 +11,7 @@ import pandas as pd
 
 from scipy.optimize import curve_fit
 
-from vocal.schema_types import DerivedString
+from vocal.types import DerivedString
 
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..decades import flags

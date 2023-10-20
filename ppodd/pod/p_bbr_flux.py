@@ -6,7 +6,7 @@ radiative fluxes from these. See the class docstring for mor information.
 # pylint: disable=invalid-name
 import numpy as np
 
-from vocal.schema_types import DerivedString
+from vocal.types import DerivedString
 
 from .base import PPBase, register_pp
 from .shortcuts import _l, _o, _z, _c

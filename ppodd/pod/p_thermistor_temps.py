@@ -6,7 +6,7 @@ import pandas as pd
 from scipy import interpolate
 from scipy.interpolate import CubicSpline
 
-from vocal.schema_types import DerivedString, OptionalDerivedString
+from vocal.types import DerivedString, OptionalDerivedString
 
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..decades.attributes import DocAttribute

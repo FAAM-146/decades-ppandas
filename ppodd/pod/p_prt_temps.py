@@ -8,7 +8,7 @@ import datetime
 
 import numpy as np
 
-from vocal.schema_types import DerivedString, OptionalDerivedString
+from vocal.types import DerivedString, OptionalDerivedString
 
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..decades.attributes import DocAttribute

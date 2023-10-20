@@ -5,7 +5,7 @@ class docstring for more info.
 
 import numpy as np
 
-from vocal.schema_types import DerivedString
+from vocal.types import DerivedString
 
 from ..decades import DecadesVariable
 from ..decades.attributes import DocAttribute

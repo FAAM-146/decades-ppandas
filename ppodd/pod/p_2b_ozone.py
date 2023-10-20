@@ -1,7 +1,7 @@
 import datetime
 import numpy as np
 
-from vocal.schema_types import OptionalDerivedString
+from vocal.types import OptionalDerivedString
 
 from ..decades import DecadesVariable
 from ..decades.flags import DecadesBitmaskFlag
