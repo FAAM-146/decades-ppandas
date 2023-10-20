@@ -3,6 +3,8 @@ import uuid
 
 from typing import TYPE_CHECKING, Callable, Optional
 
+import numpy as np
+
 from ppodd.utils.utils import stringify_if_datetime
 
 if TYPE_CHECKING:
@@ -225,10 +227,10 @@ class GeoBoundsProvider(AttributeHelper):
             return None
 
     def get_props(self) -> None:
-        self.lat_min = self.dataset.globals['geospatial_lat_min']
-        self.lat_max = self.dataset.globals['geospatial_lat_max']
-        self.lon_min = self.dataset.globals['geospatial_lon_min']
-        self.lon_max = self.dataset.globals['geospatial_lon_max']
+        self.lat_min = self.geospatial_lat_min
+        self.lat_max = self.geospatial_lat_max
+        self.lon_min = self.geospatial_lon_min
+        self.lon_max = self.geospatial_lon_max
 
     @property
     def geospatial_bounds(self) -> Optional[str]:
@@ -242,7 +244,70 @@ class GeoBoundsProvider(AttributeHelper):
         p3 = self.point('uu')
         p4 = self.point('ul')
 
+        if None in (p1, p2, p3, p4):
+            return None
+
         try:
             return f'POLYGON(({p1}, {p2}, {p3}, {p4}, {p1}))'
         except TypeError:
+            return None
+        
+    @property
+    def geospatial_lat_min(self) -> Optional[float]:
+        """
+        Provides the lower latitude bound of the flight envelope
+        """
+        try:
+            return np.float32(self.dataset[self.dataset.lat].min())
+        except Exception:
+            return None
+        
+    @property
+    def geospatial_lat_max(self) -> Optional[float]:
+        """
+        Provides the upper latitude bound of the flight envelope
+        """
+        try:
+            return np.float32(self.dataset[self.dataset.lat].max())
+        except Exception:
+            return None
+        
+    @property
+    def geospatial_lon_min(self) -> Optional[float]:
+        """
+        Provides the lower longitude bound of the flight envelope
+        """
+        try:
+            return np.float32(self.dataset[self.dataset.lon].min())
+        except Exception:
+            return None
+        
+    @property
+    def geospatial_lon_max(self) -> Optional[float]:
+        """
+        Provides the upper longitude bound of the flight envelope
+        """
+        try:
+            return np.float32(self.dataset[self.dataset.lon].max())
+        except Exception:
+            return None
+    
+    @property
+    def geospatial_alt_min(self) -> Optional[float]:
+        """
+        Provides the lower altitude bound of the flight envelope
+        """
+        try:
+            return np.float32(self.dataset[self.dataset.alt].min())
+        except Exception:
+            return None
+        
+    @property
+    def geospatial_alt_max(self) -> Optional[float]:
+        """
+        Provides the upper altitude bound of the flight envelope
+        """
+        try:
+            return np.float32(self.dataset[self.dataset.alt].max())
+        except Exception:
             return None
