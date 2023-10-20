@@ -3,7 +3,7 @@ import re
 import numpy as np
 import pandas as pd
 
-from vocal.schema_types import DerivedFloat32
+from vocal.types import DerivedFloat32
 
 from ppodd.decades.flags import DecadesClassicFlag
 from ppodd.decades.attributes import (

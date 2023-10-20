@@ -8,7 +8,7 @@ from dataclasses import dataclass
 
 import pydantic
 
-from vocal.schema_types import DerivedString, OptionalDerivedString
+from vocal.types import DerivedString, OptionalDerivedString
 
 from ppodd import URL as PPODD_URL, DOI as PPODD_DOI
 

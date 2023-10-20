@@ -11,7 +11,7 @@ from pydoc import locate
 
 import numpy as np
 
-from vocal.schema_types import OptionalDerivedString
+from vocal.types import OptionalDerivedString
 
 
 from ppodd.decades.process import DecadesProcessor
