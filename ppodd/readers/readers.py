@@ -1,7 +1,6 @@
 import abc
 import csv
 import datetime
-from email import header
 import glob
 import importlib
 import json
@@ -20,7 +19,6 @@ import numpy as np
 import pandas as pd
 import yaml
 
-from ppodd import flipdir
 from ppodd.decades import DecadesVariable
 from ppodd.readers import register
 from ppodd.decades.flags import (DecadesBitmaskFlag, DecadesClassicFlag)

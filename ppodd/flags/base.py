@@ -102,7 +102,7 @@ class FlaggingBase(abc.ABC):
         """
 
         downstream = [list(i.declarations) for i in
-                      self.dataset.completed_modules
+                      self.dataset.processor.completed_modules
                       if var in i.inputs
                       and var not in i.ignored_upstream_flags]
 
