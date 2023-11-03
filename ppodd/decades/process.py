@@ -12,14 +12,6 @@ class DecadesProcessor:
     def __init__(self, dataset):
         self.dataset = dataset
 
-    # def process(self, modname=None):
-    #     if modname is not None:
-    #         self._process(modname)
-    #         return
-        
-    #     self._process()
-        # self.run_flagging()
-
     def process(self, modname=None):
         """
         Run processing modules.
@@ -27,10 +19,7 @@ class DecadesProcessor:
         Args:
             modname (str, optional): the name of the module to run.
         """
-        # The linter directives below probably mean this could do with
-        # some refactoring...
-        # pylint: disable=too-many-locals, too-many-branches
-        # pylint: disable=too-many-statements
+
         from ppodd.pod.base import pp_register
 
         if self.dataset.trim:

@@ -52,7 +52,7 @@ class FlightTime(AttributeHelper):
     Provides `takeoff_time` and `landing_time` attributes
     """
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self._takeoff_time = None
         self._landing_time = None
 
