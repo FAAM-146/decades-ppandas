@@ -10,7 +10,6 @@ from .base import PPBase, register_pp
 from .shortcuts import _z
 
 INSTRUMENT_FAULT = 2
-DATA_MISSING = 3
 
 
 @register_pp('core')
@@ -20,6 +19,11 @@ class Nephelometer(PPBase):
     from the nephelometer do not require any further processing, however this
     module parses the instrument status information to provide a QC flag for
     the data.
+
+    .. note::
+        Prior to software version 24.0.0, this module used classic flagging. From
+        version 24.0.0, the module uses bitmask flagging, and further flagging may
+        be added by standalone flagging modules.
     """
 
     inputs = [
@@ -219,11 +223,6 @@ class Nephelometer(PPBase):
         d.loc[ix==111111111, 'T_FLAG'] = INSTRUMENT_FAULT
         d.loc[ix==111111111, 'P_FLAG'] = INSTRUMENT_FAULT
 
-        d.loc[np.isnan(d['AERACK_neph_status']), 'RH_FLAG'] = DATA_MISSING
-        d.loc[np.isnan(d['AERACK_neph_status']), 'SC_FLAG'] = DATA_MISSING
-        d.loc[np.isnan(d['AERACK_neph_status']), 'T_FLAG'] = DATA_MISSING
-        d.loc[np.isnan(d['AERACK_neph_status']), 'P_FLAG'] = DATA_MISSING
-
 
     def process(self):
         """
@@ -252,25 +251,32 @@ class Nephelometer(PPBase):
             tcp_name, out_name = pair
 
             dv = DecadesVariable(
-                self.d[tcp_name], name=out_name,
+                self.d[tcp_name], name=out_name, flag=DecadesBitmaskFlag
             )
-
-            dv.flag.add_meaning(0, 'data_good')
-            dv.flag.add_meaning(1, 'not_used')
-            dv.flag.add_meaning(INSTRUMENT_FAULT, 'instrument_flag_raised')
-            dv.flag.add_meaning(DATA_MISSING, 'data_missing')
 
             if 'SC_' in out_name:
                 dv.data /= 1e6
-                dv.flag.add_flag(self.d['SC_FLAG'])
+                dv.flag.add_mask(
+                    self.d['SC_FLAG'], 'instrument_flag_raised',
+                    'A fault has been raised by the instrument'
+                )
 
             elif '_PR' in out_name:
-                dv.flag.add_flag(self.d['P_FLAG'])
+                dv.flag.add_mask(
+                    self.d['P_FLAG'], 'instrument_flag_raised',
+                    'A fault has been raised by the instrument'
+                )
 
             elif '_T' in out_name:
-                dv.flag.add_flag(self.d['T_FLAG'])
+                dv.flag.add_mask(
+                    self.d['T_FLAG'], 'instrument_flag_raised',
+                    'A fault has been raised by the instrument'
+                )
 
             elif '_RH' in out_name:
-                dv.flag.add_flag(self.d['RH_FLAG'])
+                dv.flag.add_mask(
+                    self.d['RH_FLAG'], 'instrument_flag_raised',
+                    'A fault has been raised by the instrument'
+                )
 
             self.add_output(dv)
