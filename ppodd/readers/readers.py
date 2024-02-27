@@ -121,8 +121,6 @@ class CSVReader(FileReader):
         for _file in self.files:
             df = pd.read_csv(_file.filepath, index_col=[0], parse_dates=[0])
             _freq = int(1 / (df.index[1] - df.index[0]).total_seconds())
-            print(df)
-            print(type(df.index[0]))
             for variable_name in df.columns:
                 variable = DecadesVariable(
                     df[variable_name],
@@ -141,21 +139,27 @@ class CSVReader(FileReader):
 @register(patterns=[
     'TWBOZO01_[0-9]{8}_[0-9]{6}_[a-zA-Z][0-9]{3}\.txt',
     'CHTSOO02_[0-9]{8}_[0-9]{6}_[a-zA-Z][0-9]{3}\.txt',
-    'AL55CO01_[0-9]{8}_[0-9]{6}_[a-zA-Z][0-9]{3}\.txt'
+    'AL55CO01_[0-9]{8}_[0-9]{6}_[a-zA-Z][0-9]{3}\.txt',
+    'ZEUS0001_[0-9]{8}_[0-9]{6}_[a-zA-Z][0-9]{3}\.txt'
 ])
-class ChemistryTxtReader(FileReader):
+class GenericTxtReader(FileReader):
     level = 2
     def read(self):
         for _file in self.files:
+            prefix = os.path.basename(_file.filepath).split('_')[0][:-2]
             df = pd.read_csv(
                 _file.filepath, index_col=[2],
                 parse_dates=[2],
                 date_parser=lambda t: datetime.datetime.utcfromtimestamp(float(t))
             )
             _freq = int(1 / (df.index[1] - df.index[0]).total_seconds())
-            for variable_name in df.columns:
+            for _variable_name in df.columns:
+                variable_name = _variable_name
+                if not variable_name.startswith(prefix):
+                    variable_name = f'{prefix}_{variable_name}'
+                    
                 variable = DecadesVariable(
-                    df[variable_name],
+                    df[_variable_name],
                     index=df.index,
                     name=variable_name,
                     long_name=variable_name,
