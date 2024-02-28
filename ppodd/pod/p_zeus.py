@@ -26,8 +26,8 @@ class ElectricFieldZeus(PPBase):
         Provide dummy input data for testing.
         """ 
         return {
-            'ZEUS00_zeus_eField': ('data', _o(100)),
-            'WOW_IND': ('data', _c(_o(10), _z(80), _o(10)))
+            'ZEUS00_zeus_eField': ('data', _o(100), 1),
+            'WOW_IND': ('data', _c([_o(10), _z(80), _o(10)]), 1)
         }
 
     def declare_outputs(self):

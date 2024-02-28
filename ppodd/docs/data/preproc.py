@@ -58,7 +58,7 @@ def get_global_attrs_string(required=True, standard=None): #standard_name=None,
         standard_version [None]: the version of <standard_name> to use.
     """
 
-    schema = standard.GlobalAttributes.schema()
+    schema = standard.GlobalAttributes.model_json_schema()
 
     if required:
         attrs = {k: v for k, v in schema['properties'].items() if k in schema['required']}
@@ -89,7 +89,7 @@ def get_variable_attrs_string(required=True, standard=None):#_name=None,
     # if standard_name is None or standard_version is None:
         # raise ValueError('Standard name and version must be given')
 
-    schema = standard.VariableAttributes.schema()
+    schema = standard.VariableAttributes.model_json_schema()
 
     if required:
         attrs = {k: v for k, v in schema['properties'].items() if k in schema['required']}
