@@ -110,7 +110,7 @@ class Nephelometer(PPBase):
             'TSC_GRNU',
             units='m-1',
             frequency=1,
-            long_name=('Uncorrected red total scattering coefficient from '
+            long_name=('Uncorrected green total scattering coefficient from '
                        'TSI 3563 Nephelometer'),
             instrument_manufacturer=neph_manufacturer,
             instrument_model=neph_model
