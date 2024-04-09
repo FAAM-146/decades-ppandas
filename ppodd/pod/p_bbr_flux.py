@@ -152,7 +152,8 @@ class BBRFlux(PPBase):
         """
         Declare the output variables that this modules produces.
         """
-        manufacturer = 'Kipp and Zonen'
+        manufacturer = 'The Eppley Laboratory inc.'
+        model = 'PSP'
 
         self.declare(
             'SW_DN_C',
@@ -161,6 +162,7 @@ class BBRFlux(PPBase):
             standard_name='downwelling_shortwave_flux_in_air',
             long_name='Corrected downward short wave irradiance, clear dome',
             instrument_manufacturer=manufacturer,
+            instrument_model=model,
             instrument_serial_number=self.dataset.lazy['BBRUP1_SN']
         )
 
@@ -170,6 +172,7 @@ class BBRFlux(PPBase):
             frequency=1,
             long_name='Corrected downward short wave irradiance, red dome',
             instrument_manufacturer=manufacturer,
+            instrument_model=model,
             instrument_serial_number=self.dataset.lazy['BBRUP2_SN']
         )
 
@@ -180,6 +183,7 @@ class BBRFlux(PPBase):
             standard_name='upwelling_shortwave_flux_in_air',
             long_name='Corrected upward short wave irradiance, clear dome',
             instrument_manufacturer=manufacturer,
+            instrument_model=model,
             instrument_serial_number=self.dataset.lazy['BBRLP1_SN']
         )
 
@@ -189,6 +193,7 @@ class BBRFlux(PPBase):
             frequency=1,
             long_name='Corrected upward short wave irradiance, red dome',
             instrument_manufacturer=manufacturer,
+            instrument_model=model,
             instrument_serial_number=self.dataset.lazy['BBRLP2_SN']
         )
 

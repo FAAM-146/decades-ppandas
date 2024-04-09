@@ -128,7 +128,7 @@ class KippZonenPyrgeometer(PPBase):
             frequency=1,
             long_name='Corrected downward longwave irradiance',
             instrument_manufacturer='Kipp and Zonen',
-            instrument_model='CR4',
+            instrument_model='CGR 4',
             instrument_serial_number=self.dataset.lazy['BBRUIR_SN']
         )
 
@@ -138,7 +138,7 @@ class KippZonenPyrgeometer(PPBase):
             frequency=1,
             long_name='Corrected upward longwave irradiance',
             instrument_manufacturer='Kipp and Zonen',
-            instrument_model='CR4',
+            instrument_model='CGR 4',
             instrument_serial_number=self.dataset.lazy['BBRLIR_SN']
         )
 
