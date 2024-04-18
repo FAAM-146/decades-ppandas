@@ -293,7 +293,7 @@ class GeoBoundsProvider(AttributeHelper):
             return None
     
     @property
-    def geospatial_alt_min(self) -> Optional[float]:
+    def geospatial_vertical_min(self) -> Optional[float]:
         """
         Provides the lower altitude bound of the flight envelope
         """
@@ -303,7 +303,7 @@ class GeoBoundsProvider(AttributeHelper):
             return None
         
     @property
-    def geospatial_alt_max(self) -> Optional[float]:
+    def geospatial_vertical_max(self) -> Optional[float]:
         """
         Provides the upper altitude bound of the flight envelope
         """
