@@ -36,6 +36,12 @@ class BBRFlux(PPBase):
     Caluclates the corrected fluxes from the upper and lower clear dome and red
     dome pyranometers.
 
+    .. note::
+
+        Prior to software version 24.3.0, the BBRs were incorrectly labelled as
+        manufactured by Kipp & Zonen. This has been corrected to The Eppley
+        Laboratory inc. from version 24.3.0 onwards.
+
     The thermistors in the pyranometers have a characteristic non-linear
     temperature dependence due to the manufacturing process. If not corrected
     for, this can lead to errors in temperature of up to 1 :math:`^\circ\text{C}`.
