@@ -287,7 +287,7 @@ def stringify_if_datetime(dt):
 def make_definition(pp_group, standard, one_hz=False):
     
     from ppodd.pod.base import pp_register
-    from vocal import schema_types
+    from vocal.types import schema_types
     from ruamel.yaml import YAML
     
     def make_variable(var, flag=False):
