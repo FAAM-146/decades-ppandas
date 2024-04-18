@@ -423,8 +423,8 @@ def make_definition(pp_group, standard, one_hz=False):
     _dataset['attributes']['processing_software_doi'] = DOI
     _dataset['attributes']['project_name'] = schema_types.DerivedString
     _dataset['attributes']['project_acronym'] = schema_types.DerivedString
-    _dataset['attributes']['project_principal_investigator'] = schema_types.DerivedString
-    _dataset['attributes']['project_principal_investigator_email'] = schema_types.DerivedString
+    _dataset['attributes']['project_principal_investigator'] = schema_types.OptionalDerivedString
+    _dataset['attributes']['project_principal_investigator_email'] = schema_types.OptionalDerivedString
     _dataset['attributes']['project_principal_investigator_url'] = schema_types.OptionalDerivedString
     
     yaml = YAML()
