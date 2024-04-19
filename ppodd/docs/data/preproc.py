@@ -125,7 +125,7 @@ def get_module_doc(module):
 
     if module.DEPRECIATED_AFTER != datetime.date.max:
         sdate = module.DEPRECIATED_AFTER.strftime('%Y-%d-%m')
-        _doc += f'.. note:: \n\tThis module depreciated for flights after {sdate}\n\n'
+        _doc += f'.. warning:: \n\tThis module depreciated for flights after {sdate}\n\n'
 
     if module.VALID_AFTER != datetime.date.min:
         sdate = module.VALID_AFTER.strftime('%Y-%d-%m')
@@ -135,10 +135,13 @@ def get_module_doc(module):
     if _doc is None:
         _doc = 'No module documentation has been provided.'
 
+    module_name = module.__name__
+    if module.DEPRECIATED_AFTER != datetime.date.max:
+        module_name = f':del:`{module_name}`'
     txt = '.. _{}:\n\n'.format(module.__name__)
-    txt += '-' * len(module.__name__) + '\n'
-    txt += f'{module.__name__}\n'
-    txt += '-' * len(module.__name__) + '\n\n'
+    txt += '-' * len(module_name) + '\n'
+    txt += f'{module_name}\n'
+    txt += '-' * len(module_name) + '\n\n'
     txt += trim_docstr(_doc.strip()) + '\n'
 
     txt += get_module_vardoc(m)

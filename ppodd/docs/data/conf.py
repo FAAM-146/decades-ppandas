@@ -34,7 +34,8 @@ version = release
 extensions = [
     'sphinx_rtd_theme',   # Read the docs theme
     'sphinx.ext.autodoc', # Auto doc code documentation
-    'sphinx.ext.napoleon' # Google style docstrings
+    'sphinx.ext.napoleon',# Google style docstrings
+    'sphinxnotes.strike'  # Strikethrough styling
 ]
 
 napoleon_include_init_with_doc = True
