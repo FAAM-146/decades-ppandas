@@ -10,8 +10,8 @@ import pandas as pd
 from netCDF4 import Dataset
 import sqlite3
 
-from ..utils import pd_freq, try_to_call, unwrap_array, stringify_if_datetime
-from ..decades.attributes import ATTRIBUTE_NOT_SET
+from ppodd.utils import pd_freq, try_to_call, unwrap_array, stringify_if_datetime
+from ppodd.decades.attributes import ATTRIBUTE_NOT_SET
 
 __all__ = ['SQLiteWriter', 'NetCDFWriter']
 

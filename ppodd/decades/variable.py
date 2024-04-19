@@ -63,7 +63,7 @@ class DecadesVariable(object):
         for _attr in _attrs:
             # Get the default value of an attribute, if it exists
             try:
-                _default = self.attrs._definition.schema()['properties'][_attr]['ppodd_default']
+                _default = self.attrs._definition.model_json_schema()['properties'][_attr]['ppodd_default']
             except KeyError:
                 _default = None
 

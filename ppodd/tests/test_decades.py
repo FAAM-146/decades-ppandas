@@ -23,9 +23,10 @@ TEST_FILE_PATTERNS = {
     'SEAPROBE_20010101_000000_c123.wcm': r.WcmFileReader,
     'faam-fgga_faam_20010101_r0_c123.na': r.FGGAReader,
     'CCN-200 data 010101010000.csv': r.CCNReader,
-    'TWBOZO01_20000101_120130_C123.txt': r.ChemistryTxtReader,
-    'CHTSOO02_20000101_120130_C123.txt': r.ChemistryTxtReader,
-    'AL55CO01_20000101_120130_C123.txt': r.ChemistryTxtReader
+    'TWBOZO01_20000101_120130_C123.txt': r.GenericTxtReader,
+    'CHTSOO02_20000101_120130_C123.txt': r.GenericTxtReader,
+    'AL55CO01_20000101_120130_C123.txt': r.GenericTxtReader,
+    'ZEUS0001_20000101_120130_C123.txt': r.GenericTxtReader
 }
 
 

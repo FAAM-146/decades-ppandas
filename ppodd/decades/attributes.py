@@ -87,7 +87,7 @@ class AttributesCollection(object):
 
         try:
             # Set REQUIRED and OPTIONAL attributes from the attributes definition
-            schema = _definition.schema()
+            schema = _definition.model_json_schema()
 
             self.REQUIRED_ATTRIBUTES = [
                 g for g in schema['properties'].keys() if g in schema['required']
@@ -150,7 +150,7 @@ class AttributesCollection(object):
             return
 
         if value == ATTR_USE_EXAMPLE:
-            value = self._definition.schema()['properties'][key]['example']
+            value = self._definition.model_json_schema()['properties'][key]['example']
 
         self.add(Attribute(key, value))
 
@@ -225,7 +225,7 @@ class AttributesCollection(object):
         if att.value == ATTR_USE_EXAMPLE:
             att = Attribute(
                 att.key,
-                self._definition.schema()['properties'][att.key]['example']
+                self._definition.model_json_schema()['properties'][att.key]['example']
             )
 
         # Add the attribute
