@@ -16,7 +16,7 @@ from vocal.types import OptionalDerivedString
 
 from ppodd.decades.process import DecadesProcessor
 from ppodd.decades.backends import DefaultBackend
-from ppodd.decades.utils import Lazy
+from ppodd.decades.utils import DatasetNormalizer, Lazy
 from ppodd.decades.file import DecadesFile
 from ppodd.decades.attributes import (
     AttributesCollection, Attribute, Context, ATTR_USE_EXAMPLE
@@ -156,6 +156,16 @@ class DecadesDataset(object):
             pass
             
         super().__setattr__(name, value)
+
+    def normalize(self, frequency: int) -> DatasetNormalizer:
+        """
+        Return a context manager which will normalize all variables in the
+        dataset to a given frequency.
+
+        Args:
+            frequency (int): the frequency to normalize to.
+        """
+        return DatasetNormalizer(self, frequency)
 
     @property
     def coords(self):

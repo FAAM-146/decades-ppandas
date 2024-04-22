@@ -9,7 +9,9 @@ from ppodd.decades.flags import DecadesClassicFlag
 from ppodd.decades.attributes import (
     AttributesCollection, Attribute, ATTR_USE_EXAMPLE, Context
 )
+from ppodd.decades.utils import resample_variable
 from ppodd.utils import pd_freq, infer_freq
+from ppodd.utils.utils import unwrap_array
 
 
 class DecadesVariable(object):
@@ -57,6 +59,8 @@ class DecadesVariable(object):
         self.name = kwargs.pop('name', None)
         self.write = kwargs.pop('write', True)
         self.doc_mode = kwargs.pop('doc_mode', False)
+        self.circular = kwargs.pop('circular', False)
+        self._forced_frequency = None
 
         # Set attributes given as keyword arguments
         _attrs = self.attrs.REQUIRED_ATTRIBUTES + self.attrs.OPTIONAL_ATTRIBUTES
@@ -155,17 +159,11 @@ class DecadesVariable(object):
         Implement (). When a class instance is called, create and return a
         Pandas Series with the correct index.
         """
-        i = pd.date_range(
-            start=self.t0, end=self.t1,
-            freq=self._get_freq()
-        )
-
-        kwargs = {}
-        if self.dtype:
-            kwargs['dtype'] = self.dtype
-
-        return pd.Series(self.array, index=i, name=self.name, **kwargs)
-
+        if not self._forced_frequency:
+            return self.to_series()
+        
+        return resample_variable(self, self._forced_frequency)
+       
     def __len__(self):
         """
         Impement len(). The length of a variable is the length of its array
@@ -208,6 +206,13 @@ class DecadesVariable(object):
         """
         if attr == 'attrs':
             super().__setattr__(attr, value)
+            return
+
+        # This is a special case, as we don't want to set the frequency
+        # attribute if we're forcing a frequency
+        if attr == 'frequency':
+            super().__setattr__(attr, value)
+            return
 
         if attr in (
             self.attrs.REQUIRED_ATTRIBUTES + self.attrs.OPTIONAL_ATTRIBUTES
@@ -227,7 +232,46 @@ class DecadesVariable(object):
         Implement repr()
         """
         return r'<DecadesVariable[{!r}]>'.format(self.name)
+    
+    @property
+    def frequency(self) -> int | None:
+        """
+        int: The frequency to force the variable to, or None if no frequency
+        forcing is required.
+        """
+        if self._forced_frequency is not None:
+            return self._forced_frequency
+        return self.attrs['frequency']
+    
+    @frequency.setter
+    def frequency(self, freq: int | None) -> None:
+        """
+        Set the frequency to force the variable to.
 
+        Args:
+            freq (int): the frequency to force the variable to.
+        """
+        self._forced_frequency = freq
+
+    def to_series(self, **kwargs) -> pd.Series:
+        """
+        Convert the variable to a pandas Series.
+
+        Returns:
+            pd.Series: a pandas Series containing the variable data.
+        """
+        
+        i = pd.date_range(
+            start=self.t0, end=self.t1,
+            freq=self._get_freq()
+        )
+
+        kwargs = {}
+        if self.dtype:
+            kwargs['dtype'] = self.dtype
+
+        return pd.Series(self.array, index=i, name=self.name, **kwargs)
+        
     def _get_freq(self, df=None):
         """
         Return the frequency of the variable.
@@ -249,7 +293,7 @@ class DecadesVariable(object):
         if len(_freq) == 1:
             _freq = f'1{_freq}'
 
-        self.frequency = int(1/pd.to_timedelta(_freq).total_seconds())
+        self._frequency = int(1/pd.to_timedelta(_freq).total_seconds())
         return _freq
 
     @staticmethod

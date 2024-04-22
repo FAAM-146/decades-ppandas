@@ -6,6 +6,7 @@ for QC flagging of data variables.
 import numpy as np
 import pandas as pd
 
+from ppodd.decades.utils import resample_variable
 from ppodd.utils import pd_freq
 
 __all__ = ('DecadesClassicFlag', 'DecadesBitmaskFlag')
@@ -134,6 +135,15 @@ class DecadesClassicFlag(DecadesFlagABC):
     def __call__(self):
         """
         Return flag values when the instance is called.
+        """
+        if not self.var._forced_frequency:
+            return self.to_series()
+        
+        return resample_variable(self, self._var.frequency, apply='max')
+    
+    def to_series(self):
+        """
+        Return the flag as a pandas Series.
         """
         s = pd.Series(self._df['FLAG'])
         s.index = self.index
@@ -268,7 +278,12 @@ class DecadesBitmaskFlag(DecadesFlagABC):
         When an instance is called, build the flag from the mask values and
         return it.
         """
-
+        if not self._var._forced_frequency:
+            return self.to_series()
+        
+        return resample_variable(self, self._var.frequency, apply='max')
+    
+    def to_series(self):
         _meanings = self.meanings
 
         _masks = self.masks
@@ -285,8 +300,8 @@ class DecadesBitmaskFlag(DecadesFlagABC):
 
         _flag_vals = _flag_vals.astype(np.int8)
 
-        return pd.Series(_flag_vals, index=self._var.index)
-
+        return pd.Series(_flag_vals, index=self.index)
+        
     @property
     def df(self):
         _df = self._df.copy()
