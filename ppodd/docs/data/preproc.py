@@ -1,5 +1,6 @@
 import datetime
 import importlib
+import inspect
 import os
 import shutil
 import sys
@@ -135,13 +136,16 @@ def get_module_doc(module):
     if _doc is None:
         _doc = 'No module documentation has been provided.'
 
+    _module_file = os.path.basename(inspect.getfile(m.__class__))
+
     module_name = module.__name__
     if module.DEPRECIATED_AFTER != datetime.date.max:
         module_name = f':del:`{module_name}`'
     txt = '.. _{}:\n\n'.format(module.__name__)
     txt += '-' * len(module_name) + '\n'
     txt += f'{module_name}\n'
-    txt += '-' * len(module_name) + '\n\n'
+    txt += '-' * len(module_name) + '\n'
+    txt +=  f'`{_module_file} <http://github.com/FAAM-146/decades-ppandas/blob/master/ppodd/pod/{_module_file}>`_\n\n'
     txt += trim_docstr(_doc.strip()) + '\n'
 
     txt += get_module_vardoc(m)
