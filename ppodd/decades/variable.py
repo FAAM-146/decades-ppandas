@@ -65,6 +65,7 @@ class DecadesVariable(object):
         # Set attributes given as keyword arguments
         _attrs = self.attrs.REQUIRED_ATTRIBUTES + self.attrs.OPTIONAL_ATTRIBUTES
         for _attr in _attrs:
+            
             # Get the default value of an attribute, if it exists
             try:
                 _default = self.attrs._definition.model_json_schema()['properties'][_attr]['ppodd_default']
@@ -88,6 +89,10 @@ class DecadesVariable(object):
                     pass
 
             _val = kwargs.pop(_attr, _default)
+
+            if _attr == 'frequency':
+                self._frequency = _val
+
             if _val is not None:
                 self.attrs.add(
                     Attribute(_attr, _val, context=_context, context_type=_context_type)
@@ -185,7 +190,6 @@ class DecadesVariable(object):
 
         if attr == 'flag':
             return self.flag
-
         if attr in self.attrs.keys:
             return self.attrs[attr]
 
@@ -225,7 +229,7 @@ class DecadesVariable(object):
         """
         Implement str()
         """
-        return self.name
+        return self.name or '[Unnamed Variable]'
 
     def __repr__(self):
         """
@@ -241,7 +245,7 @@ class DecadesVariable(object):
         """
         if self._forced_frequency is not None:
             return self._forced_frequency
-        return self.attrs['frequency']
+        return self._frequency
     
     @frequency.setter
     def frequency(self, freq: int | None) -> None:
@@ -282,10 +286,17 @@ class DecadesVariable(object):
         Returns:
             int: the frequency code of the variable.
         """
+        _freq = None
         try:
-            return pd_freq[self.attrs['frequency']]
-        except (KeyError, AttributeError):
-            _freq = pd.infer_freq(df.index)
+            _freq = pd_freq[self._frequency]
+        except KeyError:
+            pass
+
+        if _freq is None:
+            try:
+                _freq = pd_freq[self.attrs['frequency']]
+            except (KeyError, AttributeError):
+                _freq = pd.infer_freq(df.index)
 
         if _freq is None:
             _freq = infer_freq(df.index)
@@ -294,6 +305,7 @@ class DecadesVariable(object):
             _freq = f'1{_freq}'
 
         self._frequency = int(1/pd.to_timedelta(_freq).total_seconds())
+        self.attrs.add(Attribute('frequency', self._frequency))
         return _freq
 
     @staticmethod

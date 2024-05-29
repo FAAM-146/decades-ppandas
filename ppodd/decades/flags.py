@@ -136,7 +136,7 @@ class DecadesClassicFlag(DecadesFlagABC):
         """
         Return flag values when the instance is called.
         """
-        if not self.var._forced_frequency:
+        if not self._var._forced_frequency:
             return self.to_series()
         
         return resample_variable(self, self._var.frequency, apply='max')
