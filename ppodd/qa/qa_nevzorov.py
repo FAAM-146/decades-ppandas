@@ -23,7 +23,10 @@ class NevzorovQA(QAMod):
         _ax = fig.timeseries_axes([.1, .7, .8, .2], labelx=False)
 
         _index = self.dataset['NV_LWC1_COL_P'].index
-        _mask = (_index > fig.to_time) & (_index < fig.land_time)
+        try:
+            _mask = (_index > fig.to_time) & (_index < fig.land_time)
+        except Exception:
+            _mask = np.ones_like(_index, dtype=bool)
         max_power = np.max([
             self.dataset['NV_REF_P'].data.loc[_mask],
             self.dataset['NV_LWC1_COL_P'].data.loc[_mask],
@@ -46,7 +49,11 @@ class NevzorovQA(QAMod):
         _ax = fig.timeseries_axes([.1, .5, .8, .2], labelx=False)
 
         _index = self.dataset['NV_TWC_U'].index
-        _mask = (_index > fig.to_time) & (_index < fig.land_time)
+
+        try:
+            _mask = (_index > fig.to_time) & (_index < fig.land_time)
+        except Exception:
+            _mask = np.ones_like(_index, dtype=bool)
 
         twc = self.dataset['NV_TWC_U'].data
         lwc1 = self.dataset['NV_LWC1_U'].data
@@ -68,7 +75,10 @@ class NevzorovQA(QAMod):
         _ax = fig.timeseries_axes([.1, .3, .8, .2], labelx=False)
 
         _index = self.dataset['NV_TWC_U'].index
-        _mask = (_index > fig.to_time) & (_index < fig.land_time)
+        try:
+            _mask = (_index > fig.to_time) & (_index < fig.land_time)
+        except Exception:
+            _mask = np.ones_like(_index, dtype=bool)
 
         twc = self.dataset['NV_TWC_C'].data
         lwc1 = self.dataset['NV_LWC1_C'].data
