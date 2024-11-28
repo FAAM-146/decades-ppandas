@@ -8,20 +8,225 @@ info.
 import warnings
 import logging
 
+from enum import Enum, auto
+
 import numpy as np
 import pandas as pd
-
-from scipy.optimize import curve_fit
 
 from vocal.types import DerivedString
 
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..decades import flags
 from ..decades.attributes import DocAttribute
+from ..utils import slrs
 from .base import PPBase, register_pp
 from .shortcuts import _o, _z
 
+
+MINIMUM_IAS_CORRELATION = 0.8
+BASELINE_DEVIATION_LIMIT = 0.02
+
 logger = logging.getLogger(__name__)
+
+LinearFit = tuple[float, float]
+
+
+class CORRECTION_STATUS(Enum):
+    """
+    Enum to represent the status of the baseline correction.
+    """
+
+    UNINITIALISED = auto()
+    FROM_FLIGHT_DATA = auto()
+    FROM_CONSTANTS = auto()
+    FAILED = auto()
+
+
+def get_baseline_flag(
+        col_p: pd.Series, ref_p: pd.Series, k: pd.Series, mask: pd.Series
+    ) -> pd.Series:
+    """
+    Get a flag indicating when the parameterized baseline correction is
+    known to be poor.
+
+    Args:
+        col_p: Collector power.
+        ref_p: Reference power.
+        mask: Clear air mask.
+
+    Returns:
+        A mask indicating when the Nevzorov is in clear air.
+    """
+
+    flag = col_p * 1
+
+    smoothed_diff = (
+        (col_p / ref_p).rolling(64, center=True).mean()
+        - k.rolling(64, center=True).mean()
+    )
+
+    flag.loc[mask == 0] = 0
+    flag.loc[smoothed_diff.abs() < BASELINE_DEVIATION_LIMIT] = 0
+
+    return flag
+
+
+def get_water_content_comment(status: CORRECTION_STATUS) -> str:
+    """
+    Get a variable comment indicating how the baseline correction was
+    determined.
+    """
+
+    match status:
+
+        case CORRECTION_STATUS.FROM_FLIGHT_DATA:
+            return "Automatically baselined using flight data."
+        
+        case CORRECTION_STATUS.FROM_CONSTANTS:
+            return "Automatically baselined using flight constants."
+        
+        case (CORRECTION_STATUS.UNINITIALISED, CORRECTION_STATUS.FAILED):
+            return "Failed to baseline correct Nevzorov."
+
+
+def get_k_ias_fit(
+        col_p: pd.Series, ref_p: pd.Series, ias: pd.Series, mask: pd.Series,
+        nominal_k: float, runs: list[pd.DatetimeIndex]
+    ) -> LinearFit:
+    """
+    Get the linear fit for the IAS correction.
+
+    Args:
+        col_p: Collector power.
+        ref_p: Reference power.
+        ias: Indicated air speed.
+        mask: Clear air mask.
+        nominal_k: The nominal baseline correction.
+        runs: list of indices for each run.
+
+    Returns:
+        The linear fit.
+    """
+
+    ms = []
+    cs = []
+
+    for run in runs:
+        run_mask = mask[run]
+
+        run_k = (col_p / ref_p)[run] - nominal_k
+        run_k.loc[run_mask==0] = np.nan
+
+        run_rias = 1 / ias[run]
+        run_rias.loc[run_mask==0] = np.nan
+
+        cc = np.corrcoef(run_rias, run_k)[0, 1]
+        if np.isnan(cc):
+            cc = 0
+        if cc < MINIMUM_IAS_CORRELATION:
+            continue
+
+        (x, y) = np.polyfit(run_rias, run_k, 1)
+        ms.append(x)
+        cs.append(y)
+
+    fit = (np.median(ms), np.median(cs))
+
+    return fit
+
+
+def get_k_ps_fit(
+        col_p: pd.Series, ref_p: pd.Series, ps: pd.Series, mask: pd.Series,
+        k_ias: pd.Series, nominal_k: float, runs: list[pd.DatetimeIndex]
+    ) -> LinearFit:
+    """
+    Get the linear fit for the PS correction.
+
+    Args:
+        col_p: Collector power.
+        ref_p: Reference power.
+        ps: Static pressure.
+        mask: Clear air mask.
+        k_ias: The IAS correction.
+        nominal_k: The nominal baseline correction.
+        runs: list of indices for each run.
+
+    Returns:
+        The linear fit.
+    """
+
+    pss = []
+    rats = []
+
+    measured_k = (col_p / ref_p)
+    ps = ps.reindex(measured_k.index).interpolate().bfill()
+
+    corrected_k = measured_k - k_ias
+
+    for run in runs:
+        ri = corrected_k[run].loc[mask==1] - nominal_k
+        psi = np.log10(ps[run].loc[mask==1])
+        rim, psim = ri.median(), psi.median()
+        if np.isnan(rim) or np.isnan(psim):
+            continue
+
+        rats.append(rim)
+        pss.append(psim)
+
+    fit = np.polyfit(pss, rats, 1)
+
+    return fit
+
+
+def get_k_ps_from_fit(fit: LinearFit, ps: pd.Series) -> pd.Series:
+    """
+    Return the k value for a given set of PS values and a linear fit.
+
+    Args:
+        fit: The linear fit.
+        ps: The static pressure.
+
+    Returns:
+        The k value.
+    """
+    return fit[0] * np.log10(ps) + fit[1]
+
+
+def get_k_ias_from_fit(fit: LinearFit, ias: pd.Series) -> pd.Series:
+    """
+    Return the k value for a given set of IAS values and a linear fit.
+
+    Args:
+        fit: The linear fit.
+        ias: The indicated air speed.
+
+    Returns:
+        The k value.
+    """
+    return fit[0] * (1 / ias) + fit[1]
+
+
+def get_parameterized_k(
+        ias_fit: LinearFit, ps_fit: LinearFit, ias: pd.Series, ps: pd.Series,
+        nominal_k: float
+    ) -> pd.Series:
+    """
+    Return the parameterized k value for a given set of IAS and PS values.
+
+    Args:
+        ias_fit: The linear fit for the IAS correction.
+        ps_fit: The linear fit for the PS correction.
+        ias: The indicated air speed.
+        ps: The static pressure.
+        nominal_k: The nominal baseline correction.
+
+    Returns:
+        The parameterized k value.
+    """
+
+    return (
+        get_k_ias_from_fit(ias_fit, ias) + get_k_ps_from_fit(ps_fit, ps) + nominal_k
+    )
 
 
 def get_no_cloud_mask(twc_col_p, wow, window_secs=3, min_period=5, freq=64):
@@ -80,63 +285,6 @@ def get_no_cloud_mask(twc_col_p, wow, window_secs=3, min_period=5, freq=64):
     return pd.Series(out, index=twc_col_p.index)
 
 
-def get_fitted_k(col_p, ref_p, ias, ps, no_cloud_mask, k):
-    """
-    The Nevzorov baseline is not constant, but varies as a function of
-    indicated air speed (IAS_RVSM) and static air pressure (PS_RVSM).
-    Abel et al. (2014) provide a fitting formula in Appendix A to correct
-    the K value (ratio between collector and reference power, when outside of
-    clouds) to remove the zero offset of the liquid and total water
-    measurements.
-
-    Reference:
-        S J Abel, R J Cotton, P A Barrett and A K Vance. A comparison of ice
-        water content measurement techniques on the FAAM BAe-146 aircraft.
-        Atmospheric Measurement Techniques 7(5):4815--4857, 2014.
-
-    Args:
-        col_p: Nevz. collector power (W), pd.Series
-        ref_p: Nevz. reference power (W), pd.Series
-        ias: Indicated airspeed (m s-1), pd.Series
-        ps: Static Pressure (hPa), pd.Series
-        no_cloud_mask: mask indicating in (0) or out (1) of cloud, pd.Series
-        k: K value given in the flight constants.
-
-    Returns:
-        a tuple (K, A), where K is the fitted K value (pd.Series) and A is a
-        tuple containing the fit parameters.
-
-    """
-
-    def fit_func(x, a, b):
-        """
-        (col_pow / ref_pow) - k - [ a(1/ias) + b log_10(Ps) ]
-        """
-        return (
-            x[0, :] / x[1, :] - k - (a * (1 / x[2, :]) + b * np.log10(x[3, :]))
-        )
-
-    # Generate a mask that is out of cloud and everywhere-finite for all input
-    # variables
-    mask = ((no_cloud_mask == 1) & (np.isfinite(col_p)) & (np.isfinite(ref_p))
-            & (np.isfinite(ias)) & (np.isfinite(ps)))
-
-    # Create input data array for fit_func
-    xdata = np.vstack([
-        col_p.loc[mask].values,
-        ref_p.loc[mask].values,
-        ias.loc[mask].values,
-        ps.loc[mask].values
-    ])
-
-    # linter complains that this may be an unbalances unpacking, however the
-    # docs indicate that this isn't the case.
-    # pylint: disable=unbalanced-tuple-unpacking
-    popt, _ = curve_fit(fit_func, xdata, xdata[0, :] * 0.0)
-
-    return (k + (popt[0] * (1. / ias) + popt[1] * np.log10(ps)), popt)
-
-
 @register_pp('core')
 class Nevzorov(PPBase):
     r"""
@@ -175,9 +323,16 @@ class Nevzorov(PPBase):
     The outputs listed produced by this module depend on the type of Nevzorov
     vane fitted to the aircraft. If an old-style ``1T1L2R`` vane is fitted,
     then the default outputs are 
-    `NV_TWC_U`, `NV_TWC_C`, `NV_LWC_U`, `NV_LWC_C`. If a new-style ``1T2L1R``
-    vane is fitted, then the default outputs are `NV_TWC_U`, `NV_TWC_C`,
-    `NV_LWC1_U`, `NV_LWC1_C`, `NV_LWC2_U`, `NV_LWC2_C`.
+    `NV_TWC_C`, `NV_LWC_C`, `NV_TWC_COL_P`, `NV_LWC_COL_P`, `NV_TWC_REF_P`, `NV_LWC_REF_P`.
+    If a new-style ``1T2L1R` vane is fitted, then the default outputs are 
+    `NV_TWC_C`, `NV_LWC1_C`, `NV_LWC2_C`, `NV_TWC_COL_P`, `NV_LWC1_COL_P`, 
+    `NV_LWC2_COL_P`, `NV_REF_P`.
+
+    .. note::
+
+        Prior to software version ?? this module output uncorrected water
+        content data (`NV_TWC_U`, `NV_LWC_U`, `NV_LWC1_U`, `NV_LWC2_U`), instead
+        of the element powers. These outputs are no longer produced.
     """
 
     TEST_SETUP = {'VANETYPE': 'all'}
@@ -195,6 +350,7 @@ class Nevzorov(PPBase):
         'IAS_RVSM',
         'PS_RVSM',
         'WOW_IND',
+        'ROLL_GIN',
         'CLWCIREF', 'CLWCVREF', 'CLWCICOL',
         'CLWCVCOL',
         'CTWCIREF', 'CTWCVREF', 'CTWCICOL',
@@ -254,23 +410,11 @@ class Nevzorov(PPBase):
         """
 
         self.declare(
-            'NV_TWC_U',
-            units='gram m-3',
-            frequency=64,
-            long_name=('Uncorrected total condensed water content from the '
-                       'Nevzorov probe'),
-            instrument_manufacturer='Sky Phys Tech Inc.',
-            instrument_model=self.dataset.lazy['VANETYPE'],
-            instrument_serial_number=self.dataset.lazy['VANE_SN']
-        )
-
-        self.declare(
             'NV_TWC_C',
             units='gram m-3',
             frequency=64,
             long_name=('Corrected total condensed water content from the '
                        'Nevzorov probe'),
-            comment='Automatically baselined. May require further processing.',
             instrument_manufacturer='Sky Phys Tech Inc.',
             instrument_model=self.dataset.lazy['VANETYPE'],
             instrument_serial_number=self.dataset.lazy['VANE_SN']
@@ -284,7 +428,6 @@ class Nevzorov(PPBase):
             instrument_manufacturer='Sky Phys Tech Inc.',
             instrument_model=self.dataset.lazy['VANETYPE'],
             instrument_serial_number=self.dataset.lazy['VANE_SN'],
-            write=False
         )
 
         self.declare(
@@ -306,23 +449,11 @@ class Nevzorov(PPBase):
         """
 
         self.declare(
-            'NV_LWC_U',
-            units='gram m-3',
-            frequency=64,
-            long_name=('Uncorrected liquid water content from the Nevzorov '
-                       'probe'),
-            instrument_manufacturer='Sky Phys Tech Inc.',
-            instrument_model=self.dataset.lazy['VANETYPE'],
-            instrument_serial_number=self.dataset.lazy['VANE_SN']
-        )
-
-        self.declare(
             'NV_LWC_C',
             units='gram m-3',
             frequency=64,
             long_name='Corrected liquid water content from the Nevzorov probe',
             standard_name='mass_concentration_of_liquid_water_in_air',
-            comment='Automatically baselined. May require further processing.',
             instrument_manufacturer='Sky Phys Tech Inc.',
             instrument_model=self.dataset.lazy['VANETYPE'],
             instrument_serial_number=self.dataset.lazy['VANE_SN']
@@ -336,7 +467,7 @@ class Nevzorov(PPBase):
             instrument_manufacturer='Sky Phys Tech Inc.',
             instrument_model=self.dataset.lazy['VANETYPE'],
             instrument_serial_number=self.dataset.lazy['VANE_SN'],
-            write=False
+
         )
 
         self.declare(
@@ -347,7 +478,6 @@ class Nevzorov(PPBase):
             instrument_manufacturer='Sky Phys Tech Inc.',
             instrument_model=self.dataset.lazy['VANETYPE'],
             instrument_serial_number=self.dataset.lazy['VANE_SN'],
-            write=False
         )
 
         self.declare(
@@ -357,8 +487,7 @@ class Nevzorov(PPBase):
             long_name='LWC reference power',
             instrument_manufacturer='Sky Phys Tech Inc.',
             instrument_model=self.dataset.lazy['VANETYPE'],
-            instrument_serial_number=self.dataset.lazy['VANE_SN'],
-            write=False
+            instrument_serial_number=self.dataset.lazy['VANE_SN']
         )
 
     def _declare_outputs_1t2l1r(self):
@@ -367,35 +496,12 @@ class Nevzorov(PPBase):
         """
 
         self.declare(
-            'NV_LWC1_U',
-            units='gram m-3',
-            frequency=64,
-            long_name=('Uncorrected liquid water content from the Nevzorov '
-                       'probe (1st collector)'),
-            instrument_manufacturer='Sky Phys Tech Inc.',
-            instrument_model=self.dataset.lazy['VANETYPE'],
-            instrument_serial_number=self.dataset.lazy['VANE_SN']
-        )
-
-        self.declare(
             'NV_LWC1_C',
             units='gram m-3',
             frequency=64,
             long_name=('Corrected liquid water content from the Nevzorov probe'
                        ' (1st collector)'),
             standard_name='mass_concentration_of_liquid_water_in_air',
-            comment='Automatically baselined. May require further processing.',
-            instrument_manufacturer='Sky Phys Tech Inc.',
-            instrument_model=self.dataset.lazy['VANETYPE'],
-            instrument_serial_number=self.dataset.lazy['VANE_SN']
-        )
-
-        self.declare(
-            'NV_LWC2_U',
-            units='gram m-3',
-            frequency=64,
-            long_name=('Uncorrected liquid water content from the Nevzorov '
-                       'probe (2nd collector)'),
             instrument_manufacturer='Sky Phys Tech Inc.',
             instrument_model=self.dataset.lazy['VANETYPE'],
             instrument_serial_number=self.dataset.lazy['VANE_SN']
@@ -408,7 +514,6 @@ class Nevzorov(PPBase):
             long_name=('Corrected liquid water content from the Nevzorov probe'
                        ' (2nd collector)'),
             standard_name='mass_concentration_of_liquid_water_in_air',
-            comment='Automatically baselined. May require further processing.',
             instrument_manufacturer='Sky Phys Tech Inc.',
             instrument_model=self.dataset.lazy['VANETYPE'],
             instrument_serial_number=self.dataset.lazy['VANE_SN']
@@ -422,7 +527,6 @@ class Nevzorov(PPBase):
             instrument_manufacturer='Sky Phys Tech Inc.',
             instrument_model=self.dataset.lazy['VANETYPE'],
             instrument_serial_number=self.dataset.lazy['VANE_SN'],
-            write=False
         )
 
         self.declare(
@@ -433,7 +537,6 @@ class Nevzorov(PPBase):
             instrument_manufacturer='Sky Phys Tech Inc.',
             instrument_model=self.dataset.lazy['VANETYPE'],
             instrument_serial_number=self.dataset.lazy['VANE_SN'],
-            write=False
         )
 
         self.declare(
@@ -443,8 +546,7 @@ class Nevzorov(PPBase):
             long_name='LWC2 collector power',
             instrument_manufacturer='Sky Phys Tech Inc.',
             instrument_model=self.dataset.lazy['VANETYPE'],
-            instrument_serial_number=self.dataset.lazy['VANE_SN'],
-            write=False
+            instrument_serial_number=self.dataset.lazy['VANE_SN']
         )
 
     def declare_outputs(self):
@@ -521,6 +623,44 @@ class Nevzorov(PPBase):
             except KeyError:
                 self.dataset.constants[var[0]] = self.dataset[var[1]]
 
+    def get_fitted_k(
+            self, col_p: pd.Series, ref_p: pd.Series, no_cloud_mask: pd.Series,
+            nominal_k: float
+        ) -> tuple[pd.Series, tuple[LinearFit, LinearFit]]:
+        """
+        Fit the baseline correction to the Nevzorov data.
+
+        Args:
+            col_p: Collector power.
+            ref_p: Reference power.
+            no_cloud_mask: Mask indicating clear air.
+            nominal_k: The nominal baseline correction.
+
+        Returns:
+            The fitted baseline correction and the linear fits for the IAS and
+            PS dependencies.
+        """
+
+        wow = self.dataset['WOW_IND'].reindex(col_p.index).interpolate().bfill()
+        ps = self.dataset['PS_RVSM'].reindex(col_p.index).interpolate().bfill()
+        roll = self.dataset['ROLL_GIN'].reindex(col_p.index).interpolate().bfill()
+        ias = self.dataset['IAS_RVSM'].reindex(col_p.index).interpolate().bfill()
+        mask = no_cloud_mask.reindex(col_p.index).ffill().bfill()
+
+        s = slrs(wow, ps, roll, min_length=60, max_length=60)
+
+        k_ias_fit = get_k_ias_fit(col_p, ref_p, ias, mask, nominal_k, s)
+        k_ias = get_k_ias_from_fit(k_ias_fit, ias)
+
+        k_ps_fit = get_k_ps_fit(col_p, ref_p, ps, mask, k_ias, nominal_k, s)
+
+        parameterized_k = get_parameterized_k(
+            k_ias_fit, k_ps_fit, ias, ps, nominal_k
+        )
+
+        return parameterized_k, (k_ias_fit, k_ps_fit)
+
+
     def process(self):
         """
         Main processing routine.
@@ -565,8 +705,10 @@ class Nevzorov(PPBase):
 
             # Sensor area and cp / rp ratio in constants file
             _calconst = 'CALNV{ins}'.format(ins=ins.upper())
+            _calfit = 'FITNV{ins}'.format(ins=ins.upper())
             area = self.dataset[_calconst][1]
             K = self.dataset[_calconst][0]
+            fit_status = CORRECTION_STATUS.UNINITIALISED
 
             for meas in measurements:
                 # Get the raw sensor reading from DECADES
@@ -600,49 +742,62 @@ class Nevzorov(PPBase):
                 clear_air = get_no_cloud_mask(col_p, self.d.WOW_IND)
 
             try:
-                fitted_K, _ = get_fitted_k(
-                    col_p, ref_p, self.d.IAS_RVSM, self.d.PS_RVSM, clear_air, K
+                fitted_K, (ias_fit, ps_fit) = self.get_fitted_k(
+                    col_p, ref_p, clear_air, K
                 )
+                fit_status = CORRECTION_STATUS.FROM_FLIGHT_DATA
 
-                fit_success = True
-            except (RuntimeError, ValueError) as e:
+            except Exception:
                 # If the fit has failed, we only want to write
                 # uncorrected variables
                 if self.test_mode:
-                    fit_success = True
+                    fit_status = CORRECTION_STATUS.FROM_FLIGHT_DATA
                     fitted_K = K
                 else:
-                    logger.warning('Failed to baseline correct Nevzorov')
-                    logger.warning(str(e))
+                    logger.warning('Failed to baseline correct Nevzorov from flight data', exc_info=True)
                     fitted_K = 0
-                    fit_success = False
+                    
+            if fit_status == CORRECTION_STATUS.UNINITIALISED:
+                try:
+                    (ias_fit, ps_fit) = self.dataset[_calfit]
+                    fitted_K = get_parameterized_k(
+                        ias_fit, ps_fit, self.d['IAS_RVSM'], self.d['PS_RVSM'], K
+                    )
+                except Exception:
+                    logger.error('Failed to baseline correct Nevzorov from constants', exc_info=True)
+                    fit_status = CORRECTION_STATUS.FAILED
+                    fitted_K = 0
 
             # Create and write output variables
             w_c = DecadesVariable(
                 (col_p - fitted_K * ref_p) / (self.d.TAS_RVSM * area * nvl),
-                name='NV_{ins}_C'.format(
-                    ins=ins.upper()
-                ), flag=DecadesBitmaskFlag
+                name='NV_{ins}_C'.format(ins=ins.upper()),
+                flag=DecadesBitmaskFlag,
+                comment=get_water_content_comment(fit_status)
             )
-            if not fit_success:
+
+            if fit_status in (CORRECTION_STATUS.UNINITIALISED, CORRECTION_STATUS.FAILED):
                 w_c.write = False
 
-            w_u = DecadesVariable(
-                (col_p - K * ref_p) / (self.d.TAS_RVSM * area * nvl),
-                name='NV_{ins}_U'.format(ins=ins.upper()),
-                flag=DecadesBitmaskFlag
-            )
+            self.dataset.add_constant('NV_{ins}_K'.format(ins=ins.upper()), fitted_K)
 
             col_power = DecadesVariable(
                 col_p, name='NV_{ins}_COL_P'.format(ins=ins.upper()),
                 flag=DecadesBitmaskFlag
             )
 
-            for _var in (w_c, w_u, col_power):
+            for _var in (w_c, col_power):
                 _var.flag.add_mask(
                     self.d['flag'], flags.WOW, 'The aircraft is on the ground'
                 )
                 self.add_output(_var)
+
+            w_c.flag.add_mask(
+                get_baseline_flag(col_p, ref_p, fitted_K, clear_air),
+                'poor clear air baseline',
+                ('The Nevzorov baseline correction is poor in clear air '
+                 f'(|dk| > {BASELINE_DEVIATION_LIMIT})')
+            )
 
             if _vanetype in ('1t1l2r', 'all'):
                 if ins in ('lwc1', 'lwc2'):
