@@ -40,6 +40,7 @@ class DecadesProcessor:
                         # We have all the inputs to run the module
                         _mod.process()
                         _mod.finalize()
+                        self.dataset.run_process_hooks(module_name=modname)
                     else:
                         # The module  could not be run, due to lacking inputs.
                         logger.debug(
@@ -99,6 +100,7 @@ class DecadesProcessor:
                 logger.info('Running {}'.format(pp_module))
                 pp_module.process()
                 pp_module.finalize()
+                self.dataset.run_process_hooks(module_name=pp_module.__class__.__name__)
             except Exception as err: # pylint: disable=broad-except
                 logger.error('Error in {}: {}'.format(pp_module, err))
                 traceback.print_exc()
@@ -124,7 +126,11 @@ class DecadesProcessor:
                     setattr(var, key, value)
 
         bounds = self.dataset.time_bounds()
-        self.dataset._trim_data(start_cutoff=bounds[0], end_cutoff=bounds[1])
+
+        try:
+            self.dataset._trim_data(start_cutoff=bounds[0], end_cutoff=bounds[1])
+        except Exception as err:
+            logger.error('Error trimming dataset', exc_info=True)
 
         self.dataset._finalize()
 
