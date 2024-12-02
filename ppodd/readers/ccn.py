@@ -4,7 +4,7 @@ import re
 
 import pandas as pd
 
-from ppodd.decades import DecadesVariable
+from ppodd.decades.variable import DecadesVariable
 from ppodd.readers import register, FileReader
 
 

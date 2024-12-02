@@ -1,4 +1,5 @@
-import collections
+from __future__ import annotations
+
 import datetime
 import gc
 import glob
@@ -8,9 +9,11 @@ import re
 import traceback
 
 from pydoc import locate
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
+from pandas import Timestamp
 from vocal.types import OptionalDerivedString
 
 
@@ -18,12 +21,19 @@ from ppodd.decades.process import DecadesProcessor
 from ppodd.decades.backends import DefaultBackend
 from ppodd.decades.utils import DatasetNormalizer, Lazy
 from ppodd.decades.file import DecadesFile
+from ppodd.decades.variable import DecadesVariable
 from ppodd.decades.attributes import (
-    AttributesCollection, Attribute, Context, ATTR_USE_EXAMPLE
+    AttributesCollection,
+    Attribute,
+    Context,
+    ATTR_USE_EXAMPLE,
 )
 from ppodd.decades.attrutils import attribute_helpers
 from ppodd.writers import NetCDFWriter
 
+if TYPE_CHECKING:
+    from ppodd.readers.readers import CrioTcpDefintion
+    from ppodd.readers.readers import FileReader
 
 logger = logging.getLogger(__name__)
 
@@ -33,12 +43,20 @@ class DecadesDataset(object):
     A DecadesDataset is a top-level wrapper used to load input data, run
     processing, qa, and potentially write-out data via an injected dependency.
     """
+
     # pylint: disable=too-many-public-methods, too-many-arguments
 
-    def __init__(self, date=None, processor=DecadesProcessor,
-                 backend=DefaultBackend,
-                 writer=NetCDFWriter, pp_group='core',
-                 standard='faam_data', strict=True, logfile=None):
+    def __init__(
+        self,
+        date=None,
+        processor=DecadesProcessor,
+        backend=DefaultBackend,
+        writer=NetCDFWriter,
+        pp_group="core",
+        standard="faam_data",
+        strict=True,
+        logfile=None,
+    ):
         """
         Create a class instance.
 
@@ -81,7 +99,7 @@ class DecadesDataset(object):
         self.lat = None
         self._garbage_collect = False
         self._qa_dir = None
-   
+
         self._decache = False
         self._trim = False
         self._standard = standard
@@ -90,14 +108,15 @@ class DecadesDataset(object):
         self._backend = backend()
 
         self.globals = AttributesCollection(
-            dataset=self, definition='.'.join((standard, 'GlobalAttributes')),
-            strict=strict
+            dataset=self,
+            definition=".".join((standard, "GlobalAttributes")),
+            strict=strict,
         )
 
         for helper in attribute_helpers:
             self._attribute_helpers.append(helper(self))
 
-    def __getitem__(self, item):
+    def __getitem__(self, item: str) -> Any:
         """
         Implement getitem().
 
@@ -119,15 +138,15 @@ class DecadesDataset(object):
 
         # TIME_(MIN/MAX)_CALL return callables when can be used to return the
         # minimum and maximum times of any variable in the dataset.
-        if item == 'TIME_MIN_CALL':
-            return lambda: self.time_bounds()[0]#.strftime('%Y-%m-%dT%H:%M:%SZ')
+        if item == "TIME_MIN_CALL":
+            return lambda: self.time_bounds()[0]  # .strftime('%Y-%m-%dT%H:%M:%SZ')
 
-        if item == 'TIME_MAX_CALL':
-            return lambda: self.time_bounds()[1]#.strftime('%Y-%m-%dT%H:%M:%SZ')
+        if item == "TIME_MAX_CALL":
+            return lambda: self.time_bounds()[1]  # .strftime('%Y-%m-%dT%H:%M:%SZ')
 
-        raise KeyError('Unknown variable: {}'.format(item))
+        raise KeyError("Unknown variable: {}".format(item))
 
-    def __getattr__(self, attr):
+    def __getattr__(self, attr: str) -> Any:
         """
         Allow the use of helpers to provide additional attributes to the dataset.
         """
@@ -138,23 +157,23 @@ class DecadesDataset(object):
         except Exception:
             pass
 
-        raise AttributeError(f'{attr!r} is not an attribute of {self!r}')
+        raise AttributeError(f"{attr!r} is not an attribute of {self!r}")
 
-    def __setattr__(self, name, value):
+    def __setattr__(self, name: str, value: Any) -> None:
         """
         Intercept attributes that are set, and pass them onto attribute helpers,
         if required. This would probably be better done with on-the-fly mixins,
         but never mind...
         """
-       
+
         try:
-            for helper in self.__dict__['_attribute_helpers']:
+            for helper in self.__dict__["_attribute_helpers"]:
                 if name in helper.attributes:
                     setattr(helper, name, value)
                     return
         except KeyError:
             pass
-            
+
         super().__setattr__(name, value)
 
     def normalize(self, frequency: int) -> DatasetNormalizer:
@@ -168,16 +187,18 @@ class DecadesDataset(object):
         return DatasetNormalizer(self, frequency)
 
     @property
-    def coords(self):
+    def coords(self) -> str | None:
         """
         str: the string to use as a variable coordinates attribute. None if
         this is not set.
         """
         if self.lat and self.lon:
-            return f'{self.lon} {self.lat}'
+            return f"{self.lon} {self.lat}"
         return None
 
-    def time_bounds(self):
+    def time_bounds(
+        self,
+    ) -> tuple[datetime.datetime | Timestamp, datetime.datetime | Timestamp]:
         """
         Return the time period covered by this dataset.
 
@@ -189,16 +210,22 @@ class DecadesDataset(object):
         end_time = datetime.datetime.min
 
         for _var in self.variables:
+
             var = self[_var]
+
+            if not isinstance(var, DecadesVariable):
+                logger.warning(f"Variable {var} is not a DecadesVariable, skipping")
+                continue
 
             if not var.write:
                 continue
 
-            if var.t0 < start_time:
-                start_time = var.t0
+            t0, t1 = var.time_bounds()
+            if t0 < start_time:
+                start_time = t0
 
-            if var.t1 > end_time:
-                end_time = var.t1
+            if t1 > end_time:
+                end_time = t1
 
             self._backend.decache()
 
@@ -206,7 +233,7 @@ class DecadesDataset(object):
 
         return (start_time, end_time)
 
-    def remove(self, name):
+    def remove(self, name: str) -> None:
         """
         Remove a variable from the backend.
 
@@ -215,7 +242,7 @@ class DecadesDataset(object):
         """
         self._backend.remove(name)
 
-    def garbage_collect(self, collect):
+    def garbage_collect(self, collect: bool) -> None:
         """
         Turn garbage collection on or off. If on, variables which are not
         required for processing are removed from the dataset. TODO: this should
@@ -230,7 +257,7 @@ class DecadesDataset(object):
             return
         self._garbage_collect = False
 
-    def decache(self, decache):
+    def decache(self, decache: bool) -> None:
         """
         Turn decaching on or off. If on, the backend will regularly remove data
         from memory to whatever storage medium is used.
@@ -245,20 +272,20 @@ class DecadesDataset(object):
         self._decache = False
 
     @property
-    def outputs(self):
+    def outputs(self) -> list[DecadesVariable]:
         """
         list: Return a list of output variables from the backend.
         """
         return self._backend.outputs
 
-    def clear_outputs(self):
+    def clear_outputs(self) -> None:
         """
         Clear all outputs from the backend.
         """
         self._backend.outputs = []
 
     @property
-    def trim(self):
+    def trim(self) -> bool:
         """
         bool: True if trim mode is on, False otherwise. If trim mode is on,
         data will be trimmed to a set period before takeoff and after landing.
@@ -266,7 +293,7 @@ class DecadesDataset(object):
         return self._trim
 
     @trim.setter
-    def trim(self, trm):
+    def trim(self, trm: bool) -> None:
         """
         Set trim mode.
 
@@ -276,7 +303,7 @@ class DecadesDataset(object):
         self._trim = trm
 
     @property
-    def date(self):
+    def date(self) -> datetime.date:
         """
         datetime.datetime: Return the date of this dataset.
         """
@@ -287,23 +314,23 @@ class DecadesDataset(object):
 
         try:
             return datetime.datetime.combine(
-                self.globals['date'], datetime.datetime.min.time()
+                self.globals["date"], datetime.datetime.min.time()  # type: ignore
             ).date()
         except KeyError:
             pass
 
-        raise AttributeError('No date has been set')
+        raise AttributeError("No date has been set")
 
-    def _interpolate_globals(self):
+    def _interpolate_globals(self) -> None:
         """
         Interpolate across global attributes, allowing placeholders to be used
         in globals in the flight constants file.
         """
         for key, value in self.globals.static_items():
             if isinstance(value, str):
-                self.globals[key] = self.globals[key].format(**self.globals())
+                self.globals[key] = value.format(**self.globals())
 
-    def add_global(self, key, value):
+    def add_global(self, key: str, value: Any) -> None:
         """
         Add a global key/value pair to the dataset globals. The value can be
         either a literal or a directive. Directives are strings of the form
@@ -322,17 +349,17 @@ class DecadesDataset(object):
             key (str): the name of the global attribute to add
             value (Object): the value of the global attribute <key>
         """
-        
+
         # Recursively flatten any dictionaries passed as values
         if isinstance(value, dict):
             for _key, _val in value.items():
-                _key = '{}_{}'.format(key, _key)
+                _key = "{}_{}".format(key, _key)
                 self.add_global(_key, _val)
             return
 
         # See if the value passed is a directive
         try:
-            rex = re.compile('<(?P<action>[a-z]+) (?P<value>.+)>')
+            rex = re.compile("<(?P<action>[a-z]+) (?P<value>.+)>")
             result = rex.search(value)
         except TypeError:
             result = None
@@ -344,64 +371,64 @@ class DecadesDataset(object):
             # The value is a directive; resolve it
             groups = result.groupdict()
 
-            if groups['action'] == 'call':
+            if groups["action"] == "call":
                 # Attempt to locate the value of the call directive. Abandon
                 # this global if its not found
-                value = locate(groups['value'])
+                value = locate(groups["value"])
                 if value is None:
                     return
 
-            if groups['action'] == 'example':
+            if groups["action"] == "example":
                 value = ATTR_USE_EXAMPLE
 
-            if groups['action'] == 'attribute':
+            if groups["action"] == "attribute":
                 _context = self
                 _context_type = Context.ATTR
-                value = groups['value']
+                value = groups["value"]
 
                 if value is None:
                     return
 
-            if groups['action'] == 'data':
-                values = [v.strip() for v in groups['value'].split()]
+            if groups["action"] == "data":
+                values = [v.strip() for v in groups["value"].split()]
                 item, *callables = values
                 _context = self
                 _context_type = Context.DATA
                 value = tuple([item] + callables)
 
-        # Add the global 
+        # Add the global
         attr = Attribute(key, value, context=_context, context_type=_context_type)
         self.globals.add(attr)
 
     @property
-    def qa_dir(self):
+    def qa_dir(self) -> str | None:
         """
         str: The directory in which QC should be done. When set, will create
         the directory if it does not exist.
-
-        Raises:
-            OSError: if the path exists but is not a directory.
         """
         return self._qa_dir
 
     @qa_dir.setter
-    def qa_dir(self, qa_dir):
+    def qa_dir(self, qa_dir: str) -> None:
         """
         Set the qa_dir, creating it if it does not exist. If it exists and is
         not a directory, raise OSError.
 
         Args:
             qa_dir: a string pointing to the path to use as a qa directory.
+
+        Raises:
+            OSError: if the path exists and is not a directory.
         """
         if not os.path.isdir(qa_dir) and os.path.exists(qa_dir):
-            raise OSError('{} exists and is not a directory'.format(qa_dir))
+            raise OSError("{} exists and is not a directory".format(qa_dir))
 
         if not os.path.exists(qa_dir):
             os.makedirs(qa_dir)
 
         self._qa_dir = qa_dir
 
-    def add_definition(self, definition):
+    def add_definition(self, definition: CrioTcpDefintion) -> None:
         """
         Add a definition to the list of definitions stored in the instance.
 
@@ -410,7 +437,7 @@ class DecadesDataset(object):
         """
         self.definitions.append(definition)
 
-    def add_constant(self, name, data):
+    def add_constant(self, name: str, data: Any) -> None:
         """
         Add a constant to the dataset, to be stored in the constants list
         attribute.
@@ -421,7 +448,7 @@ class DecadesDataset(object):
         """
         self.constants[name] = data
 
-    def add_input(self, variable):
+    def add_input(self, variable: DecadesVariable) -> None:
         """
         Add a new DecadesVariable to this DecadesDataset. If the variable
         already exists, as identified by name, then append to that variable
@@ -434,21 +461,19 @@ class DecadesDataset(object):
 
         self._backend.add_input(variable)
 
-    def add_output(self, variable):
+    def add_output(self, variable: DecadesVariable) -> None:
         """
         Add an output variable to the dataset, via the backend.
 
         Args:
             variable: the DecadesVariable to add as an output.
         """
-        coord_var = (
-            OptionalDerivedString if variable.doc_mode else lambda: self.coords
-        )
-        variable.attrs.add(Attribute('coordinates', coord_var))
+        coord_var = OptionalDerivedString if variable.doc_mode else lambda: self.coords
+        variable.attrs.add(Attribute("coordinates", coord_var))
         self._backend.add_output(variable)
 
     @property
-    def variables(self):
+    def variables(self) -> list[str]:
         """
         :obj:`list` of :obj:`str`: Returns all of the variables held
         in the backend.
@@ -456,28 +481,32 @@ class DecadesDataset(object):
         return self._backend.variables
 
     @property
-    def files(self):
+    def files(self) -> list[str]:
         """
         :obj:`list` of :obj:`str`: Return a list of all files currently
         accociated with this :obj:`DecadesDataset`. Cannot be set
         explicitally.
         """
+        if not self.readers:
+            return []
+
         _files = []
         for reader in self.readers:
             _files += reader.files
         return _files
 
     @files.setter
-    def files(self, value):
+    def files(self, value: Any) -> None:
         """
         Explicitally forbid <DecadesDataset>.files = Something type
         assignments.
         """
         # pylint: disable=no-self-use
-        raise ValueError(('Cannot add directly to files. Use add_file() '
-                         'or add_decades_file()'))
+        raise ValueError(
+            ("Cannot add directly to files. Use add_file() " "or add_decades_file()")
+        )
 
-    def get_reader(self, cls):
+    def get_reader(self, cls: type[FileReader]) -> FileReader:
         """
         Get the FileReader of type cls associated with this Dataset. If no such
         reader exists, raise a ValueError.
@@ -492,10 +521,11 @@ class DecadesDataset(object):
         for reader in self.readers:
             if reader.__class__ == cls:
                 return reader
-        raise ValueError
+
+        return cls()
 
     @staticmethod
-    def infer_reader(dfile):
+    def infer_reader(dfile: DecadesFile) -> type[FileReader] | None:
         """
         Infer the reader class which should be used to load a given file.
 
@@ -505,16 +535,17 @@ class DecadesDataset(object):
         """
         # pylint: disable=relative-beyond-top-level, import-outside-toplevel
         from ppodd.readers import reader_patterns
+
         _filename = os.path.basename(dfile.filepath)
 
         for pattern in reader_patterns:
             if re.fullmatch(pattern, _filename):
                 return reader_patterns[pattern]
 
-        logger.warning('No reader found for {}'.format(dfile))
+        logger.warning("No reader found for {}".format(dfile))
         return None
 
-    def add_decades_file(self, dfile):
+    def add_decades_file(self, dfile: DecadesFile) -> None:
         """
         Add a DecadesFile to the DecadesDataset. Each file must be associated
         with a reader. If a suitable reader is already associated with the
@@ -525,25 +556,14 @@ class DecadesDataset(object):
             dfile (DecadesFile): The file to add to the dataset.
         """
 
-        dfile.dataset = self
+        dfile.dataset = self  # TODO: this should be a method of DecadesFile
 
         reader_class = DecadesDataset.infer_reader(dfile)
 
-        reader = None
+        if reader_class is None:
+            raise ValueError("No reader found for {}".format(dfile))
 
-        try:
-            reader = self.get_reader(reader_class)
-        except ValueError:
-            pass
-
-        if reader is None:
-            try:
-                reader = reader_class()
-            except TypeError:
-                reader = None
-
-        if reader is None:
-            raise ValueError
+        reader = self.get_reader(reader_class)
 
         if reader not in self.readers:
             self.readers.append(reader)
@@ -551,7 +571,7 @@ class DecadesDataset(object):
 
         reader.files.append(dfile)
 
-    def add_glob(self, pattern):
+    def add_glob(self, pattern: str) -> None:
         """
         Add files to the dataset which match a given globbing pattern.
 
@@ -561,51 +581,73 @@ class DecadesDataset(object):
         for f in glob.glob(pattern):
             self.add_file(f)
 
-    def add_file(self, filename):
+    def add_file(self, filename: str) -> None:
         """
         Add a file to the dataset, first creating a DecadesFile.
 
         Args:
             filename (str): the path to the file to add.
         """
-        logger.info('Adding {}'.format(filename))
+        logger.info("Adding {}".format(filename))
         try:
             self.add_decades_file(DecadesFile(filename))
         except ValueError:
-            logger.error('failed to add {}'.format(filename))
+            logger.error("failed to add {}".format(filename))
 
-    def run_load_hooks(self):
+    def run_load_hooks(self) -> None:
+        """
+        Run all of the post-load hooks associated with this dataset.
+        """
         for hook in self.load_hooks:
             try:
                 hook(self)
             except Exception:
-                logger.error('Error running post-load hook')
+                logger.error("Error running post-load hook")
 
-    def run_process_hooks(self):
+    def run_process_hooks(self, module_name: str | None = None) -> None:
+        """
+        Run some or all of the post-process hooks associated with this dataset.
+
+        Args:
+            module_name (str, optional): the name of the module to run the
+                post-process hooks for. If None, run all post-process hooks.
+        """
         for hook in self.process_hooks:
+
+            if module_name is not None:
+                if getattr(hook, "module_name", None) != module_name:
+                    continue
+
+            if module_name is None and getattr(hook, "module_name", None) is not None:
+                continue
+
+            name = getattr(hook, "hook_name", "Unnamed hook")
+            logger.info(f'Running post-process hook "{name}"')
+
             try:
                 hook(self)
             except Exception:
-                logger.error('Error running post-process hook')
+                logger.error("Error running post-process hook", exc_info=True)
 
-    def load(self):
+    def load(self) -> None:
         """
         Load all of the data from files associated with readers in this
         dataset.
         """
         # pylint: disable=redefined-outer-name, import-outside-toplevel
         import ppodd.qa
+
         # from ppodd.pod.base import pp_register
         for reader in self.readers:
             try:
                 reader.read()
-            except Exception as err: # pylint: disable=broad-except
-                logger.error(f'Error in reading module {reader}')
+            except Exception as err:  # pylint: disable=broad-except
+                logger.error(f"Error in reading module {reader}")
                 logger.error(str(err))
                 raise
             del reader
 
-        self.readers = None
+        self.readers = []
         # gc.collect()
 
         self.qa_modules = [qa(self) for qa in ppodd.qa.qa_modules]
@@ -622,8 +664,7 @@ class DecadesDataset(object):
 
         self.run_load_hooks()
 
-   
-    def _get_required_data(self):
+    def _get_required_data(self) -> list[str]:
         """
         Get all of the data which may still be required for a processing job.
         Allows for garbage collection.
@@ -653,7 +694,7 @@ class DecadesDataset(object):
         # required
         for var in self._variable_mods:
             try:
-                if self._variable_mods[var]['write']:
+                if self._variable_mods[var]["write"]:
                     _required_inputs.append(var)
             except KeyError:
                 # Likely an output modifier
@@ -664,7 +705,7 @@ class DecadesDataset(object):
 
         return _required_inputs
 
-    def _collect_garbage(self):
+    def _collect_garbage(self) -> None:
         """
         Run the garbage collector, via the backend.
         """
@@ -682,7 +723,7 @@ class DecadesDataset(object):
         # Run the interpreter garbage collector, 'cause overkill
         gc.collect()
 
-    def run_qa(self):
+    def run_qa(self) -> None:
         """
         Run QA (QC) modules. These are typically used to produce figures for
         QC, but may do anything QC-related.
@@ -694,11 +735,15 @@ class DecadesDataset(object):
             try:
                 _mod.run()
                 del _mod
-            except Exception as err: # pylint: disable=broad-except
-                logger.error('Error in {}: {}'.format(_mod, err))
+            except Exception as err:  # pylint: disable=broad-except
+                logger.error("Error in {}: {}".format(_mod, err))
                 traceback.print_exc()
 
-    def _trim_data(self, start_cutoff=None, end_cutoff=None):
+    def _trim_data(
+        self,
+        start_cutoff: datetime.datetime | Timestamp | None = None,
+        end_cutoff: datetime.datetime | Timestamp | None = None,
+    ) -> None:
         """
         Trim all of the data in this dataset based on takeoff and landing
         times.
@@ -714,36 +759,34 @@ class DecadesDataset(object):
         if end_cutoff is None or start_cutoff is None:
             return
 
-        logger.debug(f'trimming: {start_cutoff} -- {end_cutoff}')
+        logger.debug(f"trimming: {start_cutoff} -- {end_cutoff}")
         self._backend.trim(start_cutoff, end_cutoff)
 
-
-    def process(self, modname=None):
+    def process(self, modname: str | None = None) -> None:
         self.processor.process(modname=modname)
 
-    def _finalize(self):
+    def _finalize(self) -> None:
         """
         Finalization tasks
         """
-        for output in [i.name for i in self._backend.outputs if i.name.endswith('_CU')]:
-            var_name = output.replace('_CU', '')
+        for output in [i.name for i in self._backend.outputs if i.name.endswith("_CU")]:
+            var_name = output.replace("_CU", "")
 
             if self[var_name].flag is not None:
                 try:
                     flag = self[var_name].flag()
                     self[output].array[flag > 0] = np.nan
                 except Exception:
-                    logger.error('Failed to nan flag for output',
-                                 exc_info=True)
+                    logger.error("Failed to nan flag for output", exc_info=True)
 
-    def write(self, *args, **kwargs):
+    def write(self, *args, **kwargs) -> None:
         """
         Write data to file, by instantiating the self.writer injected class.
         All args and kwargs are passed to this classes `write` method.
         """
         self.writer(self).write(*args, **kwargs)
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """
         Do any cleanup required by the backend.
         """

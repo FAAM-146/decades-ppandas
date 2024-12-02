@@ -4,9 +4,16 @@ allow for different memory optimization strategies, however a refactoring of
 the way variables are stored internally has negated the need for this. The only
 backend now provided is DefaultBackend.
 """
+
 # pylint: disable=useless-object-inheritance
+import datetime
 import gc
 import logging
+from typing import Any, Protocol
+
+from pandas import Timestamp
+
+from ppodd.decades.variable import DecadesVariable
 
 logger = logging.getLogger(__name__)
 
@@ -22,30 +29,18 @@ class DecadesBackend(object):
         """
         Initialize the backend.
         """
-        self.inputs = []
-        self.outputs = []
+        self.inputs: list[DecadesVariable] = []
+        self.outputs: list[DecadesVariable] = []
 
-    @staticmethod
-    def _dlu_from_variable(variable):
-        """
-        Get the name of a DLU from a variable name. This is essentially the
-        first token of a string, when split with an underscore delimiter.
-
-        Args:
-            variable: A string containing the name of a variable from which to
-                      extract the name of the DLU.
-
-        Returns:
-            The name of the DLU responsible for <variable>.
-        """
-        return variable.name.split('_')[0]
+    def __getitem__(self, item: str) -> Any: ...
 
     def decache(self):
         """
         Offload variables from instance state to some other storage solution.
         """
+        ...
 
-    def collect_garbage(self, required_inputs):
+    def collect_garbage(self, required_inputs: list[str]) -> None:
         """
         Clear up any variables which are no longer required for the processing
         job.
@@ -54,18 +49,21 @@ class DecadesBackend(object):
             required_inputs: an array of variable names which are still
             required for the processing job.
         """
+        ...
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """
         Perform any cleanup required by the backend.
         """
 
-    def trim(self, start, end):
+    def trim(
+        self, start: datetime.datetime | Timestamp, end: datetime.datetime | Timestamp
+    ) -> None:
         """
         Trim any variables, removing any data before start or after end.
         """
 
-    def add_input(self, var):
+    def add_input(self, var: DecadesVariable) -> None:
         """
         Add in input - a variable created from reading input data - to the
         backend.
@@ -75,7 +73,7 @@ class DecadesBackend(object):
         """
         raise NotImplementedError
 
-    def add_output(self, variable):
+    def add_output(self, variable: DecadesVariable) -> None:
         """
         Add an output - a variable created during processing.
 
@@ -84,7 +82,7 @@ class DecadesBackend(object):
         """
         self.outputs.append(variable)
 
-    def remove(self, name):
+    def remove(self, name: str) -> None:
         """
         Remove a variable from the backend.
 
@@ -93,14 +91,14 @@ class DecadesBackend(object):
         """
         raise NotImplementedError
 
-    def clear_outputs(self):
+    def clear_outputs(self) -> None:
         """
         Clear all output variables from the backend.
         """
         self.outputs = []
 
     @property
-    def variables(self):
+    def variables(self) -> list[str]:
         """
         Return a list of the names of all of the variables (both inputs and
         outputs) contained on the backend.
@@ -114,7 +112,7 @@ class DefaultBackend(DecadesBackend):
     use for processing if no other backend is specified.
     """
 
-    def __getitem__(self, item):
+    def __getitem__(self, item: str) -> DecadesVariable:
         """
         Implement []. Given the name of a variable, return that variable if it
         exists as and input or output in the backend.
@@ -127,9 +125,11 @@ class DefaultBackend(DecadesBackend):
             if _var.name == item:
                 return _var
 
-        raise KeyError('No input: {}'.format(item))
+        raise KeyError("No input: {}".format(item))
 
-    def trim(self, start, end):
+    def trim(
+        self, start: datetime.datetime | Timestamp, end: datetime.datetime | Timestamp
+    ) -> None:
         """
         Trim all of the input variables. That is, remove all data from before
         start or after end.
@@ -143,7 +143,7 @@ class DefaultBackend(DecadesBackend):
         for _var in self.inputs:
             _var.trim(start, end)
 
-    def remove(self, name):
+    def remove(self, name: str) -> None:
         """
         Remove a variable from the backend.
 
@@ -159,7 +159,7 @@ class DefaultBackend(DecadesBackend):
                 self.outputs.remove(var)
                 return
 
-    def add_input(self, var):
+    def add_input(self, var: DecadesVariable) -> None:
         """
         Add an input to the backend, attempting to merge if an input with the
         name name is already present.
@@ -170,14 +170,14 @@ class DefaultBackend(DecadesBackend):
         """
 
         if var.name not in [i.name for i in self.inputs]:
-            logger.debug(f'Adding input {var.name}')
+            logger.debug(f"Adding input {var.name}")
             self.inputs.append(var)
             return
 
-        logger.debug(f'Merging input {var.name}')
+        logger.debug(f"Merging input {var.name}")
         self[var.name].merge(var)
 
-    def collect_garbage(self, required_inputs):
+    def collect_garbage(self, required_inputs: list[str]) -> None:
         """
         Remove any variables which are no longer required by the processing.
         Forces interpreter garbage collection, which is probably overkill.
@@ -192,7 +192,7 @@ class DefaultBackend(DecadesBackend):
         for var in self.inputs:
             if var.name not in required_inputs:
                 self.inputs.remove(var)
-                print('GC: {}'.format(var))
+                print("GC: {}".format(var))
                 del var
 
         gc.collect()

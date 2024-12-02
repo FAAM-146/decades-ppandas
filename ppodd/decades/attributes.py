@@ -1,7 +1,10 @@
+from __future__ import annotations
+
 import collections
+from collections.abc import ItemsView, KeysView, ValuesView
 import enum
 import importlib
-from typing import Any
+from typing import TYPE_CHECKING, Any
 import warnings
 
 from dataclasses import dataclass
@@ -12,9 +15,13 @@ from vocal.types import DerivedString, OptionalDerivedString
 
 from ppodd import URL as PPODD_URL, DOI as PPODD_DOI
 
-STR_DERIVED_FROM_FILE = '<derived from file>'
-ATTRIBUTE_NOT_SET = 'ATTRIBUTE_NOT_SET'
-ATTR_USE_EXAMPLE = '<example>'
+if TYPE_CHECKING:
+    from ppodd.decades.variable import DecadesVariable
+    from ppodd.decades.dataset import DecadesDataset
+
+STR_DERIVED_FROM_FILE = "<derived from file>"
+ATTRIBUTE_NOT_SET = "ATTRIBUTE_NOT_SET"
+ATTR_USE_EXAMPLE = "<example>"
 
 
 class AttributeNotSetError(Exception):
@@ -28,6 +35,7 @@ class NonStandardAttributeError(Exception):
     An exception which may be raised if an attribute is added to an
     AttributesCollection which is not defined in a standard.
     """
+
 
 @dataclass
 class DocAttribute:
@@ -55,13 +63,18 @@ class AttributesCollection(object):
     which defines which attributes are required or optional.
     """
 
-    def __init__(self, dataset=None, definition=None, strict=True):
+    def __init__(
+        self,
+        dataset: DecadesDataset | DecadesVariable | None = None,
+        definition: str | pydantic.BaseModel | None = None,
+        strict: bool = True,
+    ) -> None:
         """
         Initialise an instance.
 
         Args:
-            dataset (DecadesDataset): a ppodd Dataset associated with this
-                attributes collection.
+            dataset (DecadesDataset | DecadesVariable): a ppodd Dataset or Variable
+                associated with this attributes collection.
             definition (str, optional): a string pointing to the classpath of
                 an attributes definition.
             version (float, optional): the version of the definition to adhere
@@ -77,28 +90,34 @@ class AttributesCollection(object):
 
         self._strict = strict
 
-        _definition = None
+        _definition: pydantic.BaseModel | None = None
         # Get the definition from the classpath
         if isinstance(definition, str):
-            _def_module, _def_var = definition.rsplit('.', 1)
+            _def_module, _def_var = definition.rsplit(".", 1)
             _definition = getattr(importlib.import_module(_def_module), _def_var)
         elif definition is not None:
             _definition = definition
 
         try:
             # Set REQUIRED and OPTIONAL attributes from the attributes definition
-            schema = _definition.model_json_schema()
+            if _definition is not None:
+                schema = _definition.model_json_schema()
 
-            self.REQUIRED_ATTRIBUTES = [
-                g for g in schema['properties'].keys() if g in schema['required']
-            ]
+                self.REQUIRED_ATTRIBUTES = [
+                    g for g in schema["properties"].keys() if g in schema["required"]
+                ]
 
-            self.OPTIONAL_ATTRIBUTES = [
-                g for g in schema['properties'].keys() if g not in schema['required']
-            ]
+                self.OPTIONAL_ATTRIBUTES = [
+                    g
+                    for g in schema["properties"].keys()
+                    if g not in schema["required"]
+                ]
+
+            else:
+                raise AttributeError
 
         except AttributeError:
-            _definition = {}
+            _definition = None
             self.REQUIRED_ATTRIBUTES = []
             self.OPTIONAL_ATTRIBUTES = []
             self._strict = False
@@ -109,7 +128,7 @@ class AttributesCollection(object):
         for key in self.REQUIRED_ATTRIBUTES:
             self.add(Attribute(key, ATTRIBUTE_NOT_SET))
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> Any:
         """
         Implement [].
 
@@ -131,9 +150,9 @@ class AttributesCollection(object):
         #     if _key == key:
         #         return self._compliancify(Attribute(_key, _value))
 
-        raise KeyError('{} not an attribute'.format(key))
+        raise KeyError("{} not an attribute".format(key))
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: str, value: Any) -> None:
         """
         Implement [x].
 
@@ -145,16 +164,22 @@ class AttributesCollection(object):
 
         if type(value) is dict:
             for _k, _v in value.items():
-                __k = '_'.join((key, _k))
+                __k = "_".join((key, _k))
                 self.add(Attribute(__k, _v))
             return
 
         if value == ATTR_USE_EXAMPLE:
-            value = self._definition.model_json_schema()['properties'][key]['example']
+            if self._definition is None:
+                warnings.warn("No vocabulary definition set, cannot use example value")
+                value = None
+            else:
+                value = self._definition.model_json_schema()["properties"][key][
+                    "example"
+                ]
 
         self.add(Attribute(key, value))
 
-    def __call__(self):
+    def __call__(self) -> dict:
         """
         Implement (). Calling a class instance returns a dictionary of all of
         the attributues.
@@ -164,9 +189,9 @@ class AttributesCollection(object):
         """
         return self.dict
 
-    def _compliancify(self, att):
+    def _compliancify(self, att: "Attribute") -> Any:
         if callable(att.value):
-            if getattr(self._dataset, 'doc_mode', False):
+            if getattr(self._dataset, "doc_mode", False):
                 try:
                     return att.doc_value
                 except AttributeError:
@@ -178,7 +203,7 @@ class AttributesCollection(object):
         else:
             return att.value
 
-    def remove(self, att):
+    def remove(self, att: "Attribute | str") -> None:
         """
         Remove an attribute from the AttributesCollection
 
@@ -195,7 +220,7 @@ class AttributesCollection(object):
                 self._attributes.remove(_att)
                 return
 
-    def add(self, att):
+    def add(self, att: "Attribute") -> None:
         """
         Add an Attribute to the AttributesCollection.
 
@@ -210,7 +235,7 @@ class AttributesCollection(object):
 
         # Type checking
         if not isinstance(att, Attribute):
-            raise TypeError('attributes must be of type <Attribute>')
+            raise TypeError("attributes must be of type <Attribute>")
 
         # Remove duplicate keys
         self.remove(att)
@@ -218,21 +243,27 @@ class AttributesCollection(object):
         # Raise error or warning if the attribute is not present in the
         # definition
         if att.key not in self.REQUIRED_ATTRIBUTES + self.OPTIONAL_ATTRIBUTES:
-            _message = f'Attribute \'{att.key}\' is not defined in standard'
+            _message = f"Attribute '{att.key}' is not defined in standard"
             if self.strict:
                 raise NonStandardAttributeError(_message)
 
         if att.value == ATTR_USE_EXAMPLE:
-            att = Attribute(
-                att.key,
-                self._definition.model_json_schema()['properties'][att.key]['example']
-            )
+            if self._definition is None:
+                warnings.warn("No vocabulary definition set, cannot use example value")
+                att = Attribute(att.key, None)
+            else:
+                att = Attribute(
+                    att.key,
+                    self._definition.model_json_schema()["properties"][att.key][
+                        "example"
+                    ],
+                )
 
         # Add the attribute
         self._attributes.append(att)
 
     @property
-    def strict(self):
+    def strict(self) -> bool:
         """
         bool: Get strict mode. If strict is truthy, attributes not defined in
         the standard cannot be added to the collection.
@@ -240,7 +271,7 @@ class AttributesCollection(object):
         return self._strict
 
     @strict.setter
-    def strict(self, strict):
+    def strict(self, strict: bool) -> None:
         """
         Set the strict property.
 
@@ -250,7 +281,7 @@ class AttributesCollection(object):
         self._strict = bool(strict)
 
     @property
-    def is_compliant(self):
+    def is_compliant(self) -> bool:
         """
         bool: True if the AttributesCollection is compliant. In this context
         this means that all REQUIRED_ATTRIBUTES are set.
@@ -260,7 +291,7 @@ class AttributesCollection(object):
                 return False
         return True
 
-    def static_items(self):
+    def static_items(self) -> ItemsView[str, Any]:
         """
         Returns:
             dict: a dict containing all of the attributes which are fixed at
@@ -269,7 +300,7 @@ class AttributesCollection(object):
         """
         return self._as_dict(dynamic=False).items()
 
-    def _as_dict(self, dynamic=True):
+    def _as_dict(self, dynamic: bool = True) -> dict:
         """
         Return a dict of all of the attributes in the AttributesCollection,
         optionally excluding those which provide their value through a
@@ -284,7 +315,7 @@ class AttributesCollection(object):
             dict: a dictionary of attributes, optionally excluding those
                 providing their value through a call.
         """
-        
+
         _dict = {}
 
         for glo in self._attributes:
@@ -292,7 +323,7 @@ class AttributesCollection(object):
                 if (glo._context is not None) or callable(glo.value):
                     continue
 
-            doc_mode = getattr(self._dataset, 'doc_mode', False)
+            doc_mode = getattr(self._dataset, "doc_mode", False)
 
             if doc_mode:
                 try:
@@ -310,7 +341,7 @@ class AttributesCollection(object):
         return _dict
 
     @property
-    def keys(self):
+    def keys(self) -> KeysView:
         """
         dict_keys: Return dict_keys of all of the keys in the
         :obj:`AttributesCollection`.
@@ -318,7 +349,7 @@ class AttributesCollection(object):
         return self.dict.keys()
 
     @property
-    def values(self):
+    def values(self) -> ValuesView:
         """
         dict_values: Return dict_values of all of the values in the
         :obj:`AttributesCollection`.
@@ -326,7 +357,7 @@ class AttributesCollection(object):
         return self.dict.values()
 
     @property
-    def dict(self):
+    def dict(self) -> dict[str, Any]:
         """
         collections.OrderedDict: Return an OrderedDict of all attribures in the
         :obj:`AttributesCollection`, ordered alphabetically by key.
@@ -342,7 +373,7 @@ class Context(enum.Enum):
     ITEM = enum.auto()
     ATTR = enum.auto()
     DATA = enum.auto()
-   
+
 
 class Attribute(object):
     """
@@ -350,7 +381,13 @@ class Attribute(object):
     considered immutable once created.
     """
 
-    def __init__(self, key, value, context=None, context_type=Context.ATTR):
+    def __init__(
+        self,
+        key: str,
+        value: Any,
+        context: Any = None,
+        context_type: Context | None = Context.ATTR,
+    ) -> None:
         """
         Initialize a class instance.
 
@@ -358,6 +395,10 @@ class Attribute(object):
             key (str): the attribute key
             value (Object): the attribute value.
         """
+
+        if context is not None and context_type is None:
+            raise ValueError("Context type must be set if context is set")
+
         self._key = key
         if isinstance(value, DocAttribute):
             self._value = value.value
@@ -367,22 +408,22 @@ class Attribute(object):
         self._context = context
         self._context_type = context_type
 
-    def __repr__(self):
-        return r'Attribute({!r}, {!r})'.format(self.key, self.value)
+    def __repr__(self) -> str:
+        return r"Attribute({!r}, {!r})".format(self.key, self.value)
 
     @property
-    def key(self):
+    def key(self) -> str:
         """
         str: The Attribute key.
         """
         return self._key
 
     @property
-    def value(self):
+    def value(self) -> Any:
         """
         Object: the Attribute value.
         """
-        
+
         if self._context is None:
             return self._value
 
@@ -409,30 +450,28 @@ class Attribute(object):
                 value = getattr(value, attr)
                 if callable(value):
                     value = value()
-            
+
             return value
 
+
 GLOBALS = {
-    'core': {
-        'comment': OptionalDerivedString,
-        'constants_file': DerivedString,
-        'creator_url': 'https://www.faam.ac.uk',
-        'processing_software_commit': DerivedString,
-        'processing_software_version': DerivedString,
-        'processing_software_doi': PPODD_DOI,
-        'processing_software_url': PPODD_URL,
-        'project_acronym': DerivedString,
-        'project_name': DerivedString,
-        'project_principal_investigator': DerivedString,
-        'project_principal_investigator_email': DerivedString,
-        'project_principal_investigator_url': DerivedString,
-        'revision_comment': OptionalDerivedString,
-        'time_coverage_start': DerivedString,
-        'time_coverage_end': DerivedString,
-        'time_coverage_duration': DerivedString,
-        'metadata_link': 'https://github.com/FAAM-146/faam-data/'
-
-
-
+    "core": {
+        "comment": OptionalDerivedString,
+        "constants_file": DerivedString,
+        "creator_url": "https://www.faam.ac.uk",
+        "processing_software_commit": DerivedString,
+        "processing_software_version": DerivedString,
+        "processing_software_doi": PPODD_DOI,
+        "processing_software_url": PPODD_URL,
+        "project_acronym": DerivedString,
+        "project_name": DerivedString,
+        "project_principal_investigator": DerivedString,
+        "project_principal_investigator_email": DerivedString,
+        "project_principal_investigator_url": DerivedString,
+        "revision_comment": OptionalDerivedString,
+        "time_coverage_start": DerivedString,
+        "time_coverage_end": DerivedString,
+        "time_coverage_duration": DerivedString,
+        "metadata_link": "https://github.com/FAAM-146/faam-data/",
     }
 }

@@ -1,15 +1,20 @@
 import collections
 import logging
 import traceback
+from typing import TYPE_CHECKING
 
 import ppodd.flags
 import ppodd
+
+if TYPE_CHECKING:
+    from ppodd.decades.dataset import DecadesDataset
+
 
 logger = logging.getLogger(__name__)
 
 
 class DecadesProcessor:
-    def __init__(self, dataset):
+    def __init__(self, dataset: 'DecadesDataset') -> None:
         self.dataset = dataset
 
     def process(self, modname=None):

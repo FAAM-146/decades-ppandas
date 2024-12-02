@@ -7,6 +7,7 @@ from ppodd.utils import pd_freq, unwrap_array
 
 logger = logging.getLogger(__name__)
 
+
 class Lazy(object):
     """
     A hacky deferral wrapper for assigning dataset constants to processing
@@ -35,6 +36,7 @@ class Lazy(object):
             either <item> got from parent, or a callable deferring this
             operation.
         """
+
         def _callable():
             try:
                 return self.parent[item]
@@ -61,7 +63,7 @@ class Lazy(object):
             return getattr(self.parent, attr)
         except AttributeError:
             return lambda: getattr(self.parent, attr)
-        
+
 
 class DatasetNormalizer:
 
@@ -86,7 +88,7 @@ class DatasetNormalizer:
             self.dataset[variable].frequency = self.frequency
 
         return self.dataset
-    
+
     def __exit__(self, exc_type, exc_value, traceback):
         """
         Exit the context manager.
@@ -103,13 +105,15 @@ class DatasetNormalizer:
             self.dataset[variable].frequency = None
 
         return None
-        
+
 
 def resample_variable(
-        variable, frequency: int, apply: str='mean', 
-        start_time: pd.Timestamp = None,
-        end_time: pd.Timestamp = None
-    ) -> pd.Series:
+    variable,
+    frequency: int,
+    apply: str = "mean",
+    start_time: pd.Timestamp | None = None,
+    end_time: pd.Timestamp | None = None,
+) -> pd.Series:
     """
     Resample a variable to a new frequency.
 
@@ -122,7 +126,7 @@ def resample_variable(
         the resampled variable.
     """
     data = variable.to_series()
-    circular = getattr(variable, 'circular', False)
+    circular = getattr(variable, "circular", False)
 
     if start_time is None:
         start_time = variable.t0
@@ -130,19 +134,14 @@ def resample_variable(
     if end_time is None:
         end_time = variable.t1
 
-    _index = pd.date_range(
-        start=start_time, end=end_time,
-        freq=pd_freq[frequency]
-    )
+    _index = pd.date_range(start=start_time, end=end_time, freq=pd_freq[frequency])
 
     if circular:
         data = unwrap_array(data)
 
-    data = data.resample(
-        pd_freq[frequency]
-    ).apply(apply).reindex(_index)
+    data = data.resample(pd_freq[frequency]).apply(apply).reindex(_index)
 
     if circular:
         data[~np.isnan(data)] %= 360
 
-    return data
+    return data  # type: ignore

@@ -29,6 +29,22 @@ TEST_FILE_PATTERNS = {
     'ZEUS0001_20000101_120130_C123.txt': r.GenericTxtReader
 }
 
+def get_dataset():
+    return DecadesDataset(datetime.datetime(2000, 1, 1))
+
+def get_variable(name=TEST_VAR_NAME, values=TEST_VAR_VALUES, index=None):
+    if index is None:
+        index = pd.date_range(
+            start=datetime.datetime(2000, 1, 1),
+            periods=10, freq='S'
+        )
+    
+    
+    return DecadesVariable(
+            {TEST_VAR_NAME: TEST_VAR_VALUES}, index=index,
+            frequency=1
+    )
+
 
 class TestDecades(unittest.TestCase):
     """
@@ -45,12 +61,6 @@ class TestDecades(unittest.TestCase):
         self.test_index_32 = pd.date_range(
             start=datetime.datetime(2000, 1, 1),
             periods=320, freq='31250000N'
-        )
-
-        self.d = DecadesDataset(datetime.datetime(2000, 1, 1))
-        self.v = DecadesVariable(
-            {TEST_VAR_NAME: TEST_VAR_VALUES}, index=self.test_index_1,
-            frequency=1
         )
 
     @classmethod
@@ -78,7 +88,8 @@ class TestDecades(unittest.TestCase):
         d = DecadesDataset()
 
     def test_variable_isnumeric(self):
-        self.assertTrue(self.v.isnumeric)
+        v = get_variable()
+        self.assertTrue(v.isnumeric)
 
         v2 = DecadesVariable(
             {'stringvar': ['a'] * len(TEST_VAR_VALUES)},
@@ -154,9 +165,10 @@ class TestDecades(unittest.TestCase):
 
     def test_recover_index(self):
         v = self._get_var_1()
+        d = get_dataset()
         index = v.index
-        self.d.add_input(v)
-        for a, b in zip(self.d[v.name].index, index):
+        d.add_input(v)
+        for a, b in zip(d[v.name].index, index): # type: ignore
             self.assertEqual(a, b)
 
     def test_variable_merge_contiguous(self):
@@ -258,7 +270,7 @@ class TestDecades(unittest.TestCase):
             d.add_file(pattern)
 
         for pattern in patterns:
-            self.assertIn(pattern, [i.filepath for i in d.files])
+            self.assertIn(pattern, [i.filepath for i in d.files]) # type: ignore
 
     def test_add_decades_file(self):
         patterns = list(TEST_FILE_PATTERNS.keys())
@@ -268,7 +280,7 @@ class TestDecades(unittest.TestCase):
             d.add_file(pattern)
 
         files = []
-        for i in d.readers:
+        for i in d.readers: # type: ignore
             files += i.files
 
         for _file in files:
@@ -279,30 +291,33 @@ class TestDecades(unittest.TestCase):
         prtaft = DecadesVariable(
             {'PRTAFT_wow_flag': vals}, index=self.test_index_1
         )
-        self.d.add_input(prtaft)
+        d = get_dataset()
+        d.add_input(prtaft)
 
-        self.assertEqual(self.d.takeoff_time, self.test_index_1[4])
-        self.assertEqual(self.d.landing_time, self.test_index_1[7])
+        self.assertEqual(d.takeoff_time, self.test_index_1[4])
+        self.assertEqual(d.landing_time, self.test_index_1[7])
 
     def test_dataset_time_bounds_inputs(self):
+        d = get_dataset()
         v1 = DecadesVariable({'a': TEST_VAR_VALUES}, index=self.test_index_1)
         index2 = self.test_index_1 + datetime.timedelta(minutes=1)
         v2 = DecadesVariable({'b': TEST_VAR_VALUES}, index=index2)
-        self.d.add_input(v1)
-        self.d.add_input(v2)
-        bnds = self.d.time_bounds()
+        d.add_input(v1)
+        d.add_input(v2)
+        bnds = d.time_bounds()
         self.assertEqual(bnds[0], self.test_index_1[0])
         self.assertEqual(bnds[1], index2[-1])
 
     def test_dataset_time_bounds_outputs(self):
+        d = get_dataset()
         v1 = DecadesVariable(
             {'a': TEST_VAR_VALUES}, index=self.test_index_1, frequency=1
         )
         index2 = self.test_index_1 + datetime.timedelta(minutes=1)
         v2 = DecadesVariable({'b': TEST_VAR_VALUES}, index=index2)
-        self.d.add_output(v1)
-        self.d.add_output(v2)
-        bnds = self.d.time_bounds()
+        d.add_output(v1)
+        d.add_output(v2)
+        bnds = d.time_bounds()
         self.assertEqual(bnds[0], self.test_index_1[0])
         self.assertEqual(bnds[1], index2[-1])
 
@@ -314,21 +329,27 @@ class TestDecades(unittest.TestCase):
         v2 = DecadesVariable(
             {'b': TEST_VAR_VALUES}, index=index2, frequency=1
         )
-        self.d.add_output(v1)
-        self.d.add_input(v2)
-        bnds = self.d.time_bounds()
+        d = get_dataset()
+        d.add_output(v1)
+        d.add_input(v2)
+        bnds = d.time_bounds()
         self.assertEqual(bnds[0], self.test_index_1[0])
         self.assertEqual(bnds[1], index2[-1])
 
     def test_add_input_variable(self):
-        self.d.add_input(self.v)
-        self.assertIn(self.v, self.d._backend.inputs)
+        d = get_dataset()
+        v = get_variable()
+        d.add_input(v)
+        self.assertIn(v, d._backend.inputs)
 
     def test_add_output_variable(self):
-        self.d.add_output(self.v)
-        self.assertIn(self.v, self.d._backend.outputs)
+        d = get_dataset()
+        v = get_variable()
+        d.add_output(v)
+        self.assertIn(v, d._backend.outputs)
 
     def test_list_variables(self):
+        d = get_dataset()
         v1 = DecadesVariable(
             {'a': TEST_VAR_VALUES}, index=self.test_index_1, frequency=1
         )
@@ -336,68 +357,81 @@ class TestDecades(unittest.TestCase):
             {'b': TEST_VAR_VALUES}, index=self.test_index_1, frequency=1
         )
 
-        self.d.add_input(v1)
-        self.d.add_output(v2)
+        d.add_input(v1)
+        d.add_output(v2)
 
-        self.assertIn(v1.name, self.d.variables)
-        self.assertIn(v2.name, self.d.variables)
+        self.assertIn(v1.name, d.variables)
+        self.assertIn(v2.name, d.variables)
 
     def test_remove_variable(self):
-        self.d.add_input(self.v)
-        self.d.remove(self.v.name)
-        self.assertEqual(self.d.variables, [])
+        d = get_dataset()
+        v = DecadesVariable(
+            {'a': TEST_VAR_VALUES}, index=self.test_index_1, frequency=1
+        )
 
-        self.d.add_output(self.v)
-        self.d.remove(self.v.name)
-        self.assertEqual(self.d.variables, [])
+        d.add_input(v)
+        d.remove(v.name)
+        self.assertEqual(d.variables, [])
+
+        d.add_output(v)
+        d.remove(v.name)
+        self.assertEqual(d.variables, [])
 
     def test_add_constant(self):
-        self.d.add_constant('LTUAE', 42)
-        self.assertEqual(self.d['LTUAE'], 42)
+        d = get_dataset()
+        d.add_constant('LTUAE', 42)
+        self.assertEqual(d['LTUAE'], 42)
 
     def test_lazy_constant_item(self):
-        value = self.d.lazy['LTUAE']
-        self.d.add_constant('LTUAE', 42)
+        d = get_dataset()
+        value = d.lazy['LTUAE']
+        d.add_constant('LTUAE', 42)
         self.assertEqual(value(), 42)
-        self.assertEqual(self.d.lazy['LTUAE'], 42)
+        self.assertEqual(d.lazy['LTUAE'], 42)
 
     def test_outputs_list(self):
-        v1 = self.v
+        d = get_dataset()
+        v1 = get_variable()
         v2 = DecadesVariable({'v2': TEST_VAR_VALUES}, index=self.test_index_1,
                              frequency=1)
-        self.d.add_output(v1)
-        self.d.add_output(v2)
-        self.assertIn(v1, self.d.outputs)
-        self.assertIn(v2, self.d.outputs)
+        d.add_output(v1)
+        d.add_output(v2)
+        self.assertIn(v1, d.outputs)
+        self.assertIn(v2, d.outputs)
 
     def test_clear_outputs(self):
-        v1 = self.v
+        d = get_dataset()
+        v1 = get_variable()
         v2 = DecadesVariable({'v2': TEST_VAR_VALUES}, index=self.test_index_1,
                              frequency=1)
-        self.d.add_output(v1)
-        self.d.add_output(v2)
-        self.d.clear_outputs()
-        self.assertEqual(self.d.outputs, [])
+        d.add_output(v1)
+        d.add_output(v2)
+        d.clear_outputs()
+        self.assertEqual(d.outputs, [])
 
     def test_add_global(self):
+        d = get_dataset()
         self.assertRaises(
-            NonStandardAttributeError, lambda: self.d.add_global('LTUAE', 42)
+            NonStandardAttributeError, lambda: d.add_global('LTUAE', 42)
         )
-        self.d.globals.strict = False
-        self.d.add_global('LTUAE', 42)
-        self.assertEqual(self.d.globals()['LTUAE'], 42)
+        d.globals.strict = False
+        d.add_global('LTUAE', 42)
+        self.assertEqual(d.globals()['LTUAE'], 42)
 
     def test_add_interpolated_global(self):
-        self.d.globals.strict = False
-        self.d.add_global('one', 2)
-        self.d.add_global('two', '{one}')
-        self.d._interpolate_globals()
-        self.assertEqual(self.d.globals()['two'], '2')
+        d = get_dataset()
+        d.globals.strict = False
+        d.add_global('one', 2)
+        d.add_global('two', '{one}')
+        d._interpolate_globals()
+        self.assertEqual(d.globals()['two'], '2')
 
     def test_add_data_global(self):
-        self.d.add_output(self.v)
-        self.d.globals.strict = False
-        self.d.add_global('test1', f'<data {TEST_VAR_NAME} max>')
-        self.assertEqual(self.d.globals()['test1'], max(TEST_VAR_VALUES))
-        self.d.add_global('test2', f'<call datetime.date.today>')
-        self.assertEqual(self.d.globals()['test2'], datetime.date.today())
+        d = get_dataset()
+        v = get_variable()
+        d.add_output(v)
+        d.globals.strict = False
+        d.add_global('test1', f'<data {TEST_VAR_NAME} max>')
+        self.assertEqual(d.globals()['test1'], max(TEST_VAR_VALUES))
+        d.add_global('test2', f'<call datetime.date.today>')
+        self.assertEqual(d.globals()['test2'], datetime.date.today())

@@ -1,6 +1,7 @@
 import datetime
 import importlib
-from typing import Sequence
+from typing import TYPE_CHECKING, Literal, Sequence
+from types import ModuleType
 import numpy as np
 import pandas as pd
 
@@ -8,34 +9,44 @@ from scipy.stats import mode
 
 from ppodd import URL, DOI
 
+if TYPE_CHECKING:
+    from ppodd.decades.variable import DecadesVariable
+
+InterpolateOptions = Literal[
+    "linear", "nearest", "zero", "slinear", "quadratic", "cubic"
+]
+
 pd_freq = {
-    1: '1S',
-    2: '500L',
-    4: '250L',
-    8: '125L',
-    10: '100L',
-    16: '62500U',
-    20: '50L',
-    50: '20L',
-    32: '31250000N',
-    64: '15625000N',
-    128: '7812500N',
-    256: '3906250N'
+    1: "1S",
+    2: "500L",
+    4: "250L",
+    8: "125L",
+    10: "100L",
+    16: "62500U",
+    20: "50L",
+    50: "20L",
+    32: "31250000N",
+    64: "15625000N",
+    128: "7812500N",
+    256: "3906250N",
 }
 
 
-def infer_freq(index, mode_conf=0.99):
+def infer_freq(index: pd.DatetimeIndex, mode_conf: float = 0.99) -> str:
+    """
+    Infer the frequency of a time series from the index.
+    """
     diff = index[1:] - index[:-1]
     a = mode(diff)
     if (a.count[0] / len(index)) >= mode_conf:
-        return f'{a.mode[0]}N'
+        return f"{a.mode[0]}N"
 
-    raise ValueError('Cannot infer frequency')
-
-
+    raise ValueError("Cannot infer frequency")
 
 
-def get_range_flag(var, limits, flag_val=2):
+def get_range_flag(
+    var: np.ndarray, limits: tuple[float | int, float | int], flag_val: int = 2
+) -> np.ndarray:
     """
     Get a flag variable which flags when a variable is outside a specified
     range.
@@ -61,7 +72,7 @@ def get_range_flag(var, limits, flag_val=2):
     return flag
 
 
-def unwrap_array(ang):
+def unwrap_array(ang: 'pd.Series[float | int]') -> pd.Series:
     """
     Removes dicontinuities in directional (angular) data, similar to np.unwrap,
     but less good.
@@ -83,9 +94,18 @@ def unwrap_array(ang):
     return ang
 
 
-def flagged_avg(df, flag_col, data_col, fill_nan=None, flag_value=1,
-                skip_start=0, skip_end=0, out_name=None, interp=False,
-                interp_method='linear'):
+def flagged_avg(
+    df: pd.DataFrame,
+    flag_col: str,
+    data_col: str,
+    fill_nan: float | None = None,
+    flag_value: int = 1,
+    skip_start: int = 0,
+    skip_end: int = 0,
+    out_name: str | None = None,
+    interp: bool = False,
+    interp_method: InterpolateOptions = "linear",
+) -> None:
     """
     Average a variable where a corresponding flag has a given value
 
@@ -113,14 +133,14 @@ def flagged_avg(df, flag_col, data_col, fill_nan=None, flag_value=1,
         None, df is modified in-place.
     """
     if out_name is None:
-        out_name = '{}_{}'.format(data_col, flag_col)
+        out_name = "{}_{}".format(data_col, flag_col)
 
     # Replace nans in the flag, either by backfilling or setting to a given
-    # value 
+    # value
     if fill_nan is not None:
         df[flag_col].fillna(fill_nan, inplace=True)
     else:
-        df[flag_col].fillna(method='bfill', inplace=True)
+        df[flag_col].bfill(inplace=True)
 
     # Identify coherent groups of a single flag value, and drop those not
     # corresponding to the falg value that we're interested in
@@ -134,17 +154,19 @@ def flagged_avg(df, flag_col, data_col, fill_nan=None, flag_value=1,
     # potentially skipping data at the start and end of each group
     # TODO: this is double-plus ugly.
     means = pd.Series(
-       _groups.apply(lambda x: x[data_col].iloc[skip_start:len(x)-skip_end].mean()).values,
-        index=_groups.apply(lambda x: x.index[int(len(x) / 2)])
+        _groups.apply(
+            lambda x: x[data_col].iloc[skip_start : len(x) - skip_end].mean()
+        ).values,
+        index=_groups.apply(lambda x: x.index[int(len(x) / 2)]),
     )
 
     # Either interpolate back across the full index, or create a series which
     # is NaN everywhere that the means are not defined.
     if interp:
         df[out_name] = (
-            means.reindex(
-                df.index.union(means.index).sort_values()
-            ).interpolate(method=interp_method).loc[df.index]
+            means.reindex(df.index.union(means.index).sort_values())
+            .interpolate(method=interp_method)
+            .loc[df.index]
         )
 
     else:
@@ -156,14 +178,23 @@ def try_to_call(call, compliance=False):
     try:
         if compliance:
             if callable(call):
-                return '<derived from file>'
+                return "<derived from file>"
         return call()
     except TypeError:
         return call
 
 
-def slrs(wow, ps, roll, min_length=120, max_length=None, roll_lim=3,
-         ps_lim=2, roll_mean=5, freq=1):
+def slrs(
+    wow: pd.Series,
+    ps: pd.Series,
+    roll: pd.Series,
+    min_length: int = 120,
+    max_length: int | None = None,
+    roll_lim: float = 3,
+    ps_lim: float = 2,
+    roll_mean: int = 5,
+    freq: int = 1,
+) -> list[pd.DatetimeIndex]:
 
     def _add_slrs(slrs, group):
         _gdf = group[1]
@@ -183,32 +214,34 @@ def slrs(wow, ps, roll, min_length=120, max_length=None, roll_lim=3,
     slrs = []
 
     if max_length is not None and max_length < min_length:
-        raise ValueError('max_length must be >= min_length')
+        raise ValueError("max_length must be >= min_length")
 
     _df = pd.DataFrame()
-    _df['WOW_IND'] = wow
-    _df['PS_RVSM'] = ps
-    _df['ROLL_GIN'] = roll
-    _df = _df.asfreq('1S')
+    _df["WOW_IND"] = wow
+    _df["PS_RVSM"] = ps
+    _df["ROLL_GIN"] = roll
+    _df = _df.asfreq("1S")
 
     # Drop an data on the ground
     _df.loc[_df.WOW_IND == 1] = np.nan
     _df.dropna(inplace=True)
 
     # Check the variance of the static pressure is sufficiently small
-    _df['PS_C'] = _df.PS_RVSM.rolling(
-        window_size, center=True
-    ).std() < ps_lim
+    _df["PS_C"] = _df.PS_RVSM.rolling(window_size, center=True).std() < ps_lim
 
     # Check that the range of the GIN roll is inside acceptable limits
-    _df['ROLL_C'] = _df.ROLL_GIN.rolling(roll_mean).mean().rolling(
-        window_size, center=True
-    ).apply(np.ptp, raw=True) < roll_lim
+    _df["ROLL_C"] = (
+        _df.ROLL_GIN.rolling(roll_mean)
+        .mean()
+        .rolling(window_size, center=True)
+        .apply(np.ptp, raw=True)
+        < roll_lim
+    )
 
     # Identify discontiguous regions which pass the selection criteria
     # and group them
-    _df['_SLR'] = (_df['PS_C'] & _df['ROLL_C']).astype(int)
-    _df['_SLRCNT'] = (_df._SLR.diff(1) != 0).astype('int').cumsum()
+    _df["_SLR"] = (_df["PS_C"] & _df["ROLL_C"]).astype(int)
+    _df["_SLRCNT"] = (_df._SLR.diff(1) != 0).astype("int").cumsum()
     groups = _df.groupby(_df._SLRCNT)
 
     slrs = []
@@ -222,84 +255,95 @@ def slrs(wow, ps, roll, min_length=120, max_length=None, roll_lim=3,
         # Add slrs to list, splitting if required
         _add_slrs(slrs, group)
 
-    return [i.asfreq('{0:0.0f}N'.format(1e9/freq)).index for i in slrs]
+    return [i.asfreq("{0:0.0f}N".format(1e9 / freq)).index for i in slrs]
 
 
 class Either(object):
 
-    def __init__(self, *args, name=None):
+    def __init__(self, *args, name: str | None = None):
         self.options = args
         if name is None:
-            raise ValueError('name must be given')
+            raise ValueError("name must be given")
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         if other in self.options:
             return True
 
         try:
-            if other.options == self.options and type(other) == type(self):
+            if other.options == self.options and type(other) == type(self):  # type: ignore
                 return True
         except AttributeError:
             pass
 
         return False
 
-    def __str__(self):
-        return '<{}>'.format(', '.join(self.options))
+    def __str__(self) -> str:
+        return "<{}>".format(", ".join(self.options))
 
-    def __repr__(self):
-        _repr = 'Either('
+    def __repr__(self) -> str:
+        _repr = "Either("
         for i, option in enumerate(self.options):
-            _repr += '{!r}'.format(option)
+            _repr += "{!r}".format(option)
             if i != len(self.options) - 1:
-                _repr += ', '
-        _repr += ')'
+                _repr += ", "
+        _repr += ")"
         return _repr
 
-    def __contains__(self, item):
+    def __contains__(self, item: object) -> bool:
         return item in self.options
 
 
-def stringify_if_datetime(dt):
-        """
-        Stringify a datetime like object. An object is assumed to be datetime
-        like if it has a strftime method.
+def stringify_if_datetime(dt: object) -> str:
+    """
+    Stringify a datetime like object. An object is assumed to be datetime
+    like if it has a strftime method.
 
-        If dt has an hour attribute, the full time is returned, otherwise just
-        the date.
+    If dt has an hour attribute, the full time is returned, otherwise just
+    the date.
 
-        Args:
-            dt - on object
+    Args:
+        dt - on object
 
-        Returns:
-            an iso formatted date/time string if dt supports strftime, otherwise
-            dt
-        """
-        if not (hasattr(dt, 'strftime') and callable(dt.strftime)):
-            return dt
+    Returns:
+        an iso formatted date/time string if dt supports strftime, otherwise
+        dt
+    """
+    if not (hasattr(dt, "strftime") and callable(dt.strftime)):  # type: ignore
+        return str(dt)
 
-        if hasattr(dt, 'hour'):
-            return dt.strftime('%Y-%m-%dT%H:%M:%SZ')
-        
-        return dt.strftime('%Y-%m-%d')
+    if hasattr(dt, "hour"):
+        return dt.strftime("%Y-%m-%dT%H:%M:%SZ")  # type: ignore - we know it has a strftime method
+
+    return dt.strftime("%Y-%m-%d")  # type: ignore - we know it has a strftime method
 
 
-def make_definition(pp_group, standard, one_hz=False):
-    
+def make_definition(pp_group: str, standard: str | ModuleType, one_hz: bool = False) -> None:
+    """
+    Attempt to generate a YAML file which describes the variables in a given
+    processing group, for use with vocal definitions.
+
+    Args:
+        pp_group: the processing group to generate the definition for.
+        standard: the standard to use for the definition. This can be either
+
+    Kwargs:
+        one_hz: if True, the definition will be generated for 1Hz data.
+    """
+
     from ppodd.pod.base import pp_register
     from vocal.types import schema_types
     from ruamel.yaml import YAML
-    
-    def make_variable(var, flag=False):
+
+    def make_variable(var: 'DecadesVariable', flag: bool=False) -> dict:
         _meta = {
-            'name': var.name if not flag else f'{var.name}_FLAG',
-            'datatype': schema_types.Float32 if not flag else schema_types.Integer8,
-            'required': False
+            "name": var.name if not flag else f"{var.name}_FLAG",
+            "datatype": schema_types.Float32 if not flag else schema_types.Integer8,
+            "required": False,
         }
 
         if not flag:
             _attributes = var.attrs()
-            #_attributes['coordinates'] = schema_types.DerivedString
+            # _attributes['coordinates'] = schema_types.DerivedString
         else:
             _attributes = dict(var.flag.cfattrs)
             for item, value in _attributes.items():
@@ -312,51 +356,55 @@ def make_definition(pp_group, standard, one_hz=False):
                     except Exception:
                         pass
                 try:
-                    value = value.item()
+                    value = value.item() # type: ignore - forgiveness rather than permission
                 except Exception:
                     pass
                 _attributes[item] = value
 
-            if 'flag_masks' in _attributes:
-                _attributes['flag_masks'] = schema_types.DerivedByteArray
+            if "flag_masks" in _attributes:
+                _attributes["flag_masks"] = schema_types.DerivedByteArray
 
-            if 'flag_values' in _attributes:
-                _attributes['flag_values'] = schema_types.DerivedByteArray
+            if "flag_values" in _attributes:
+                _attributes["flag_values"] = schema_types.DerivedByteArray
 
-            if 'valid_range' in _attributes:
-                _attributes['valid_range'] = [schema_types.DerivedByte, schema_types.DerivedByte]
-                
-        #if 'actual_range' in _attributes:
+            if "valid_range" in _attributes:
+                _attributes["valid_range"] = [
+                    schema_types.DerivedByte,
+                    schema_types.DerivedByte,
+                ]
+
+        # if 'actual_range' in _attributes:
         #    _attributes['actual_range'] = [
         #        schema_types.DerivedFloat32, schema_types.DerivedFloat32
         #    ]
 
-        _attributes['comment'] = schema_types.OptionalDerivedString
+        _attributes["comment"] = schema_types.OptionalDerivedString
 
         # These are variable attributes which we expect to be derived from file
         # on a case-by-case basis
         var_vars = (
-            'sensor_serial_number', 'instrument_serial_number', 'flag_meanings',
-            'sensor_type', 'sensor_manufacturer', 'sensor_model'
+            "sensor_serial_number",
+            "instrument_serial_number",
+            "flag_meanings",
+            "sensor_type",
+            "sensor_manufacturer",
+            "sensor_model",
         )
         for _var in var_vars:
             if _var in _attributes:
                 _attributes[_var] = schema_types.DerivedString
 
-        _dimensions = ['Time']
-        if var.frequency > 1 and not one_hz:
-            _dimensions.append(f'sps{var.frequency:02d}')
+        _dimensions = ["Time"]
+        if var.frequency is not None and var.frequency > 1 and not one_hz:
+            _dimensions.append(f"sps{var.frequency:02d}")
 
         if one_hz:
-            _attributes['frequency'] = 1
+            _attributes["frequency"] = 1
 
-        return {
-            'meta': _meta,
-            'attributes': _attributes,
-            'dimensions': _dimensions
-        }
-    
-    standard = importlib.import_module(standard)
+        return {"meta": _meta, "attributes": _attributes, "dimensions": _dimensions}
+
+    if isinstance(standard, str):
+        standard = importlib.import_module(standard)
 
     dimensions_to_add = {}
     
@@ -367,25 +415,19 @@ def make_definition(pp_group, standard, one_hz=False):
         'attributes': {},
         'variables': [
             {
-                'meta': {
-                    'name': 'Time',
-                    'datatype': '<int32>'
+                "meta": {"name": "Time", "datatype": "<int32>"},
+                "dimensions": ["Time"],
+                "attributes": {
+                    "long_name": "Time of measurement",
+                    "standard_name": "time",
+                    "calendar": "gregorian",
+                    "coverage_content_type": "coordinate",
+                    "frequency": 1,
+                    "units": schema_types.DerivedString,
                 },
-                'dimensions': ['Time'],
-                'attributes': {
-                    'long_name': 'Time of measurement',
-                    'standard_name': 'time',
-                    'calendar': 'gregorian',
-                    'coverage_content_type': 'coordinate',
-                    'frequency': 1,
-                    'units': schema_types.DerivedString
-                }
             }
         ],
-        'dimensions': [{
-            'name': 'Time',
-            'size': None
-        }]
+        "dimensions": [{"name": "Time", "size": None}],
     }
 
     for module in pp_register.modules(pp_group, date=datetime.date.today()):
@@ -393,49 +435,52 @@ def make_definition(pp_group, standard, one_hz=False):
         instance.process()
         instance.finalize()
         for var in instance.dataset.outputs:
-            dim_name = f'sps{var.frequency:02d}'
+            dim_name = f"sps{var.frequency:02d}"
             if dim_name not in dimensions_to_add and not one_hz:
-                dimensions_to_add[dim_name] = {
-                    'name': dim_name,
-                    'size': var.frequency
-                }
+                dimensions_to_add[dim_name] = {"name": dim_name, "size": var.frequency}
             if var.write:
-                exists = len([i for i in _dataset['variables'] if i['meta']['name']==var.name])
+                exists = len(
+                    [i for i in _dataset["variables"] if i["meta"]["name"] == var.name]
+                )
                 if exists:
                     continue
-                _dataset['variables'].append(make_variable(var))
+                _dataset["variables"].append(make_variable(var))
 
                 if var.flag is not None:
-                    _dataset['variables'].append(make_variable(var, flag=True))
+                    _dataset["variables"].append(make_variable(var, flag=True))
 
     for dim_to_add in dimensions_to_add.values():
-        _dataset['dimensions'].append(dim_to_add)
+        _dataset["dimensions"].append(dim_to_add)
 
-    _dataset['dimensions'].sort(key=lambda x: x['size'] if x['size'] is not None else -9e99)
+    _dataset["dimensions"].sort(
+        key=lambda x: x["size"] if x["size"] is not None else -9e99
+    )
 
-    # Attributes which we require for this file, but which are not required in the FAAM 
+    # Attributes which we require for this file, but which are not required in the FAAM
     # standard.
-    _dataset['attributes']['constants_file'] = schema_types.DerivedString
-    _dataset['attributes']['creator_url'] = schema_types.OptionalDerivedString
-    _dataset['attributes']['processing_software_commit'] = schema_types.DerivedString
-    _dataset['attributes']['processing_software_url'] = URL
-    _dataset['attributes']['processing_software_version'] = schema_types.DerivedString
-    _dataset['attributes']['processing_software_doi'] = DOI
-    _dataset['attributes']['project_name'] = schema_types.DerivedString
-    _dataset['attributes']['project_acronym'] = schema_types.DerivedString
-    _dataset['attributes']['project_principal_investigator'] = schema_types.OptionalDerivedString
-    _dataset['attributes']['project_principal_investigator_email'] = schema_types.OptionalDerivedString
-    _dataset['attributes']['project_principal_investigator_url'] = schema_types.OptionalDerivedString
-    
+    _dataset["attributes"]["constants_file"] = schema_types.DerivedString
+    _dataset["attributes"]["creator_url"] = schema_types.OptionalDerivedString
+    _dataset["attributes"]["processing_software_commit"] = schema_types.DerivedString
+    _dataset["attributes"]["processing_software_url"] = URL
+    _dataset["attributes"]["processing_software_version"] = schema_types.DerivedString
+    _dataset["attributes"]["processing_software_doi"] = DOI
+    _dataset["attributes"]["project_name"] = schema_types.DerivedString
+    _dataset["attributes"]["project_acronym"] = schema_types.DerivedString
+    _dataset["attributes"][
+        "project_principal_investigator"
+    ] = schema_types.OptionalDerivedString
+    _dataset["attributes"][
+        "project_principal_investigator_email"
+    ] = schema_types.OptionalDerivedString
+    _dataset["attributes"][
+        "project_principal_investigator_url"
+    ] = schema_types.OptionalDerivedString
+
     yaml = YAML()
     yaml.indent(mapping=2, sequence=4, offset=2)
 
-    one_hz_str = ''
-    if one_hz:
-        one_hz_str = '_1hz'
+    one_hz_str = "_1hz" if one_hz else ""
 
-    output_filename = f'core_faam_YYYYmmdd_v005_rN_xNNN{one_hz_str}.yaml'
-    with open(output_filename, 'w') as f:
-        yaml.dump( _dataset, f)
-
-    
+    output_filename = f"core_faam_YYYYmmdd_v005_rN_xNNN{one_hz_str}.yaml"
+    with open(output_filename, "w") as f:
+        yaml.dump(_dataset, f)

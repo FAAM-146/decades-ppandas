@@ -1,14 +1,20 @@
 import abc
+import datetime
+import logging
 import uuid
 
 from typing import TYPE_CHECKING, Callable, Optional
 
 import numpy as np
+import pandas as pd
 
 from ppodd.utils.utils import stringify_if_datetime
 
 if TYPE_CHECKING:
     from ppodd.decades import DecadesDataset
+
+
+logger = logging.getLogger(__name__)
 
 attribute_helpers = []
 def register_attribute_helper(cls):
@@ -53,11 +59,11 @@ class FlightTime(AttributeHelper):
     """
 
     def __post_init__(self) -> None:
-        self._takeoff_time = None
-        self._landing_time = None
+        self._takeoff_time: pd.Timestamp | None = None
+        self._landing_time: pd.Timestamp | None = None
 
     @property
-    def takeoff_time(self):
+    def takeoff_time(self) -> pd.Timestamp | None:
         """
         :term:`datetime-like`: Return the latest takeoff time of the data set,
         as determined by the last time at which PRTAFT_wow_flag changing 1 -> 0
@@ -67,21 +73,21 @@ class FlightTime(AttributeHelper):
             return self._takeoff_time
 
         try:
-            wow = self.dataset['PRTAFT_wow_flag']()
+            wow = self.dataset['PRTAFT_wow_flag']() # type: ignore
         except KeyError:
             return None
 
         try:
             self._takeoff_time = wow.diff().where(
                 wow.diff() == -1
-            ).dropna().tail(1).index[0]
+            ).dropna().tail(1).index[0] # type: ignore
         except IndexError:
             return None
 
         return self._takeoff_time
 
     @property
-    def landing_time(self):
+    def landing_time(self) -> pd.Timestamp | None:
         """
         :term:`datetime-like`: Return the latest landing time of the dataset,
         as determined by the last time at which PRTAFT_wow_flag changes from
@@ -92,14 +98,14 @@ class FlightTime(AttributeHelper):
             return self._landing_time
 
         try:
-            wow = self.dataset['PRTAFT_wow_flag']()
+            wow = self.dataset['PRTAFT_wow_flag']() # type: ignore
         except KeyError:
             return None
 
         try:
             self._landing_time = wow.diff().where(
                 wow.diff() == 1
-            ).dropna().tail(1).index[0]
+            ).dropna().tail(1).index[0] # type: ignore
         except IndexError:
             return None
 
@@ -118,7 +124,7 @@ class IDProvider(AttributeHelper):
         self._data_id = None
 
     @property
-    def data_id(self) -> str:
+    def data_id(self) -> Callable[[], str | None]:
         """
         Return the `data_id`
         """
@@ -169,29 +175,25 @@ class DurationProvider(AttributeHelper):
     dataset in ISO format (e.g. PT1H23M12S).
     """
 
-    def _get_duration(self) -> str:
-        start = self.dataset.lazy['TIME_MIN_CALL']
-        end = self.dataset.lazy['TIME_MAX_CALL']
-        delta = (end - start).total_seconds()
-
-        hours = int(delta // 3600)
-        minutes = int(delta // 60 % 60)
-        seconds = int(delta % 60)
-
-        a = f'PT{hours}H{minutes}M{seconds}S'
-        return a
-
     @property
-    def time_coverage_duration(self) -> Callable[[], str]:
+    def time_coverage_duration(self) -> Callable[[], str | None]:
         """
         Provide `time_coverage_duration`. This is calculated as the difference
         between `TIME_MAX_CALL` and `TIME_MIN_CALL`, formatted in ISO8601
         timedelta format.
         """
-        def _closure():
-            start = self.dataset.lazy['TIME_MIN_CALL']
-            end = self.dataset.lazy['TIME_MAX_CALL']
-            delta = (end() - start()).total_seconds()
+        def _closure() -> str | None:
+            try:
+                start = self.dataset.lazy['TIME_MIN_CALL']()
+                end = self.dataset.lazy['TIME_MAX_CALL']()
+            except Exception:
+                logger.error('Could not calculate time_coverage_duration')
+                return None
+
+            if start is None or end is None:
+                return 'PT0S'
+
+            delta = (end - start).total_seconds()
             hours = int(delta // 3600)
             minutes = int(delta // 60 % 60)
             seconds = int(delta % 60)
@@ -258,7 +260,7 @@ class GeoBoundsProvider(AttributeHelper):
         Provides the lower latitude bound of the flight envelope
         """
         try:
-            return np.float32(self.dataset[self.dataset.lat].min())
+            return np.float32(self.dataset[self.dataset.lat].min()) # type: ignore
         except Exception:
             return None
         
@@ -268,7 +270,7 @@ class GeoBoundsProvider(AttributeHelper):
         Provides the upper latitude bound of the flight envelope
         """
         try:
-            return np.float32(self.dataset[self.dataset.lat].max())
+            return np.float32(self.dataset[self.dataset.lat].max()) # type: ignore
         except Exception:
             return None
         
@@ -278,7 +280,7 @@ class GeoBoundsProvider(AttributeHelper):
         Provides the lower longitude bound of the flight envelope
         """
         try:
-            return np.float32(self.dataset[self.dataset.lon].min())
+            return np.float32(self.dataset[self.dataset.lon].min()) # type: ignore
         except Exception:
             return None
         
@@ -288,7 +290,7 @@ class GeoBoundsProvider(AttributeHelper):
         Provides the upper longitude bound of the flight envelope
         """
         try:
-            return np.float32(self.dataset[self.dataset.lon].max())
+            return np.float32(self.dataset[self.dataset.lon].max()) # type: ignore
         except Exception:
             return None
     
@@ -298,7 +300,7 @@ class GeoBoundsProvider(AttributeHelper):
         Provides the lower altitude bound of the flight envelope
         """
         try:
-            return np.float32(self.dataset[self.dataset.alt].min())
+            return np.float32(self.dataset[self.dataset.alt].min()) # type: ignore
         except Exception:
             return None
         
@@ -308,6 +310,6 @@ class GeoBoundsProvider(AttributeHelper):
         Provides the upper altitude bound of the flight envelope
         """
         try:
-            return np.float32(self.dataset[self.dataset.alt].max())
+            return np.float32(self.dataset[self.dataset.alt].max()) # type: ignore
         except Exception:
             return None

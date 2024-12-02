@@ -9,6 +9,7 @@ import os
 import re
 import sys
 import tempfile
+from typing import TYPE_CHECKING, Any
 import zipfile
 import warnings
 
@@ -19,9 +20,12 @@ import numpy as np
 import pandas as pd
 import yaml
 
-from ppodd.decades import DecadesVariable
+if TYPE_CHECKING:
+    from ppodd.decades.dataset import DecadesDataset
+from ppodd.decades.variable import DecadesVariable
+from ppodd.decades.file import DecadesFile
 from ppodd.readers import register
-from ppodd.decades.flags import (DecadesBitmaskFlag, DecadesClassicFlag)
+from ppodd.decades.flags import DecadesBitmaskFlag, DecadesClassicFlag
 from ..utils import pd_freq
 
 C_BAD_TIME_DEV = 43200
@@ -35,15 +39,17 @@ class FileReader(abc.ABC):
     An abstract class which should be subclassed to implement a decades
     file reader.
     """
+
     level = 0
 
     def __init__(self):
-        self.files = []
+        self.files: list[DecadesFile] = []
         self.variables = []
         self.metadata = []
+        self.dataset: DecadesDataset | None = None
 
     @abc.abstractmethod
-    def read(self, decades_file):
+    def read(self):
         """Override the read method to implement a FileReader."""
 
     def __eq__(self, other):
@@ -54,71 +60,81 @@ class FlightConstantsReader(FileReader):
     """
     Read a flight constants file.
     """
+
     def _load(self, *args, **kwargs):
         raise NotImplementedError
 
-    def read(self):
+    def read(self) -> None:
+
         for _file in self.files:
-            logger.info('Reading {}'.format(_file.filepath))
+            logger.info("Reading {}".format(_file.filepath))
+
+            # TODO: we need to add a method to add the dataset to the file
+            if _file.dataset is None:
+                raise ValueError("No dataset has been associated with file.")
+
             consts = self._load(_file)
 
-            for key, value in consts['Globals'].items():
+            for key, value in consts["Globals"].items():
                 if type(value) is list:
-                    value = '\n'.join(value)
+                    value = "\n".join(value)
 
                 _file.dataset.add_global(key, value)
 
             # Add a global indicating the flight constants file used
-            _file.dataset.add_global(
-                'constants_file', os.path.basename(_file.filepath)
-            )
+            _file.dataset.add_global("constants_file", os.path.basename(_file.filepath))
 
-            for mod_name, mod_content in consts['Constants'].items():
+            for mod_name, mod_content in consts["Constants"].items():
                 for key, value in mod_content.items():
                     _file.dataset.constants[key] = value
 
             try:
-                for key, val in consts['Modifications']['Variables'].items():
+                for key, val in consts["Modifications"]["Variables"].items():
                     _file.dataset._variable_mods[key] = val
             except KeyError:
                 # No variable modifications
                 pass
 
             try:
-                for pp_mod in consts['Modifications']['Exclude']:
+                for pp_mod in consts["Modifications"]["Exclude"]:
                     _file.dataset._mod_exclusions.append(pp_mod)
             except KeyError:
                 # No module exclusions
                 pass
 
             try:
-                for key, val in consts['Modifications']['Flags'].items():
+                for key, val in consts["Modifications"]["Flags"].items():
                     _file.dataset._flag_mods[key] = val
             except KeyError:
                 # No flag additions from QA
                 pass
 
 
-@register(patterns=['.*\.json'])
+@register(patterns=[r".*\.json"])
 class JsonConstantsReader(FlightConstantsReader):
-    def _load(self, _file):
-        with open(_file.filepath, 'r') as _consts:
+    def _load(self, _file: DecadesFile) -> dict[str, Any]:
+        with open(_file.filepath, "r") as _consts:
             consts = json.loads(_consts.read())
             return consts
 
 
-@register(patterns=['.*\.yaml'])
+@register(patterns=[r".*\.yaml"])
 class YamlConstantsReader(FlightConstantsReader):
-    def _load(self, _file):
-        with open(_file.filepath, 'r') as _consts:
+    def _load(self, _file: DecadesFile) -> dict[str, Any]:
+        with open(_file.filepath, "r") as _consts:
             consts = yaml.load(_consts, Loader=yaml.Loader)
             return consts
 
-@register(patterns=['.*_faam_.*\.csv'])
+
+@register(patterns=[r".*_faam_.*\.csv"])
 class CSVReader(FileReader):
     level = 2
-    def read(self):
+
+    def read(self) -> None:
         for _file in self.files:
+            if _file.dataset is None:
+                raise ValueError("No dataset has been associated with file.")
+
             df = pd.read_csv(_file.filepath, index_col=[0], parse_dates=[0])
             _freq = int(1 / (df.index[1] - df.index[0]).total_seconds())
             for variable_name in df.columns:
@@ -127,110 +143,121 @@ class CSVReader(FileReader):
                     index=df.index,
                     name=variable_name,
                     long_name=variable_name,
-                    units='RAW',
+                    units="RAW",
                     frequency=_freq,
                     write=False,
-                    flag=None
+                    flag=None,
                 )
 
                 _file.dataset.add_input(variable)
 
 
-@register(patterns=[
-    'TWBOZO01_[0-9]{8}_[0-9]{6}_[a-zA-Z][0-9]{3}\.txt',
-    'CHTSOO02_[0-9]{8}_[0-9]{6}_[a-zA-Z][0-9]{3}\.txt',
-    'AL55CO01_[0-9]{8}_[0-9]{6}_[a-zA-Z][0-9]{3}\.txt',
-    'ZEUS0001_[0-9]{8}_[0-9]{6}_[a-zA-Z][0-9]{3}\.txt'
-])
+@register(
+    patterns=[
+        r"TWBOZO01_[0-9]{8}_[0-9]{6}_[a-zA-Z][0-9]{3}\.txt",
+        r"CHTSOO02_[0-9]{8}_[0-9]{6}_[a-zA-Z][0-9]{3}\.txt",
+        r"AL55CO01_[0-9]{8}_[0-9]{6}_[a-zA-Z][0-9]{3}\.txt",
+        r"ZEUS0001_[0-9]{8}_[0-9]{6}_[a-zA-Z][0-9]{3}\.txt",
+    ]
+)
 class GenericTxtReader(FileReader):
     level = 2
-    def read(self):
+
+    def read(self) -> None:
         for _file in self.files:
-            prefix = os.path.basename(_file.filepath).split('_')[0][:-2]
+            if _file.dataset is None:
+                raise ValueError("No dataset has been associated with file.")
+
+            prefix = os.path.basename(_file.filepath).split("_")[0][:-2]
             df = pd.read_csv(
-                _file.filepath, index_col=[2],
+                _file.filepath,
+                index_col=[2],
                 parse_dates=[2],
-                date_parser=lambda t: datetime.datetime.utcfromtimestamp(float(t))
-            )
+                date_parser=lambda t: datetime.datetime.utcfromtimestamp(float(t)),
+            )  # type: ignore # TODO
             _freq = int(1 / (df.index[1] - df.index[0]).total_seconds())
             for _variable_name in df.columns:
                 variable_name = _variable_name
                 if not variable_name.startswith(prefix):
-                    variable_name = f'{prefix}_{variable_name}'
-                    
+                    variable_name = f"{prefix}_{variable_name}"
+
                 variable = DecadesVariable(
                     df[_variable_name],
                     index=df.index,
                     name=variable_name,
                     long_name=variable_name,
-                    units='RAW',
+                    units="RAW",
                     frequency=_freq,
                     write=False,
-                    flag=None
+                    flag=None,
                 )
                 _file.dataset.add_input(variable)
 
 
-@register(patterns=['core_faam_.*\.nc', '.*\.nc'])
+@register(patterns=[r"core_faam_.*\.nc", r".*\.nc"])
 class CoreNetCDFReader(FileReader):
     level = 2
 
-    def _time_at(self, time, freq):
+    def _time_at(self, time: pd.DatetimeIndex, freq: int) -> pd.DatetimeIndex:
         if freq == 1:
             return time
 
         return pd.date_range(
-            time[0], time[-1] + datetime.timedelta(seconds=1),
-            freq=pd_freq[freq]
+            time[0], time[-1] + datetime.timedelta(seconds=1), freq=pd_freq[freq]
         )[:-1]
 
-    def _var_freq(self, var):
+    def _var_freq(self, var: np.ndarray) -> int:
         try:
             return var.shape[1]
         except IndexError:
             return 1
 
-    def _flag_class(self, var_name, nc):
+    def _flag_class(self, var_name: str, nc: netCDF4.Dataset) -> type | None:  # type: ignore
         try:
-            nc[f'{var_name}_FLAG'].flag_masks
+            nc[f"{var_name}_FLAG"].flag_masks
             return DecadesBitmaskFlag
         except (AttributeError, KeyError, IndexError):
             pass
 
         try:
-            nc[f'{var_name}_FLAG'].flag_values
+            nc[f"{var_name}_FLAG"].flag_values
             return DecadesClassicFlag
         except (AttributeError, KeyError, IndexError):
             pass
 
         return None
 
-    def flag(self, var, nc):
+    def flag(self, var: DecadesVariable, nc: netCDF4.Dataset) -> None:  # type: ignore
         if var.flag is None:
             return
-        flag_var = nc[f'{var.name}_FLAG']
+        flag_var = nc[f"{var.name}_FLAG"]
         var.flag = type(var.flag).from_nc_variable(flag_var, var)
 
-    def read(self):
+    def read(self) -> None:
         for _file in self.files:
-            logger.info(f'Reading {_file}...')
-            with netCDF4.Dataset(_file.filepath) as nc:
+            logger.info(f"Reading {_file}...")
+
+            if _file.dataset is None:
+                raise ValueError("No dataset has been associated with file.")
+
+            with netCDF4.Dataset(_file.filepath) as nc:  # type: ignore
                 time = pd.DatetimeIndex(
-                    netCDF4.num2date(
-                        nc['Time'][:], units=nc['Time'].units,
+                    netCDF4.num2date(  # type: ignore
+                        nc["Time"][:],
+                        units=nc["Time"].units,
                         only_use_cftime_datetimes=False,
-                        only_use_python_datetimes=True
+                        only_use_python_datetimes=True,
                     )
                 )
 
                 for var in nc.variables:
-                    if var.endswith('FLAG') or var == 'Time':
+                    if var.endswith("FLAG") or var == "Time":
                         continue
 
                     # Get the frequency of the variable from the name of the
                     # second dimension. Ugly as sin!
                     try:
-                        _freq = int(nc[var].dimensions[1].replace('sps', ''))
+                        _freq = int(nc[var].dimensions[1].replace("sps", ""))
                     except IndexError:
                         _freq = 1
 
@@ -250,7 +277,7 @@ class CoreNetCDFReader(FileReader):
                         # core data files, where frequency corresponds to some
                         # nominal measurement frequency, rather than sample
                         # freq in the file
-                        if attr == 'frequency':
+                        if attr == "frequency":
                             setattr(variable, attr, _freq)
                             continue
                         setattr(variable, attr, getattr(nc[var], attr))
@@ -259,46 +286,61 @@ class CoreNetCDFReader(FileReader):
 
                 # This is how we'd add global from the netcdf to the Dataset.
                 # Not sure we want this though, so disabled at the mo
+
+
 #                for attr in nc.ncattrs():
 #                    if attr not in _file.dataset.globals().keys():
 #                        _file.dataset.add_global(attr, getattr(nc, attr))
 
 
-@register(patterns=['.*\.zip'])
+@register(patterns=[r".*\.zip"])
 class ZipFileReader(FileReader):
     """
     Read a Zip file. Zip files are assumed to comtain other files which all
     have associated FileReaders.
     """
+
     level = 0
 
-    def read(self):
+    def read(self) -> None:
         """
         Reads a Zip file.
         """
         _tempdir = tempfile.mkdtemp()
-        logger.debug('Working in {}'.format(_tempdir))
+        logger.debug("Working in {}".format(_tempdir))
+
+        _dataset: DecadesDataset | None = None
 
         for _file in self.files:
             _dataset = _file.dataset
-            logger.info('Reading {}...'.format(_file))
+
+            if _dataset is None:
+                raise ValueError("No dataset has been associated with file.")
+
+            logger.info("Reading {}...".format(_file))
             _zipfile = zipfile.ZipFile(_file.filepath)
             _zipfile.extractall(_tempdir)
 
-        for _file in glob.glob(os.path.join(_tempdir, '*')):
+        for _file in glob.glob(os.path.join(_tempdir, "*")):
+            if _dataset is None:
+                raise ValueError("No dataset has been associated with file.")
             _dataset.add_file(_file)
 
 
-@register(patterns=['.*\.py'])
+@register(patterns=[r".*\.py"])
 class PythonHookReader(FileReader):
     level = 0
 
-    def read(self):
+    def read(self) -> None:
         for _file in self.files:
-            mod_name = _file.filepath.replace('.py', '')
+
+            if _file.dataset is None:
+                raise ValueError("No dataset has been associated with file.")
+
+            mod_name = _file.filepath.replace(".py", "")
             dir_name = os.path.dirname(mod_name)
             if not dir_name:
-                dir_name = '.'
+                dir_name = "."
             mod_name = os.path.basename(mod_name)
 
             # This is upsettingly hacky, but seems to work better in practice.
@@ -306,34 +348,34 @@ class PythonHookReader(FileReader):
             mod_py = importlib.import_module(mod_name)
 
             try:
-                hook = getattr(mod_py, 'post_load_hook')
+                hook = getattr(mod_py, "post_load_hook")
                 _file.dataset.load_hooks.append(hook)
-                logger.info(f'Added post_load_hook {mod_name}')
+                logger.info(f"Added post_load_hook {mod_name}")
                 continue
             except AttributeError:
                 pass
 
             try:
-                hook = getattr(mod_py, 'post_process_hook')
+                hook = getattr(mod_py, "post_process_hook")
                 _file.dataset.process_hooks.append(hook)
-                logger.info(f'Added post_process_hook {mod_name}')
+                logger.info(f"Added post_process_hook {mod_name}")
                 continue
             except AttributeError:
                 pass
 
 
-@register(patterns=['(^SEAPROBE|.{8})_.+_\w\d{3}'])
+@register(patterns=[r"(^SEAPROBE|.{8})_.+_\w\d{3}"])
 class TcpFileReader(FileReader):
     level = 2
-    time_variable = 'utc_time'
+    time_variable = "utc_time"
     tolerance = 0
 
-    def scan(self, dfile, definition):
-        logger.info('Scanning {}...'.format(dfile))
+    def scan(self, dfile: DecadesFile, definition: "CrioTcpDefintion") -> np.ndarray:
+        logger.info("Scanning {}...".format(dfile))
 
         filename = dfile.filepath
 
-        with open(filename, 'rb') as f:
+        with open(filename, "rb") as f:
             rawdata = f.read()
 
         offsets = self._get_packet_offsets(definition, rawdata)
@@ -343,8 +385,9 @@ class TcpFileReader(FileReader):
         good_indicies = packet_lens == definition.packet_length
 
         megaslice = [
-            slice(i, i+definition.packet_length)
-            for i, j in zip(offsets, good_indicies) if j
+            slice(i, i + definition.packet_length)
+            for i, j in zip(offsets, good_indicies)
+            if j
         ]
 
         index = np.zeros(len(rawdata), dtype=bool)
@@ -352,34 +395,42 @@ class TcpFileReader(FileReader):
         for i, _slice in enumerate(megaslice):
             index[_slice] = True
 
-        rawbytes = np.frombuffer(rawdata, 'b')
+        rawbytes = np.frombuffer(rawdata, "b")
         _output = np.frombuffer(rawbytes[index], dtype=definition.dtypes)
 
         return _output
 
-    def _get_packet_offsets(self, definition, rawdata):
-        rex = re.compile(b'\$' + definition.identifier.encode())
+    def _get_packet_offsets(
+        self, definition: "CrioTcpDefintion", rawdata: bytes
+    ) -> list[int]:
+        if definition.identifier is None:
+            raise ValueError("No identifier found in definition.")
+        rex = re.compile(b"\$" + definition.identifier.encode())
         offsets = [i.start() for i in rex.finditer(rawdata)]
         return offsets
 
-    def _scan_read_packet_len(self, definition, offset, rawdata):
-        packet_dlen = definition.dtypes['packet_length'].itemsize
+    def _scan_read_packet_len(
+        self, definition: "CrioTcpDefintion", offset: int, rawdata: bytes
+    ) -> int:
+        packet_dlen = definition.dtypes["packet_length"].itemsize
         id_length = definition.dtypes[0].itemsize
 
         packet_length = np.frombuffer(
-            rawdata[offset+id_length:offset+id_length+packet_dlen],
-            dtype=definition.dtypes['packet_length']
+            rawdata[offset + id_length : offset + id_length + packet_dlen],
+            dtype=definition.dtypes["packet_length"],
         )[0]
 
         return packet_length
 
-    def _get_definition(self, _file):
+    def _get_definition(self, _file: DecadesFile) -> "CrioTcpDefintion | None":
+        if _file.dataset is None:
+            raise ValueError("No dataset has been associated with file.")
         for _definition in _file.dataset.definitions:
-            _crio_type = os.path.basename(_file.filepath).split('_')[0]
+            _crio_type = os.path.basename(_file.filepath).split("_")[0]
             if _definition.identifier == _crio_type:
                 return _definition
 
-    def _get_index_fast(self, time, frequency):
+    def _get_index_fast(self, time: np.ndarray, frequency: int) -> pd.DatetimeIndex:
         """
         Returns an interpolated (subsecond) index using a fast,
         but potentially error-prone method.
@@ -392,13 +443,11 @@ class TcpFileReader(FileReader):
         returns:
             a pandas.DatetimeIndex
         """
-        _time = np.append(
-            time, [time[-1] + 1]
-        )
-        index = pd.to_datetime(_time, unit='s')
+        _time = np.append(time, [time[-1] + 1])
+        index = pd.to_datetime(_time, unit="s")
         return pd.date_range(_time[0], time[-1], freq=pd_freq[frequency])[:-1]
 
-    def _get_index_slow(self, time, frequency):
+    def _get_index_slow(self, time: np.ndarray, frequency: int) -> pd.DatetimeIndex:
         """
         Returns an interpolated (subsecond) index using a slightly,
         slower, but more robust method.
@@ -411,24 +460,29 @@ class TcpFileReader(FileReader):
         returns:
             a pandas.DatetimeIndex
         """
-        _time = np.append(
-            time, [time[-1] + 1]
-        )
-        _index = pd.to_datetime(_time, unit='s')
+        _time = np.append(time, [time[-1] + 1])
+        _index = pd.to_datetime(_time, unit="s")
         _index = _index.unique()
 
         df = pd.DataFrame(index=_index)
-        df['temp'] = 0
+        df["temp"] = 0
 
-        i = df.asfreq(
-            pd_freq[frequency]
-        ).interpolate(
-            method='time', limit=frequency-1
-        ).dropna().index
+        i = (
+            df.asfreq(pd_freq[frequency])
+            .interpolate(method="time", limit=frequency - 1)
+            .dropna()
+            .index
+        )
 
-        return i[:-1]
+        return i[:-1]  # type: ignore # TODO
 
-    def _get_index(self, var, name, time, definition):
+    def _get_index(
+        self,
+        var: np.ndarray,
+        name: str,
+        time: np.ndarray,
+        definition: "CrioTcpDefintion",
+    ) -> tuple[int, pd.DatetimeIndex]:
         try:
             frequency = definition.dtypes[name].shape[0]
         except IndexError:
@@ -445,41 +499,47 @@ class TcpFileReader(FileReader):
                     self._index_dict[frequency] = self._get_index_slow(time, frequency)
         else:
             if 1 not in self._index_dict:
-                self._index_dict[1] = pd.to_datetime(time, unit='s')
+                self._index_dict[1] = pd.to_datetime(time, unit="s")
 
         return frequency, self._index_dict[frequency]
 
-    def _get_group_name(self, definition):
+    def _get_group_name(self, definition: "CrioTcpDefintion") -> str:
+        if definition.identifier is None:
+            raise ValueError("No identifier found in definition.")
         return definition.identifier[:-2]
 
-    def read(self):
+    def read(self) -> None:
         for _file in sorted(self.files, key=lambda x: os.path.basename(x.filepath)):
             self.dataset = _file.dataset
+
+            if _file.dataset is None:
+                raise ValueError("No dataset has been associated with file.")
+
             self._index_dict = {}
 
             definition = self._get_definition(_file)
 
             if definition is None:
                 warnings.warn(
-                    'No CRIO definition found for {}'.format(_file.filepath),
-                    RuntimeWarning
+                    "No CRIO definition found for {}".format(_file.filepath),
+                    RuntimeWarning,
                 )
                 continue
 
             dtypes = definition.dtypes
 
-            logger.info('Reading {}...'.format(_file))
+            logger.info("Reading {}...".format(_file))
             _data = np.fromfile(_file.filepath, dtype=dtypes)
 
             _read_fail = False
             for d in _data:
                 try:
-                    data_id = d[0].decode('utf-8')
+                    data_id = d[0].decode("utf-8")
                 except UnicodeDecodeError:
                     _read_fail = True
                     break
 
-                data_id = data_id.replace('$', '')
+                data_id = data_id.replace("$", "")
                 if data_id != definition.identifier:
                     _read_fail = True
                     break
@@ -488,7 +548,7 @@ class TcpFileReader(FileReader):
                 del _data
                 _data = self.scan(_file, definition)
 
-            _time = _data[self.time_variable]
+            _time = _data[self.time_variable]  # type: ignore # TODO
 
             # If there isn't any time info, then get out of here before we
             # raise an exception.
@@ -502,14 +562,14 @@ class TcpFileReader(FileReader):
             _time.loc[(_time - _time.median()).abs() > C_BAD_TIME_DEV] = np.nan
             _time = _time.interpolate(limit=1).values
 
-            _good_times = np.where(~np.isnan(_time))
+            _good_times = np.where(~np.isnan(_time))  # type: ignore # TODO
             _time = _time[_good_times]
             if len(_time) < C_MIN_ARRAY_LEN:
-                logger.info('Array shorter than minimum valid length.')
+                logger.info("Array shorter than minimum valid length.")
                 continue
 
-            for _name, _dtype in _data.dtype.fields.items():
-                if _name[0] == '$':
+            for _name, _dtype in _data.dtype.fields.items():  # type: ignore # TODO
+                if _name[0] == "$":
                     continue
                 if _name == self.time_variable:
                     continue
@@ -518,29 +578,27 @@ class TcpFileReader(FileReader):
                 # to system byteorder if required
                 _var_dtype = _dtype[0].base
                 if definition.get_field(_name).byte_order != sys.byteorder:
-                    _var = _data[_name].byteswap().newbyteorder()
+                    _var = _data[_name].byteswap().newbyteorder()  # type: ignore # TODO
                     _var_dtype = _var_dtype.newbyteorder()
                 else:
-                    _var = _data[_name]
+                    _var = _data[_name]  # type: ignore # TODO
 
                 if len(_var.shape) == 1:
                     _var = _var[_good_times]
                 else:
                     _var = _var[_good_times, :]
 
-                frequency, index = self._get_index(
-                    _var, _name, _time, definition
-                )
+                frequency, index = self._get_index(_var, _name, _time, definition)
 
                 # Define the decades variable
                 dtd = self._get_group_name(definition)
 
-                variable_name = '{}_{}'.format(dtd,  _name)
+                variable_name = "{}_{}".format(dtd, _name)
 
                 max_var_len = len(self._index_dict[frequency])
                 if max_var_len != len(_var.ravel()):
-                    logger.warning('index & variable len differ')
-                    logger.warning(' -> ({})'.format(variable_name))
+                    logger.warning("index & variable len differ")
+                    logger.warning(" -> ({})".format(variable_name))
 
                 _var = _var.ravel()[:max_var_len]
 
@@ -549,7 +607,7 @@ class TcpFileReader(FileReader):
                     index=self._index_dict[frequency],
                     name=variable_name,
                     long_name=definition.get_field(_name).long_name,
-                    units='RAW',
+                    units="RAW",
                     frequency=frequency,
                     tolerance=self.tolerance,
                     write=False,
@@ -564,92 +622,119 @@ class CrioFileReader(TcpFileReader):
     pass
 
 
-@register(patterns=['GINDAT.+\.bin'])
+@register(patterns=[r"GINDAT.+\.bin"])
 class GinFileReader(TcpFileReader):
-    time_variable = 'time1'
+    time_variable = "time1"
     frequency = 50
-    tolerance = '10L'
+    tolerance = "10L"
 
-    def _get_definition(self, _file):
+    def _get_definition(self, _file: DecadesFile) -> "CrioTcpDefintion":
+        if _file.dataset is None:
+            raise ValueError("No dataset has been associated with file.")
+
         for _definition in _file.dataset.definitions:
-            if _definition.identifier == 'GRP':
+            if _definition.identifier == "GRP":
                 return _definition
 
-    def _get_group_name(self, *args):
-        return 'GINDAT'
+        raise ValueError("No GRP definition found for {}".format(_file.filepath))
 
-    def _scan_read_packet_len(self, definition, offset, rawdata):
-        packet_dlen = definition.dtypes['packet_length'].itemsize
+    def _get_group_name(self, *args, **kwargs):
+        return "GINDAT"
+
+    def _scan_read_packet_len(
+        self, definition: "CrioTcpDefintion", offset: int, rawdata: bytes
+    ) -> int:
+        packet_dlen = definition.dtypes["packet_length"].itemsize
         id_length = definition.dtypes[0].itemsize
 
         packet_length = np.frombuffer(
-            rawdata[offset+id_length+2:offset+id_length+2+packet_dlen],
-            dtype=definition.dtypes['packet_length']
+            rawdata[offset + id_length + 2 : offset + id_length + 2 + packet_dlen],
+            dtype=definition.dtypes["packet_length"],
         )[0]
 
         return packet_length
 
-    def _time_last_saturday(self):
-        dset_date =  datetime.datetime(*self.dataset.date.timetuple()[:3])
-        return dset_date - relativedelta.relativedelta(
-            weekday=relativedelta.SU(-1)
-        )
+    def _time_last_saturday(self) -> datetime.datetime:
+        assert self.dataset is not None
+        dset_date = datetime.datetime(*self.dataset.date.timetuple()[:3])
+        return dset_date - relativedelta.relativedelta(weekday=relativedelta.SU(-1))
 
-    def _get_index(self, var, name, time, definition):
+    def _get_index(
+        self,
+        var: np.ndarray,
+        name: str,
+        time: np.ndarray,
+        definition: "CrioTcpDefintion",
+    ) -> tuple[int, pd.DatetimeIndex]:
         try:
             return self.frequency, self._index_dict[self.frequency]
         except KeyError:
             pass
 
         index = pd.DatetimeIndex(np.array(time) * 1e9)
-        index += pd.DateOffset(
-            seconds=(self._time_last_saturday() - datetime.datetime(
-                1970, 1, 1)).total_seconds()
-        )
+
+        float_secs = (
+            self._time_last_saturday() - datetime.datetime(1970, 1, 1)
+        ).total_seconds()
+
+        int_secs = int(float_secs)
+        milliseconds = int((float_secs - int_secs) * 1e6)
+
+        index += pd.DateOffset(seconds=int_secs, milliseconds=milliseconds)
         self._index_dict[self.frequency] = index
-        return self.frequency, index
+        return self.frequency, index  # type: ignore # TODO
 
 
 class DefinitionReader(FileReader):
     level = 1
 
-    def _get_datatype(self, size, num_points, typestr):
+    def _get_datatype(self, size: int, num_points: int, typestr: str) -> str:
         type_dict = {
-            'unsigned_int': 'u', 'int': 'i', 'signed_int': 'i', 'double': 'f',
-            'single_float': 'f', 'float': 'f', 'single': 'f',
-            'double_float': 'f', 'boolean': 'u', 'f': 'f', 'i': 'i', 'u': 'u',
-            'text': 'S'
+            "unsigned_int": "u",
+            "int": "i",
+            "signed_int": "i",
+            "double": "f",
+            "single_float": "f",
+            "float": "f",
+            "single": "f",
+            "double_float": "f",
+            "boolean": "u",
+            "f": "f",
+            "i": "i",
+            "u": "u",
+            "text": "S",
         }
 
-        endian = '>'
-        if '<' in typestr:
-            endian = '<'
-        typestr = typestr.replace('>', '').replace('<', '')
+        endian = ">"
+        if "<" in typestr:
+            endian = "<"
+        typestr = typestr.replace(">", "").replace("<", "")
 
         if num_points > 1:
-            typestr = '{endian}{num_points}{kind}{size}'.format(
-                endian=endian,
-                kind=type_dict[typestr],
-                size=size,
-                num_points=num_points
+            typestr = "{endian}{num_points}{kind}{size}".format(
+                endian=endian, kind=type_dict[typestr], size=size, num_points=num_points
             )
         else:
-            typestr = '{endian}{kind}{size}'.format(
+            typestr = "{endian}{kind}{size}".format(
                 kind=type_dict[typestr], size=size, endian=endian
             )
 
         return typestr
 
 
-@register(patterns=['.+_TCP_?.*\.csv'])
+@register(patterns=[r".+_TCP_?.*\.csv"])
 class CrioDefinitionReader(DefinitionReader):
 
-    def read(self):
+    def read(self) -> None:
         for _file in self.files:
-            logger.info('Reading {}'.format(_file))
+            logger.info("Reading {}".format(_file))
+
+            if _file.dataset is None:
+                raise ValueError("No dataset has been associated with file.")
+
             tcp_def = CrioTcpDefintion()
             is_header = True
-            with open(_file.filepath, 'r', encoding='ISO-8859-1') as _csv:
+            with open(_file.filepath, "r", encoding="ISO-8859-1") as _csv:
                 reader = csv.reader(_csv)
                 for row in reader:
 
@@ -658,19 +743,19 @@ class CrioDefinitionReader(DefinitionReader):
                         continue
 
                     # Ignore tyhe header
-                    if row[0] == 'field':
+                    if row[0] == "field":
                         continue
 
                     # Exctract the crio identifier
-                    if row[0][0] == '$':
-                        tcp_def.identifier = row[0].replace('$', '')
+                    if row[0][0] == "$":
+                        tcp_def.identifier = row[0].replace("$", "")
 
                     if is_header:
                         tcp_def.header_length += int(row[1])
                     else:
                         tcp_def.body_length += int(row[1])
 
-                    if row[0] == 'packet_length':
+                    if row[0] == "packet_length":
                         is_header = False
 
                     _num_bytes = int(row[1])
@@ -684,7 +769,7 @@ class CrioDefinitionReader(DefinitionReader):
                                 _bytes_per_point, _num_points, _type
                             ),
                             short_name=row[0],
-                            long_name=row[4]
+                            long_name=row[4],
                         )
                     )
 
@@ -701,32 +786,38 @@ class CrioTcpDefintion(object):
     def __init__(self):
         self.header_length = 0
         self.body_length = 0
-        self.identifier = None
+        self.identifier: str | None = None
         self.fields = []
 
     @property
-    def packet_length(self):
+    def packet_length(self) -> int:
         return self.header_length + self.body_length
 
     @property
-    def dtypes(self):
+    def dtypes(self) -> np.dtype:
         return np.dtype([(i.short_name, i.datatype) for i in self.fields])
 
-    def get_field(self, name):
+    def get_field(self, name: str) -> "DataField":
         for f in self.fields:
             if f.short_name == name:
                 return f
+        raise ValueError("Field not found in definition.")
 
 
 class DataField(object):
-    def __init__(self, datatype=None, short_name=None, long_name=None):
+    def __init__(
+        self,
+        datatype: str | None = None,
+        short_name: str | None = None,
+        long_name: str | None = None,
+    ) -> None:
         self.datatype = datatype
         self.short_name = short_name
         self.long_name = long_name
 
-        if '>' in datatype:
-            self.byte_order = 'big'
-        elif '<' in datatype:
-            self.byte_order = 'little'
+        if datatype and ">" in datatype:
+            self.byte_order = "big"
+        elif datatype and "<" in datatype:
+            self.byte_order = "little"
         else:
             self.byte_order = None

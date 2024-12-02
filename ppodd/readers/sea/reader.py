@@ -3,7 +3,7 @@ import logging
 import numpy as np
 
 from ppodd.readers import FileReader, register
-from ppodd.decades import DecadesVariable
+from ppodd.decades.variable import DecadesVariable
 
 from .utils import to_dataframe
 from .parser import parser_f
