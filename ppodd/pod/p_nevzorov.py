@@ -43,7 +43,7 @@ class CORRECTION_STATUS(Enum):
 
 
 def get_baseline_flag(
-        col_p: pd.Series, ref_p: pd.Series, k: pd.Series, mask: pd.Series
+        col_p: pd.Series, ref_p: pd.Series, k: pd.Series | float, mask: pd.Series
     ) -> pd.Series:
     """
     Get a flag indicating when the parameterized baseline correction is
@@ -60,9 +60,12 @@ def get_baseline_flag(
 
     flag = col_p * 1
 
+    if isinstance(k, float):
+        k = pd.Series(k, index=col_p.index)
+
     smoothed_diff = (
         (col_p / ref_p).rolling(64, center=True).mean()
-        - k.rolling(64, center=True).mean()
+        - k.rolling(64, center=True).mean() # type: ignore - we're confident k is a series
     )
 
     flag.loc[mask == 0] = 0
@@ -87,6 +90,9 @@ def get_water_content_comment(status: CORRECTION_STATUS) -> str:
         
         case (CORRECTION_STATUS.UNINITIALISED, CORRECTION_STATUS.FAILED):
             return "Failed to baseline correct Nevzorov."
+        
+        case _:
+            return "Unknown baseline correction status."
 
 
 def get_k_ias_fit(
@@ -401,7 +407,8 @@ class Nevzorov(PPBase):
             'TAS_RVSM': ('data', 250 * _o(100), 32),
             'IAS_RVSM': ('data', 200 * _o(100), 32),
             'PS_RVSM': ('data', 500 * _o(100), 32),
-            'WOW_IND': ('data', _z(100), 1)
+            'WOW_IND': ('data', _z(100), 1),
+            'ROLL_GIN': ('data', 0.0 * _o(100), 32)
         }
 
     def _declare_outputs_common(self):
