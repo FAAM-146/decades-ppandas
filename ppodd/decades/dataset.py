@@ -9,6 +9,7 @@ import re
 import traceback
 
 from pydoc import locate
+import warnings
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -724,8 +725,12 @@ class DecadesDataset(object):
         gc.collect()
 
     def run_qa(self) -> None:
+        warnings.warn('run_qa is deprecated, use run_qc instead', DeprecationWarning)
+        self.run_qc()
+
+    def run_qc(self):
         """
-        Run QA (QC) modules. These are typically used to produce figures for
+        Run QC modules. These are typically used to produce figures for
         QC, but may do anything QC-related.
         """
         while self.qa_modules:

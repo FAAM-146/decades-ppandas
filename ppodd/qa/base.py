@@ -146,12 +146,12 @@ class QAFigure(object):
         try:
             self.to_time = pd.to_datetime(to_time)
         except Exception:
-            self.to_time = None
+            self.to_time = self.dataset.time_bounds[0]
 
         try:
             self.land_time = pd.to_datetime(land_time)
         except Exception:
-            self.land_time = None
+            self.land_time = self.dataset.time_bounds[1]
 
         self.set_subtitle(
             'Report for {flight}, on {date}'.format(
@@ -175,9 +175,12 @@ class QAFigure(object):
         return getattr(self._fig, attr)
 
     def filter_in_flight(self, var):
-        return var.loc[
-            (var.index > self.to_time) & (var.index < self.land_time)
-        ]
+        try:
+            return var.loc[
+                (var.index > self.to_time) & (var.index < self.land_time)
+            ]
+        except Exception:
+            return var
 
     def set_subtitle(self, subtitle):
         self.text(.5, .95, subtitle, horizontalalignment='center',

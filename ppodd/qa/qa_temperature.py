@@ -97,7 +97,10 @@ class TemperatureQA(QAMod):
         temp_axis.plot(tat_di, label='DI', color='tab:orange')
 
         temp2_axis.add_zero_line()
-        temp_axis.set_ylim([tmin, tmax])
+        try:
+            temp_axis.set_ylim([tmin, tmax])
+        except Exception as e:
+            pass
         temp_axis.set_xticklabels([])
         temp_axis.set_ylabel('Temp. (K)')
         temp2_axis.set_ylabel('$\Delta$ Temp. (K)')
