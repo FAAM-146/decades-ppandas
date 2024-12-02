@@ -11,7 +11,7 @@ import pandas as pd
 
 from ppodd.flags.base import FlaggingBase
 
-CPC_VARIABLES = ('CPC_CNTS',)
+CPC_VARIABLES = ("CPC_CNTS",)
 MASKED = 1
 UNMASKED = 0
 
@@ -25,10 +25,10 @@ class CPCCloudFlag(FlaggingBase):
     reference instrument) and the CPC.
     """
 
-    inputs = ['NV_CLEAR_AIR_MASK']
+    inputs = ["NV_CLEAR_AIR_MASK"]
     flagged = list(CPC_VARIABLES)
 
-    def _get_flag(self, var):
+    def _get_flag(self, var: str) -> pd.Series:
         """
         Entry point for the flagging module.
         """
@@ -36,23 +36,25 @@ class CPCCloudFlag(FlaggingBase):
         try:
             index = self.dataset[var].index
         except (KeyError, AttributeError):
-            raise ValueError('Unable to get variable index')
+            raise ValueError("Unable to get variable index")
 
-        clear_air_series = self.dataset['NV_CLEAR_AIR_MASK']()
-        clear_air_series.index += datetime.timedelta(seconds=self.dataset['CPC_LAG_SECS'])
+        clear_air_series = self.dataset["NV_CLEAR_AIR_MASK"]()
+        clear_air_series.index += datetime.timedelta(
+            seconds=self.dataset["CPC_LAG_SECS"]
+        )
         clear_air_series = clear_air_series.reindex(index).ffill().bfill()
         mask = clear_air_series == UNMASKED
         nv_start = clear_air_series.index[0]
         nv_end = clear_air_series.index[-1]
         mask = mask.reindex(index)
         mask.loc[(mask.index <= nv_start) | (mask.index >= nv_end)] = 0
-        mask.fillna(method='ffill', inplace=True)
-        mask.fillna(method='bfill', inplace=True)
+        mask.fillna(method="ffill", inplace=True)
+        mask.fillna(method="bfill", inplace=True)
 
         return mask
 
-    def _flag(self, test=False):
-        
+    def _flag(self, test: bool = False) -> None:
+
         for var in CPC_VARIABLES:
             if test:
                 flag = self.test_flag
@@ -63,7 +65,11 @@ class CPCCloudFlag(FlaggingBase):
                     continue
 
             self.add_mask(
-                var, flag, 'in cloud',
-                ('The aircraft is indicated as being in cloud, according to '
-                 'the clear air mask derived from the Nevzorov power variance.')
+                var,
+                flag,
+                "in cloud",
+                (
+                    "The aircraft is indicated as being in cloud, according to "
+                    "the clear air mask derived from the Nevzorov power variance."
+                ),
             )

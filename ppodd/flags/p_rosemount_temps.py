@@ -9,10 +9,11 @@ import pandas as pd
 
 from ppodd.flags.base import FlaggingBase
 
-TEMPERATURE_THRESHOLD = 1.
-TEMPERATURE_VARIABLES = ('TAT_DI_R', 'TAT_ND_R')
+TEMPERATURE_THRESHOLD = 1.0
+TEMPERATURE_VARIABLES = ("TAT_DI_R", "TAT_ND_R")
 MASKED = 1
 UNMASKED = 0
+
 
 class RosemountTempDeltaFlag(FlaggingBase):
     """
@@ -24,27 +25,25 @@ class RosemountTempDeltaFlag(FlaggingBase):
     inputs = list(TEMPERATURE_VARIABLES)
     flagged = list(TEMPERATURE_VARIABLES)
 
-    def _get_flag(self):
+    def _get_flag(self) -> pd.Series:
         """
         Get the flag value for the new flag
         """
 
         # Get the absolute difference between the deiced and non-deiced
         # temperatures
-        _diff = np.abs(
-            self.dataset['TAT_DI_R'].array - self.dataset['TAT_ND_R'].array
-        )
+        _diff = np.abs(self.dataset["TAT_DI_R"].array - self.dataset["TAT_ND_R"].array)
 
         # Create a mask for the flag
         mask = pd.Series(
-            np.zeros_like(self.dataset['TAT_DI_R'].array),
-            index=self.dataset['TAT_DI_R'].index
+            np.zeros_like(self.dataset["TAT_DI_R"].array),
+            index=self.dataset["TAT_DI_R"].index,
         )
         mask.loc[_diff > TEMPERATURE_THRESHOLD] = MASKED
 
         return mask
 
-    def _flag(self, test=False):
+    def _flag(self, test: bool = False) -> None:
         """
         Entry point for the flagging module.
         """
@@ -57,9 +56,13 @@ class RosemountTempDeltaFlag(FlaggingBase):
         # For each of the temperature add the threshold mask
         for var in TEMPERATURE_VARIABLES:
             self.add_mask(
-                var, flag, 'discrepancy threshold exceeded',
-                ('The discrepancy between the deiced and non-deiced temperature '
-                f'sensors is greater than {TEMPERATURE_THRESHOLD} K.')
+                var,
+                flag,
+                "discrepancy threshold exceeded",
+                (
+                    "The discrepancy between the deiced and non-deiced temperature "
+                    f"sensors is greater than {TEMPERATURE_THRESHOLD} K."
+                ),
             )
 
 
@@ -70,10 +73,10 @@ class RosemountTempCloudFlag(FlaggingBase):
     probe.
     """
 
-    inputs = ['NV_CLEAR_AIR_MASK']
+    inputs = ["NV_CLEAR_AIR_MASK"]
     flagged = list(TEMPERATURE_VARIABLES)
 
-    def _get_flag(self, var):
+    def _get_flag(self, var: str) -> pd.Series:
         """
         Entry point for the flagging module.
         """
@@ -81,20 +84,20 @@ class RosemountTempCloudFlag(FlaggingBase):
         try:
             index = self.dataset[var].index
         except (KeyError, AttributeError):
-            raise ValueError('Unable to get variable index')
+            raise ValueError("Unable to get variable index")
 
-        clear_air_series = self.dataset['NV_CLEAR_AIR_MASK']()
+        clear_air_series = self.dataset["NV_CLEAR_AIR_MASK"]()
         mask = clear_air_series == UNMASKED
         nv_start = clear_air_series.index[0]
         nv_end = clear_air_series.index[-1]
         mask = mask.reindex(index)
         mask.loc[(mask.index <= nv_start) | (mask.index >= nv_end)] = 0
-        mask.fillna(method='ffill', inplace=True)
-        mask.fillna(method='bfill', inplace=True)
+        mask.fillna(method="ffill", inplace=True)
+        mask.fillna(method="bfill", inplace=True)
 
         return mask
 
-    def _flag(self, test=False):
+    def _flag(self, test: bool = False) -> None:
         for var in TEMPERATURE_VARIABLES:
             if test:
                 flag = self.test_flag
@@ -105,7 +108,11 @@ class RosemountTempCloudFlag(FlaggingBase):
                     continue
 
             self.add_mask(
-                var, flag, 'in cloud',
-                ('The aircraft is indicated as being in cloud, according to '
-                 'the clear air mask derived from the Nevzorov power variance.')
+                var,
+                flag,
+                "in cloud",
+                (
+                    "The aircraft is indicated as being in cloud, according to "
+                    "the clear air mask derived from the Nevzorov power variance."
+                ),
             )
