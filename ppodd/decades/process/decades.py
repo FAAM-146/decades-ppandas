@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import collections
 import logging
 import traceback
@@ -14,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 class DecadesProcessor:
-    def __init__(self, dataset: 'DecadesDataset') -> None:
+    def __init__(self, dataset: DecadesDataset) -> None:
         self.dataset = dataset
 
     def process(self, modname=None):
@@ -70,7 +72,7 @@ class DecadesProcessor:
         self.pp_modules = collections.deque(_pp_modules)
 
         # Initialize flagging modules
-        self.flag_modules = [flag(self) for flag in ppodd.flags.flag_modules]
+        self.flag_modules = [flag(self.dataset) for flag in ppodd.flags.flag_modules]
 
         # Clear all outputs whice have been defined previously
         self.dataset._backend.clear_outputs()
