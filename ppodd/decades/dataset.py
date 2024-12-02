@@ -8,6 +8,7 @@ import re
 import traceback
 
 from pydoc import locate
+import warnings
 
 import numpy as np
 
@@ -575,18 +576,39 @@ class DecadesDataset(object):
             logger.error('failed to add {}'.format(filename))
 
     def run_load_hooks(self):
+        """
+        Run all of the post-load hooks associated with this dataset.
+        """
         for hook in self.load_hooks:
             try:
                 hook(self)
             except Exception:
                 logger.error('Error running post-load hook')
 
-    def run_process_hooks(self):
+    def run_process_hooks(self, module_name=None):
+        """
+        Run some or all of the post-process hooks associated with this dataset.
+
+        Args:
+            module_name (str, optional): the name of the module to run the
+                post-process hooks for. If None, run all post-process hooks.
+        """
         for hook in self.process_hooks:
+
+            if module_name is not None:
+                if getattr(hook, 'module_name', None) != module_name:
+                    continue
+
+            if module_name is None and getattr(hook, 'module_name', None) is not None:
+                continue
+
+            name = getattr(hook, 'hook_name', 'Unnamed hook')
+            logger.info(f'Running post-process hook "{name}"')
+            
             try:
                 hook(self)
             except Exception:
-                logger.error('Error running post-process hook')
+                logger.error('Error running post-process hook', exc_info=True)
 
     def load(self):
         """
@@ -683,8 +705,12 @@ class DecadesDataset(object):
         gc.collect()
 
     def run_qa(self):
+        warnings.warn('run_qa is deprecated, use run_qc instead', DeprecationWarning)
+        self.run_qc()
+
+    def run_qc(self):
         """
-        Run QA (QC) modules. These are typically used to produce figures for
+        Run QC modules. These are typically used to produce figures for
         QC, but may do anything QC-related.
         """
         while self.qa_modules:

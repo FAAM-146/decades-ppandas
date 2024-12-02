@@ -360,9 +360,36 @@ def make_definition(pp_group, standard, one_hz=False):
 
     dimensions_to_add = {}
     
+    file_pattern = 'core_faam_[0-9]{8}_v005_r[0-9]+_[c-z][0-9]{3}'
+    if one_hz:
+        file_pattern += '_1hz'
+    file_pattern += '.nc'
+
     _dataset = {
         'meta': {
-            'file_pattern': 'core'
+            'file_pattern': file_pattern,
+            'short_name': one_hz and 'core_1hz' or 'core',
+            'long_name': one_hz and 'FAAM Core Data at 1 Hz' or 'FAAM Core Data',
+            'description': ('This dataset contains core data, primarily from the '
+                            'DECADES data system on the FAAM aircraft. This covers '
+                            'meteorological, chemistry, aerosol, inertial, and airframe measurements.'),
+            'references': [
+                {
+                    'title': 'Processing Documentation',
+                    'web': 'https://www.faam.ac.uk/sphinx/coredata',
+                    'doi': '10.5281/zenodo.7105518'
+                },
+                {
+                    'title': 'FAAM Met. Handbook',
+                    'web': 'https://www.faam.ac.uk/sphinx/met-handbook',
+                    'doi': '10.5281/zenodo.5846961'
+                },
+                {
+                    'title': 'Processing Software',
+                    'web': 'https://github.com/FAAM-146/decades-ppandas',
+                    'doi': '10.5281/zenodo.5711136'
+                }
+            ]
         }, 
         'attributes': {},
         'variables': [
