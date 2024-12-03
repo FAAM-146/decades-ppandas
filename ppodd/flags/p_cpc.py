@@ -8,6 +8,7 @@ import datetime
 
 import numpy as np
 import pandas as pd
+from pandas import Series
 
 from ppodd.flags.base import FlaggingBase
 
@@ -57,7 +58,7 @@ class CPCCloudFlag(FlaggingBase):
 
         for var in CPC_VARIABLES:
             if test:
-                flag = self.test_flag
+                flag: Series | np.ndarray = self.test_flag
             else:
                 try:
                     flag = self._get_flag(var)

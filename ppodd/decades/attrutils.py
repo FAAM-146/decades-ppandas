@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import abc
 import datetime
 import logging
@@ -16,7 +18,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-attribute_helpers = []
+attribute_helpers: list[AttributeHelper]  = []
 def register_attribute_helper(cls):
     attribute_helpers.append(cls)
     return cls
@@ -37,8 +39,8 @@ class AttributeHelper(abc.ABC):
         pass
 
     @property
-    def attributes(self) -> list[property]:
-        _attrs = []
+    def attributes(self) -> list[property|str]:
+        _attrs: list[property|str] = []
         for attr in dir(self):
             if attr == 'attributes':
                 continue
@@ -218,7 +220,7 @@ class GeoBoundsProvider(AttributeHelper):
         }
 
     def point(self, defstr: str) -> Optional[str]:
-        lon_id, lat_id  = defstr
+        lon_id, lat_id  = list(defstr)
 
         lon_map = self.get_map('lon')
         lat_map = self.get_map('lat')

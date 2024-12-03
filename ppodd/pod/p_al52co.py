@@ -130,8 +130,8 @@ class AL52CO(PPBase):
 
         # In the processing, we nan out the start of the data, we need to
         # replace this so that the .shift()).cumsum() method works.
-        d['AL52CO_cal_status'].fillna(method='bfill', inplace=True)
-        d['AL52CO_cal_status'].fillna(method='ffill', inplace=True)
+        d['AL52CO_cal_status'].bfill(inplace=True)
+        d['AL52CO_cal_status'].ffill(inplace=True)
 
         # Flag when the aircraft is on the ground
         fdf.loc[d['WOW_IND'] != 0, WOW_FLAG] = 1
@@ -196,12 +196,12 @@ class AL52CO(PPBase):
 
         # Mask erroneous values in the sensitivity
         d.loc[d['AL52CO_sens'] <= SENS_CUTOFF, 'AL52CO_sens'] = np.nan
-        d['AL52CO_sens'].fillna(method='bfill', inplace=True)
-        d['AL52CO_sens'].fillna(method='ffill', inplace=True)
+        d['AL52CO_sens'].bfill(inplace=True)
+        d['AL52CO_sens'].ffill(inplace=True)
 
         # Mask erroneous values in the zero
         d.loc[d['AL52CO_zero'] == 0, 'AL52CO_zero'] = np.nan
-        d['AL52CO_zero'].fillna(method='bfill', inplace=True)
+        d['AL52CO_zero'].bfill(inplace=True)
 
         # Build a flag indicating where the sensitivity and zero have changed
         # after a calibration, with a 2 sec safety buffer
@@ -213,11 +213,11 @@ class AL52CO(PPBase):
 
         # Interpolate the zero
         flagged_avg(d, 'CAL_FLAG', 'AL52CO_zero', out_name='ZERO', interp=True)
-        d.ZERO.fillna(method='bfill', inplace=True)
+        d.ZERO.bfill(inplace=True)
 
         # Interpolate the sensitivity
         flagged_avg(d, 'CAL_FLAG', 'AL52CO_sens', out_name='SENS', interp=True)
-        d.SENS.fillna(method='bfill', inplace=True)
+        d.SENS.bfill(inplace=True)
 
         # Calculate concentration using interpolated sens & zero
         d['CO_AERO'] = (d.AL52CO_counts - d.ZERO) / d.SENS

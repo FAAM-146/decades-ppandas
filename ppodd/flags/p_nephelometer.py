@@ -3,6 +3,7 @@ This module provides flagging modules for the nephelometer, providing data quali
 information which can not be inferred during processing of the nephelometer data.
 """
 
+import numpy as np
 import pandas as pd
 
 from ppodd.flags.base import FlaggingBase
@@ -51,7 +52,7 @@ class NephelometerCloudFlag(FlaggingBase):
 
         for var in NEPH_VARIABLES:
             if test:
-                flag = self.test_flag
+                flag: pd.Series | np.ndarray = self.test_flag
             else:
                 try:
                     flag = self._get_flag(var)

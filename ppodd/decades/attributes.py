@@ -11,7 +11,7 @@ from dataclasses import dataclass
 
 import pydantic
 
-from vocal.types import DerivedString, OptionalDerivedString
+from vocal.types import DerivedString, OptionalDerivedString # type: ignore
 
 from ppodd import URL as PPODD_URL, DOI as PPODD_DOI
 
@@ -84,8 +84,8 @@ class AttributesCollection(object):
         """
         # Init instance variables
         self._dataset = dataset
-        self._attributes = []
-        self._data_attributes = {}
+        self._attributes: list[Attribute] = []
+        # self._data_attributes = {}
         self._compliance = False
 
         self._strict = strict

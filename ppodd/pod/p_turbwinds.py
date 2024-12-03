@@ -462,7 +462,7 @@ class TurbulenceProbe(PPBase):
             circular=('HDG_GIN',)
         )
         d = self.d
-        d['WOW_IND'].fillna(method='ffill', inplace=True)
+        d['WOW_IND'].ffill(inplace=True)
 
         consts = {
             i: self.dataset[i] for i in

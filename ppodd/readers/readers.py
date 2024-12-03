@@ -368,7 +368,7 @@ class PythonHookReader(FileReader):
 class TcpFileReader(FileReader):
     level = 2
     time_variable = "utc_time"
-    tolerance = 0
+    tolerance: int | str = 0
 
     def scan(self, dfile: DecadesFile, definition: "CrioTcpDefintion") -> np.ndarray:
         logger.info("Scanning {}...".format(dfile))
@@ -626,7 +626,7 @@ class CrioFileReader(TcpFileReader):
 class GinFileReader(TcpFileReader):
     time_variable = "time1"
     frequency = 50
-    tolerance = "10L"
+    tolerance = "10s"
 
     def _get_definition(self, _file: DecadesFile) -> "CrioTcpDefintion":
         if _file.dataset is None:

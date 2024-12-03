@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Any, Iterable, Literal
 import netCDF4
 import numpy as np
 import pandas as pd
+from pandas import Timestamp
 
 from ppodd.decades.utils import resample_variable
 
@@ -53,7 +54,7 @@ class DecadesFlagABC(object):
         self.frequency = var.frequency
         self.postfix = postfix
         self._long_name = f"Data quality flag for {var.name}"
-        self.descriptions = {}
+        self.descriptions: dict[str | int, str | None] = {}
 
     @property
     def index(self) -> pd.DatetimeIndex:
@@ -62,7 +63,7 @@ class DecadesFlagABC(object):
         """
         if self.frequency is None:
             raise ValueError("Frequency not set for variable")
-        
+
         return pd.date_range(start=self.t0, end=self.t1, freq=pd_freq[self.frequency])
 
     @property
@@ -89,7 +90,11 @@ class DecadesFlagABC(object):
         except KeyError:
             return None
 
-    def trim(self, start: datetime.datetime | pd.Timestamp, end: datetime.datetime | pd.Timestamp) -> None:
+    def trim(
+        self,
+        start: datetime.datetime | pd.Timestamp,
+        end: datetime.datetime | pd.Timestamp,
+    ) -> None:
         """
         Drop any flagging data outside specified time bounds.
 
@@ -98,15 +103,15 @@ class DecadesFlagABC(object):
             end: the maximum valid time
         """
         _index = self.index
-        loc = (_index >= start) & (_index <= end) # type: ignore - think this is fine
+        loc = (_index >= start) & (_index <= end)  # type: ignore # This is fine
 
         _df = self._df.copy(deep=True)
         _df.index = _index
         _df = _df.loc[loc]
-        _df.index = range(len(_df.index)) # type: ignore
+        _df.index = range(len(_df.index))  # type: ignore
         self._df = _df
-        self.t0 = start
-        self.t1 = end
+        self.t0 = Timestamp(start)
+        self.t1 = Timestamp(end)
 
     @property
     def cfattrs(self) -> dict[str, Any]:
@@ -145,7 +150,7 @@ class DecadesClassicFlag(DecadesFlagABC):
 
         # The meanings of each flag value. If no meanings are defined, no
         # flagging is assumed to have taken place.
-        self.meanings: dict[np.int8 | int, str] = {}
+        self.meanings: dict[int, str] = {}
 
     def __call__(self) -> pd.Series:
         """
@@ -177,10 +182,9 @@ class DecadesClassicFlag(DecadesFlagABC):
 
         if self.meanings:
             if 0 in self.meanings:
-                _meanings = self.meanings
+                _meanings: dict[int, str] = self.meanings
             elif np.any(self() != -128):
-                _meanings: dict[np.int8 | int, str] = {0: DATA_GOOD}
-                self.meanings
+                _meanings = {0: DATA_GOOD}
                 _meanings.update(self.meanings)
             else:
                 _meanings = self.meanings
@@ -200,7 +204,7 @@ class DecadesClassicFlag(DecadesFlagABC):
             np.int8(i) for i in sorted([int(j) for j in _meanings.keys()])
         ]
         _cfattrs["flag_meanings"] = " ".join(
-            _meanings[i] for i in _cfattrs["flag_values"]
+            _meanings[int(i)] for i in _cfattrs["flag_values"]
         )
 
         _cfattrs["frequency"] = self.frequency
@@ -225,7 +229,9 @@ class DecadesClassicFlag(DecadesFlagABC):
         self.meanings[value] = meaning.replace(" ", "_").lower()
         self.descriptions[value] = description
 
-    def add_flag(self, flag: np.ndarray | pd.Series, method: FlagMethod = MAXIMUM) -> None:
+    def add_flag(
+        self, flag: np.ndarray | pd.Series, method: FlagMethod = 'maximum'
+    ) -> None:
         """
         Add an array to the flag. Can either be merged with the current flag
         (through a elementwise max) or can replace the current flag values
@@ -418,7 +424,7 @@ class DecadesBitmaskFlag(DecadesFlagABC):
         meanings = np.atleast_1d(ncvar.flag_meanings.split())
 
         _data = ncvar[:].ravel().data
-        _flags = []
+        _flags: list[np.ndarray] = []
 
         for mask, meaning in zip(masks[::-1], meanings[::-1]):
             _flag_data = _data >= mask

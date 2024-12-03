@@ -69,7 +69,7 @@ class RadAlt(PPBase):
         d.loc[d['HGT_RADR'] >= RADALT_MAX, 'RANGE_FLAG'] = 3
         d.loc[d['HGT_RADR'] <= RADALT_MIN, 'RANGE_FLAG'] = 3
 
-        wow = d['WOW_IND'].fillna(method='bfill').fillna(method='ffill')
+        wow = d['WOW_IND'].bfill().ffill()
         d.loc[wow == 0, 'WOW_FLAG'] = 1
 
     def process(self):

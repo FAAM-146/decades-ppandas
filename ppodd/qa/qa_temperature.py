@@ -20,12 +20,12 @@ class TemperatureQA(QAMod):
         lwc_axis = fig.timeseries_axes([.1, .80, .8, .05], labelx=False)
 
         try:
-            clear_air = self.dataset['NV_CLEAR_AIR_MASK'].data.asfreq('1S')
+            clear_air = self.dataset['NV_CLEAR_AIR_MASK'].data.asfreq('1s')
         except KeyError:
             return
         cloud = 1 - clear_air
 
-        wow = self.dataset['WOW_IND'].data.asfreq('1S')
+        wow = self.dataset['WOW_IND'].data.asfreq('1s')
         wow = wow.reindex(cloud.index).bfill().ffill()
 
         cloud.loc[wow == 1] = np.nan
@@ -46,7 +46,7 @@ class TemperatureQA(QAMod):
 
     def make_heater_plot(self, fig):
         heater_axis = fig.timeseries_axes([.1, .85, .8, .02], labelx=False)
-        heater = self.dataset['PRTAFT_deiced_temp_flag'].data.asfreq('1S')
+        heater = self.dataset['PRTAFT_deiced_temp_flag'].data.asfreq('1s')
         heater.loc[heater == 0] = np.nan
         _x = np.vstack([heater, heater])
 
@@ -65,8 +65,8 @@ class TemperatureQA(QAMod):
         temp_axis, temp2_axis = fig.timeseries_axes([.1, .55, .8, .25], twinx=True)
         temp_axis.patch.set_alpha(0.0)
 
-        tat_di = self.dataset['TAT_DI_R'].data.asfreq('1S')
-        tat_nd = self.dataset['TAT_ND_R'].data.asfreq('1S')
+        tat_di = self.dataset['TAT_DI_R'].data.asfreq('1s')
+        tat_nd = self.dataset['TAT_ND_R'].data.asfreq('1s')
 
         temp2_axis.plot(
             tat_di - tat_nd, color='k', linewidth=.5, alpha=.3, label='DI - ND'
@@ -76,7 +76,7 @@ class TemperatureQA(QAMod):
         tmax = fig.filter_in_flight(tat_di).dropna().max()
 
         try:
-            u_tat_di = self.dataset['TAT_DI_R_CU'].data.asfreq('1S')
+            u_tat_di = self.dataset['TAT_DI_R_CU'].data.asfreq('1s')
             temp_axis.fill_between(
                 u_tat_di.index, tat_di-u_tat_di, tat_di+u_tat_di,
                 alpha=.5, color='tab:orange'
@@ -85,7 +85,7 @@ class TemperatureQA(QAMod):
             print(str(e))
 
         try:
-            u_tat_nd = self.dataset['TAT_ND_R_CU'].data.asfreq('1S')
+            u_tat_nd = self.dataset['TAT_ND_R_CU'].data.asfreq('1s')
             temp_axis.fill_between(
                 u_tat_nd.index, tat_nd-u_tat_nd, tat_nd+u_tat_nd,
                 alpha=.5, color='tab:blue'
@@ -109,8 +109,8 @@ class TemperatureQA(QAMod):
         temp2_axis.set_ylim([-2, 2])
 
     def make_mach_alt_plot(self, fig):
-        sp = self.dataset['PS_RVSM'].data.asfreq('1S')
-        psp = self.dataset['Q_RVSM'].data.asfreq('1S')
+        sp = self.dataset['PS_RVSM'].data.asfreq('1s')
+        psp = self.dataset['Q_RVSM'].data.asfreq('1s')
 
         ma_axis, pa_axis = fig.timeseries_axes([.1, .37, .8, .17], twinx=True)
 
@@ -118,7 +118,7 @@ class TemperatureQA(QAMod):
         ma_axis.legend(fontsize=6, loc='upper right')
         ma_axis.set_ylim([0, .65])
 
-        pa_axis.plot(self.dataset['PALT_RVS'].data.asfreq('1S'),
+        pa_axis.plot(self.dataset['PALT_RVS'].data.asfreq('1s'),
                      color='green', label='Press. Alt.')
         pa_axis.legend(fontsize=6, loc='upper left')
 
@@ -129,9 +129,9 @@ class TemperatureQA(QAMod):
     def make_scatter_plot(self, fig):
         scat_axis = fig.axes([.1, .12, .38, .2])
 
-        tat_di = self.dataset['TAT_DI_R'].data.asfreq('1S')
-        tat_nd = self.dataset['TAT_ND_R'].data.asfreq('1S')
-        wow = self.dataset['WOW_IND'].data.asfreq('1S')
+        tat_di = self.dataset['TAT_DI_R'].data.asfreq('1s')
+        tat_nd = self.dataset['TAT_ND_R'].data.asfreq('1s')
+        wow = self.dataset['WOW_IND'].data.asfreq('1s')
 
         tat_di.loc[wow == 1] = np.nan
         tat_nd.loc[wow == 1] = np.nan

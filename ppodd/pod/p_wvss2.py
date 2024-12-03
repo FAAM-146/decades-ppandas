@@ -113,9 +113,9 @@ class WVSS2(object):
 
         # Interpolate onto a 1 Hz time base. Do not allow gaps of more than 3
         # datapoints at this frequency
-        start_index = self.d.index[0].round('1S')
-        end_index = self.d.index[-2].round('1S')
-        new_index = pd.date_range(start_index, end_index, freq='1S')
+        start_index = self.d.index[0].round('1s')
+        end_index = self.d.index[-2].round('1s')
+        new_index = pd.date_range(start_index, end_index, freq='1s')
 
         interp_df = self.d.reindex(
             self.d.index.union(new_index).sort_values()
@@ -123,10 +123,10 @@ class WVSS2(object):
 
         interp_df['WOW_IND'] = self.dataset['WOW_IND'].reindex(
             interp_df.index
-        ).fillna(method='bfill')
+        ).bfill()
 
         interp_df['VMR_RANGE_FLAG'] = 0
-        interp_df['WOW'] = interp_df['WOW_IND'].fillna(method='bfill')
+        interp_df['WOW'] = interp_df['WOW_IND'].bfill()
 
         # Output data
         for name in parameters.keys():

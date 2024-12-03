@@ -49,7 +49,7 @@ class RosemountTempDeltaFlag(FlaggingBase):
         """
 
         if test:
-            flag = self.test_flag
+            flag: pd.Series | np.ndarray = self.test_flag
         else:
             flag = self._get_flag()
 
@@ -100,7 +100,7 @@ class RosemountTempCloudFlag(FlaggingBase):
     def _flag(self, test: bool = False) -> None:
         for var in TEMPERATURE_VARIABLES:
             if test:
-                flag = self.test_flag
+                flag: pd.Series | np.ndarray = self.test_flag
             else:
                 try:
                     flag = self._get_flag(var)

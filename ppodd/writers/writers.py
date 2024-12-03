@@ -270,7 +270,7 @@ class NetCDFWriter(DecadesWriter):
             if var.flag is not None:
                 _flag = var.flag().resample(
                     pd_freq[_freq]
-                ).pad().reindex(_index).fillna(flag_fill_value)
+                ).mean().pad().reindex(_index).fillna(flag_fill_value)
 
         # Reshape the data if it is not at 1 Hz
         if _freq != 1:
@@ -402,7 +402,7 @@ class NetCDFWriter(DecadesWriter):
 
             # Create an index for the Time variable
             dates = pd.date_range(
-                self.start_time, self.end_time, freq='S'
+                self.start_time, self.end_time, freq='s'
             )
 
             # Time will natively be nanoseconds from 1970-01-01, so just

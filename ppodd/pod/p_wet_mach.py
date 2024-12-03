@@ -135,7 +135,7 @@ class WetMach(PPBase):
         q = d.Q_RVSM
         p = d.PS_RVSM
         wvss2_vmr = d.WVSS2F_VMR_C.interpolate(limit=32)
-        wow = d.WOW_IND.fillna(method='bfill')
+        wow = d.WOW_IND.bfill()
 
         # epsilon is the mass ratio of water and dry air
         eps = MOL_MASS_H20 / MOL_MASS_DRY_AIR

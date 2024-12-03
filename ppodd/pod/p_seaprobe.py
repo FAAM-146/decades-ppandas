@@ -844,7 +844,7 @@ class SeaProbe(PPBase):
         df = self.d
 
         # 1 Hz variable requires filling
-        df['WOW_IND'] = df['WOW_IND'].fillna(method='ffill').astype(bool)
+        df['WOW_IND'] = df['WOW_IND'].ffill().astype(bool)
 
         key = lambda e, s: f'SEAPROBE_d0_{e}_{s}'
 

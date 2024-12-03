@@ -38,9 +38,9 @@ class WeightOnWheels(PPBase):
         self.get_dataframe()
         wow = pd.DataFrame()
 
-        wow['WOW_IND'] = self.d['PRTAFT_wow_flag'].asfreq('1S')
-        wow['WOW_IND'].fillna(method='bfill', inplace=True)
-        wow['WOW_IND'].fillna(method='ffill', inplace=True)
+        wow['WOW_IND'] = self.d['PRTAFT_wow_flag'].asfreq('1s')
+        wow['WOW_IND'].bfill(inplace=True)
+        wow['WOW_IND'].ffill(inplace=True)
 
         self.add_output(
             DecadesVariable(

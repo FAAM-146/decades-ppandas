@@ -651,16 +651,8 @@ class DecadesDataset(object):
         self.readers = []
         # gc.collect()
 
-        self.qa_modules = [qa(self) for qa in ppodd.qa.qa_modules]
-
-        # # Initialise postprocessing modules
-        # _pp_modules = []
-        # for pp in pp_register.modules(self.pp_group, date=self.date):
-        #     try:
-        #         _pp_modules.append(pp(self))
-        #     except Exception as err: # pylint: disable=broad-except
-        #         logger.warning('Couldn\'t init {}: {}'.format(pp, str(err)))
-
+        self.qa_modules = [qa(self) for qa in ppodd.qa.qa_modules] # type: ignore
+        
         self._interpolate_globals()
 
         self.run_load_hooks()

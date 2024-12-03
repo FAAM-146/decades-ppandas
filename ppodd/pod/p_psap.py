@@ -116,7 +116,7 @@ class PSAP(PPBase):
         pump_off = d['FLO_FLAG'].loc[d['FLO_FLAG'].diff() == 2]
         pump_on = d['FLO_FLAG'].loc[d['FLO_FLAG'].diff() == -2]
 
-        sec = pd.Timedelta('1S')
+        sec = pd.Timedelta('1s')
         for index in pump_on.index:
             d.loc[[index, index + sec, index + (2 * sec)], 'FLO_FLAG'] = 2
         for index in pump_off.index:

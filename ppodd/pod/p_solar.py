@@ -49,10 +49,10 @@ class SolarAngles(PPBase):
         Processing entry point.
         """
 
-        start = self.dataset[self.inputs[0]].index[0].round('1S')
-        end = self.dataset[self.inputs[0]].index[-1].round('1S')
-        index = pd.date_range(start, end, freq='1S')
-        index_utc = pd.date_range(start, end, freq='1S',
+        start = self.dataset[self.inputs[0]].index[0].round('1s')
+        end = self.dataset[self.inputs[0]].index[-1].round('1s')
+        index = pd.date_range(start, end, freq='1s')
+        index_utc = pd.date_range(start, end, freq='1s',
                                   tz='utc').to_pydatetime()
 
         self.get_dataframe(method='onto', index=index)

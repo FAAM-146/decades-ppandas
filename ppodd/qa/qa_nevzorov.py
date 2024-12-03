@@ -89,9 +89,9 @@ class NevzorovQA(QAMod):
         """
 
         lwc_axis = fig.timeseries_axes([.1, .55, .8, .05], labelx=False)
-        clear_air = self.dataset['NV_CLEAR_AIR_MASK'].data.asfreq('1S')
+        clear_air = self.dataset['NV_CLEAR_AIR_MASK'].data.asfreq('1s')
         cloud = 1 - clear_air
-        wow = self.dataset['WOW_IND'].data.asfreq('1S')
+        wow = self.dataset['WOW_IND'].data.asfreq('1s')
         wow = wow.reindex(cloud.index).bfill().ffill()
         cloud.loc[wow == 1] = np.nan
         _x = np.abs(np.vstack((cloud, cloud)))

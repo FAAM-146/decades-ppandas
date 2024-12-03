@@ -22,13 +22,13 @@ class HumidityQA(QAMod):
         lwc_axis = fig.timeseries_axes([.1, .83, .8, .05], labelx=False)
 
         try:
-            clear_air = self.dataset['NV_CLEAR_AIR_MASK'].data.asfreq('1S')
+            clear_air = self.dataset['NV_CLEAR_AIR_MASK'].data.asfreq('1s')
         except KeyError:
             return
 
         cloud = 1 - clear_air
 
-        wow = self.dataset['WOW_IND'].data.asfreq('1S')
+        wow = self.dataset['WOW_IND'].data.asfreq('1s')
         wow = wow.reindex(cloud.index).bfill().ffill()
 
         cloud.loc[wow == 1] = np.nan

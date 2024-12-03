@@ -104,7 +104,7 @@ class DryMach(PPBase):
 
         q = d.Q_RVSM
         p = d.PS_RVSM
-        wow = d.WOW_IND.fillna(method='bfill').fillna(method='ffill')
+        wow = d.WOW_IND.bfill().ffill()
 
         mach = sp_mach(q, p)
         gamma = pd.Series(

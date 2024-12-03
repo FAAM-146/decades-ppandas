@@ -168,7 +168,7 @@ class Nephelometer(PPBase):
         d['T_FLAG'] = 0
         d['P_FLAG'] = 0
 
-        neph_status_list = list(d['AERACK_neph_status'].fillna(method='ffill'))
+        neph_status_list = list(d['AERACK_neph_status'].ffill())
         tmp = ['{0:04}'.format(int(x)) for x in neph_status_list]
         neph_status = [
             '{0:04b}{1:04b}{2:04b}{3:04b}'.format(

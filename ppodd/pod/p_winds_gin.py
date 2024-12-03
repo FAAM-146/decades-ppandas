@@ -140,12 +140,12 @@ class GINWinds(PPBase):
         """
         Processing entry point.
         """
-        start_time = self.dataset['TAS_RVSM'].index[0].round('1S')
-        end_time = self.dataset['TAS_RVSM'].index[-1].round('1S')
+        start_time = self.dataset['TAS_RVSM'].index[0].round('1s')
+        end_time = self.dataset['TAS_RVSM'].index[-1].round('1s')
 
         self.get_dataframe(
             method='onto',
-            index=pd.date_range(start=start_time, end=end_time, freq='1S'),
+            index=pd.date_range(start=start_time, end=end_time, freq='1s'),
             circular=['HDG_GIN'], limit=50
         )
 

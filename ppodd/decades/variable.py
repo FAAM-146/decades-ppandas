@@ -1,12 +1,12 @@
 import datetime
 import re
 
-from typing import Any, cast
+from typing import Any, Literal, cast
 
 import numpy as np
 import pandas as pd
 
-from vocal.types import DerivedFloat32
+from vocal.types import DerivedFloat32 # type: ignore
 
 from ppodd.decades.flags import DecadesBitmaskFlag, DecadesClassicFlag
 from ppodd.decades.attributes import (
@@ -71,7 +71,7 @@ class DecadesVariable(object):
         self.write = kwargs.pop("write", True)
         self.doc_mode = kwargs.pop("doc_mode", False)
         self.circular = kwargs.pop("circular", False)
-        self._forced_frequency = None
+        self._forced_frequency: int | None = None
 
         # Set attributes given as keyword arguments
         _attrs = self.attrs.REQUIRED_ATTRIBUTES + self.attrs.OPTIONAL_ATTRIBUTES
@@ -318,13 +318,13 @@ class DecadesVariable(object):
                     raise ValueError(
                         "No frequency given and no dataframe to infer from"
                     )
-                _freq = pd.infer_freq(df.index)  # type: ignore
+                _freq = pd.infer_freq(df.index)  # type: ignore  # we know it's a DatetimeIndex
 
         if df is None and _freq is None:
             raise ValueError("No dataframe to infer frequency from")
 
         if _freq is None:
-            _freq = infer_freq(df.index)  # type: ignore - can't be None
+            _freq = infer_freq(df.index)  # type: ignore  # can't be None
 
         if len(_freq) == 1:
             _freq = f"1{_freq}"
@@ -346,7 +346,7 @@ class DecadesVariable(object):
             np.array: a downcast copy of array, or array if it cannot be
             downcast.
         """
-        dc = "float"
+        dc: Literal["float", "integer"] = "float"
         try:
             if np.all(
                 array[np.isfinite(array)] == array[np.isfinite(array)].astype(int)
@@ -385,7 +385,7 @@ class DecadesVariable(object):
             pd.date_range(
                 start=_index[0], end=_index[-1], freq=pd_freq[self.frequency]
             ),
-            tolerance="{}N".format((0.5 / self.frequency) * 1e9),  # type: ignore - this is a valid usage
+            tolerance="{}ns".format((0.5 / self.frequency) * 1e9),  # type: ignore  # this is a valid usage
             method="nearest",
         )
 
@@ -476,7 +476,7 @@ class DecadesVariable(object):
 
         current = current_series.reindex(
             full_index,
-            tolerance="{}N".format((0.5 / self.frequency) * 1e9),  # type: ignore - this is a valid usage
+            tolerance="{}ns".format((0.5 / self.frequency) * 1e9),  # type: ignore  # this is a valid usage
             method="nearest",
         )
 

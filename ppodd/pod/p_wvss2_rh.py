@@ -124,8 +124,8 @@ class WVSS2RH(PPBase):
 
         press = d['PS_RVSM']
         wow = d['WOW_IND']
-        wow.fillna(method='ffill', inplace=True)
-        wow.fillna(method='bfill', inplace=True)
+        wow.ffill(inplace=True)
+        wow.bfill(inplace=True)
         d['WVSS2F_VMR_C'].interpolate(limit=32, inplace=True)
 
         temp_smooth = temp.rolling(64).mean()
@@ -341,12 +341,12 @@ class WVSS2RH(PPBase):
         u_rh_ice[wow == 1] = np.nan
         #=================================================================
 
-        rh_liq = rh_liq.asfreq('1S')
-        rh_ice = rh_ice.asfreq('1S')
-        u_rh_liq = u_rh_liq.asfreq('1S')
-        u_rh_ice = u_rh_ice.asfreq('1S')
+        rh_liq = rh_liq.asfreq('1s')
+        rh_ice = rh_ice.asfreq('1s')
+        u_rh_liq = u_rh_liq.asfreq('1s')
+        u_rh_ice = u_rh_ice.asfreq('1s')
 
-        wow = d['WOW_IND'].fillna(method='bfill').fillna(method='ffill')
+        wow = d['WOW_IND'].bfill().ffill()
         wow = wow.reindex(rh_ice.index)
 
         rh_ice_out = DecadesVariable(

@@ -143,7 +143,7 @@ class WVSS2Calibrated(PPBase):
         """
         self.get_dataframe()
         d = self.d
-        wow = d.WOW_IND.fillna(method='bfill').fillna(method='ffill')
+        wow = d.WOW_IND.bfill().ffill()
         vmr_corr = self.get_corrected_vmr()
         vmr_corr_cu = self.get_uncertainty()
 

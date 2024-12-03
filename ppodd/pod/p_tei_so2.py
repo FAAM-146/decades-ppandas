@@ -133,7 +133,7 @@ class TecoSO2(PPBase):
                     skip_end=CAL_FLUSH_END)
 
         # ...and backfill times before the first zero
-        self.d['zero'].fillna(method='bfill', inplace=True)
+        self.d['zero'].bfill(inplace=True)
 
         # Calculate scaled SO2
         sensitivity = self.d.CHTSOO_sensitivity

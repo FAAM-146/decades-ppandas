@@ -42,13 +42,13 @@ class FlaggingBase(abc.ABC):
     """
 
     # Names of required input variables
-    inputs = []
-    prerequisites = []
-    flagged = []
+    inputs: list[str] = []
+    prerequisites: list[type[FlaggingBase]] = []
+    flagged: list[str] = []
 
     # Super simple data for testing use
     test_flag = np.arange(5)
-    test_index = pd.date_range(start=datetime.datetime.now(), periods=5, freq="S")
+    test_index = pd.date_range(start=datetime.datetime.now(), periods=5, freq="s")
 
     def __init__(self, dataset: DecadesDataset) -> None:
         """
@@ -58,7 +58,7 @@ class FlaggingBase(abc.ABC):
             dataset: a DecadesDataset from which the processing is being run.
         """
         self.dataset = dataset
-        self.flags = {}
+        self.flags: dict[str, list[tuple[str, str|None]]] = {}
 
     def __str__(self) -> str:
         """
@@ -114,7 +114,7 @@ class FlaggingBase(abc.ABC):
         ]
 
         for i in downstream:
-            downstream += self._get_downstream(i) # type: ignore TODO: Fix this
+            downstream += self._get_downstream(i) # type: ignore  # TODO: Fix this
 
         return list(flatten(downstream))
 

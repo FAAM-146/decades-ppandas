@@ -3,6 +3,7 @@ This module provides flagging modules for the WVSS-2 derived relative humidity
 measurement which cannot be inferred during initial processing.
 """
 
+import numpy as np
 import pandas as pd
 
 from .p_rosemount_temps import RosemountTempCloudFlag, RosemountTempDeltaFlag
@@ -33,8 +34,8 @@ class WVSS2RHTemperatureFlag(FlaggingBase):
     def _flag(self, test: bool = False) -> None:
 
         if test:
-            tat_flag_ice = self.test_flag
-            tat_flag_liq = self.test_flag
+            tat_flag_ice: pd.Series | np.ndarray = self.test_flag
+            tat_flag_liq: pd.Series | np.ndarray = self.test_flag
         else:
             tat_flag_ice, tat_flag_liq = self._get_flag()
 

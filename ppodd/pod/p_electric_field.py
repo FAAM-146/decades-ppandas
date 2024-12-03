@@ -44,7 +44,7 @@ class ElectricFieldJci140(PPBase):
         Processing entry hook.
         """
         self.get_dataframe()
-        df = self.d.asfreq('1S')
+        df = self.d.asfreq('1s')
 
         output = DecadesVariable(df['PRTAFT_jci140_signal'], name='EXX_JCI')
 

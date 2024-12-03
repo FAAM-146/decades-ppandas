@@ -46,7 +46,7 @@ class WVSS2CloudFlag(FlaggingBase):
 
         for var in WVSS2_VARIABLES:
             if test:
-                flag = self.test_flag
+                flag: pd.Series | np.ndarray = self.test_flag
             else:
                 try:
                     flag = self._get_flag(var)

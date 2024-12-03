@@ -25,7 +25,7 @@ class DecadesBackend(object):
     but kept for prosperity.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Initialize the backend.
         """
@@ -34,7 +34,7 @@ class DecadesBackend(object):
 
     def __getitem__(self, item: str) -> Any: ...
 
-    def decache(self):
+    def decache(self) -> None:
         """
         Offload variables from instance state to some other storage solution.
         """

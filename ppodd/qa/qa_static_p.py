@@ -64,7 +64,7 @@ class StaticPressure(QAMod):
         ax2 = fig.axes([.55, .1, .35, .25])
 
         def _scatter(ax, param):
-            p = fig.filter_in_flight(self.dataset[param].data.asfreq('1S'))
+            p = fig.filter_in_flight(self.dataset[param].data.asfreq('1s'))
             m = (np.isfinite(p)) & (np.isfinite(rvsm))
             ax.scatter(rvsm[m], p[m], 5, c=mach.reindex(p.index)[m])
             ax.add_121(linewidth=.5)
@@ -75,8 +75,8 @@ class StaticPressure(QAMod):
 
         p9 = None
         p10 = None
-        rvsm = fig.filter_in_flight(self.dataset['PS_RVSM'].data.asfreq('1S'))
-        q = fig.filter_in_flight(self.dataset['Q_RVSM'].data.asfreq('1S'))
+        rvsm = fig.filter_in_flight(self.dataset['PS_RVSM'].data.asfreq('1s'))
+        q = fig.filter_in_flight(self.dataset['Q_RVSM'].data.asfreq('1s'))
         mach = sp_mach(q, rvsm)
 
         try:

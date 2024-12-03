@@ -1,6 +1,6 @@
 import datetime
 import importlib
-from typing import TYPE_CHECKING, Literal, Sequence
+from typing import TYPE_CHECKING, Any, Literal, Sequence
 from types import ModuleType
 import numpy as np
 import pandas as pd
@@ -17,18 +17,18 @@ InterpolateOptions = Literal[
 ]
 
 pd_freq = {
-    1: "1S",
-    2: "500L",
-    4: "250L",
-    8: "125L",
-    10: "100L",
-    16: "62500U",
-    20: "50L",
-    50: "20L",
-    32: "31250000N",
-    64: "15625000N",
-    128: "7812500N",
-    256: "3906250N",
+    1: "1s",
+    2: "500ms",
+    4: "250ms",
+    8: "125ms",
+    10: "100ms",
+    16: "62500us",
+    20: "50ms",
+    50: "20ms",
+    32: "31250000ns",
+    64: "15625000ns",
+    128: "7812500ns",
+    256: "3906250ns",
 }
 
 
@@ -39,7 +39,7 @@ def infer_freq(index: pd.DatetimeIndex, mode_conf: float = 0.99) -> str:
     diff = index[1:] - index[:-1]
     a = mode(diff)
     if (a.count[0] / len(index)) >= mode_conf:
-        return f"{a.mode[0]}N"
+        return f"{a.mode[0]}ns"
 
     raise ValueError("Cannot infer frequency")
 
@@ -293,7 +293,7 @@ class Either(object):
         return item in self.options
 
 
-def stringify_if_datetime(dt: object) -> str:
+def stringify_if_datetime(dt: Any) -> Any:
     """
     Stringify a datetime like object. An object is assumed to be datetime
     like if it has a strftime method.
@@ -308,13 +308,13 @@ def stringify_if_datetime(dt: object) -> str:
         an iso formatted date/time string if dt supports strftime, otherwise
         dt
     """
-    if not (hasattr(dt, "strftime") and callable(dt.strftime)):  # type: ignore
-        return str(dt)
+    if not (hasattr(dt, "strftime") and callable(dt.strftime)):  
+        return dt
 
     if hasattr(dt, "hour"):
-        return dt.strftime("%Y-%m-%dT%H:%M:%SZ")  # type: ignore - we know it has a strftime method
+        return dt.strftime("%Y-%m-%dT%H:%M:%SZ")  
 
-    return dt.strftime("%Y-%m-%d")  # type: ignore - we know it has a strftime method
+    return dt.strftime("%Y-%m-%d") 
 
 
 def make_definition(pp_group: str, standard: str | ModuleType, one_hz: bool = False) -> None:

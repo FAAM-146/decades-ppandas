@@ -2,11 +2,13 @@
 This module provides an abstract base class for processing modules. Processing
 modules should subclass PPBase to be included in the processing.
 """
+
 # pylint: disable=invalid-name, too-many-arguments
 
 import abc
 import datetime
 import logging
+from typing import Any, Literal, cast
 
 import numpy as np
 import pandas as pd
@@ -16,7 +18,10 @@ from ppodd.decades import DecadesDataset, DecadesVariable
 from ppodd.decades import DecadesBitmaskFlag, DecadesClassicFlag
 from ppodd.decades import flags
 
+DFJoinMethods = Literal["outerjoin", "onto"]
+
 logger = logging.getLogger(__name__)
+
 
 class PPRegister:
     def __init__(self):
@@ -32,12 +37,15 @@ class PPRegister:
         _modules = self._dict[group_name]
         if date is not None:
             _modules = [
-                i for i in _modules 
+                i
+                for i in _modules
                 if (date > i.VALID_AFTER) and (date < i.DEPRECIATED_AFTER)
             ]
         return _modules
-        
+
+
 pp_register = PPRegister()
+
 
 def register_pp(pp_group):
     def inner(cls):
@@ -46,6 +54,7 @@ def register_pp(pp_group):
         except KeyError:
             pp_register.append(pp_group, cls)
         return cls
+
     return inner
 
 
@@ -57,14 +66,14 @@ class PPBase(object):
 
     freq = pd_freq
 
-    inputs = []
-    test = {}
-    ignored_upstream_flags = []
+    inputs: list[str] = []
+    test: dict[str, tuple] = {}
+    ignored_upstream_flags: list[str] = []
 
     VALID_AFTER = datetime.date.min
     DEPRECIATED_AFTER = datetime.date.max
 
-    def __init__(self, dataset, test_mode=False):
+    def __init__(self, dataset: DecadesDataset, test_mode: bool = False) -> None:
         """
         Initialize a class instance
 
@@ -76,31 +85,31 @@ class PPBase(object):
                 building documentation etc.
         """
         self.dataset = dataset
-        self.outputs = {}
+        self.outputs: dict[str, DecadesVariable] = {}
         self.declarations = {}
         self.test_mode = test_mode
         self.declare_outputs()
-        self.d = None
+        self.d: pd.DataFrame | None = None
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         Implement str() - simply return the name of the class.
         """
         return self.__class__.__name__
 
-#    @abc.abstractmethod
-    def declare_outputs(self):
+    #    @abc.abstractmethod
+    def declare_outputs(self) -> None:
         """
         Add outputs to be written. This is run during initialization of the
         module, and should contain a call to self.declare for each output
         variable.
         """
 
-#    @abc.abstractmethod
-    def process(self):
+    #    @abc.abstractmethod
+    def process(self) -> None:
         """Do the actual postprocessing - entry point for the module"""
 
-    def declare(self, name, **kwargs):
+    def declare(self, name: str, **kwargs: dict[str, Any]) -> None:
         """
         Declare the output variables that the processing module is going to
         create.
@@ -113,31 +122,42 @@ class PPBase(object):
         if name in self.dataset.variables:
             if not self.dataset.allow_overwrite:
                 raise ValueError(
-                    f'Cannot declare {name}, as it already exists in Dataset'
+                    f"Cannot declare {name}, as it already exists in Dataset"
                 )
 
             self.dataset.remove(name)
 
         self.declarations[name] = kwargs
 
-    def add_flag_mod(self, flag, output):
+    def add_flag_mod(self, flag: pd.Series, output: DecadesVariable) -> None:
 
-        def _add_mask_flag(flag, output):
+        def _add_mask_flag(flag: pd.Series, output: DecadesVariable) -> None:
+            assert isinstance(output.flag, DecadesBitmaskFlag)
+
             output.flag.add_mask(
-                flag, 'flagged in qc',
-                ('Manually flagged during QC. Check metadata for the reason '
-                 'for flagging.')
+                flag,
+                "flagged in qc",
+                (
+                    "Manually flagged during QC. Check metadata for the reason "
+                    "for flagging."
+                ),
             )
-        def _add_classic_flag(flag, output):
-            values = sorted(list(output.flag.cfattrs['flag_values']))
+
+        def _add_classic_flag(flag: pd.Series, output: DecadesVariable) -> None:
+            assert isinstance(output.flag, DecadesClassicFlag)
+
+            values = sorted(list(output.flag.cfattrs["flag_values"]))
             if not values:
                 flag_value = 1
             else:
                 flag_value = int(values[-1]) + 1
             output.flag.add_meaning(
-                flag_value, 'flagged in qc',
-                ('Manually flagged during QC. Check metadata for the reason '
-                 'for flagging.')
+                flag_value,
+                "flagged in qc",
+                (
+                    "Manually flagged during QC. Check metadata for the reason "
+                    "for flagging."
+                ),
             )
             output.flag.add_flag(flag_value * flag)
 
@@ -149,7 +169,7 @@ class PPBase(object):
 
         return _add_classic_flag(flag, output)
 
-    def finalize(self):
+    def finalize(self) -> None:
         """
         Finalization tasks: ensure all declared outputs have been written and
         propogate the outputs to the calling DecadesDataset.
@@ -158,17 +178,17 @@ class PPBase(object):
         for declaration in self.declarations:
             if declaration not in self.outputs:
                 raise RuntimeError(
-                    'Output declared but not written: {}'.format(
-                        declaration
-                    )
+                    "Output declared but not written: {}".format(declaration)
                 )
 
         try:
-            input_flag = self.get_input_flag(list(self.outputs.items())[0].index)
+            input_flag = self.get_input_flag()
         except Exception:
-            logger.warning(f'Failed to get input flag for '
-                           f'{self.__class__.__name__}')
-            input_flag = []
+            logger.warning(
+                f"Failed to get input flag for " f"{self.__class__.__name__}"
+            )
+
+            input_flag = pd.Series([], dtype=np.int8)  # TODO: check this
 
         for name, output in self.outputs.items():
             # Apply any modifications specified in self.dataset._variable_mods
@@ -185,48 +205,51 @@ class PPBase(object):
             # Apply any extra flagging specified in the flight constants file
             if name in self.dataset._flag_mods:
                 flag_mods = self.dataset._flag_mods[name]
-                flag = pd.Series(
-                    np.zeros_like(output.data), index=output.index
-                )
+                flag = pd.Series(np.zeros_like(output.data), index=output.index)
                 for flag_mod in flag_mods:
                     start = datetime.datetime.strptime(
-                        flag_mod['start'], '%Y-%m-%dT%H:%M:%S'
+                        flag_mod["start"], "%Y-%m-%dT%H:%M:%S"
                     )
                     end = datetime.datetime.strptime(
-                        flag_mod['end'], '%Y-%m-%dT%H:%M:%S'
+                        flag_mod["end"], "%Y-%m-%dT%H:%M:%S"
                     )
                     flag.loc[(flag.index >= start) & (flag.index <= end)] = 1
                 self.add_flag_mod(flag, output)
 
-
-
             if type(output.flag) is DecadesBitmaskFlag:
                 if np.any(~np.isnan(input_flag)):
                     input_flag = input_flag.reindex(output.index)
-                    input_flag = input_flag.fillna(method='bfill')
-                    input_flag = input_flag.fillna(method='ffill')
+                    input_flag = input_flag.bfill()
+                    input_flag = input_flag.ffill()
                     output.flag.add_mask(
-                        input_flag, flags.DEPENDENCY,
-                        ('A dependency, used in the derivation of this '
-                         'variable has a non-zero flag.')
+                        input_flag,
+                        flags.DEPENDENCY,
+                        (
+                            "A dependency, used in the derivation of this "
+                            "variable has a non-zero flag."
+                        ),
                     )
 
             if type(output.flag) is DecadesClassicFlag:
                 try:
+                    a = output.flag.meanings
                     flag_value = max(list(output.flag.meanings)) + 1
                 except ValueError:
                     flag_value = 1
 
                 if np.any(~np.isnan(input_flag)) and np.any(input_flag):
                     input_flag = input_flag.reindex(output.index)
-                    input_flag = input_flag.fillna(method='bfill')
-                    input_flag = input_flag.fillna(method='ffill')
+                    input_flag = input_flag.bfill()
+                    input_flag = input_flag.ffill()
                     input_flag[input_flag > 0] = flag_value
 
                     output.flag.add_meaning(
-                        flag_value, flags.DEPENDENCY,
-                        ('A dependency, used in the derivation of this '
-                         'variable has a non-zero flag.')
+                        flag_value,
+                        flags.DEPENDENCY,
+                        (
+                            "A dependency, used in the derivation of this "
+                            "variable has a non-zero flag."
+                        ),
                     )
 
                     output.flag.add_flag(input_flag)
@@ -237,11 +260,16 @@ class PPBase(object):
             # And append the output to the dataset
             self.dataset.add_output(output)
 
-        self.outputs = None
+        self.outputs = {}
         self.d = None
 
     @staticmethod
-    def onto(dataframe, index, limit=1, period=None):
+    def onto(
+        dataframe: pd.DataFrame,
+        index: pd.DatetimeIndex,
+        limit: int = 1,
+        period: int | None = None,
+    ) -> pd.DataFrame:
         """
         Project a dataframe onto another index, interpolating across any gaps
         introduced to a given limit.
@@ -259,13 +287,13 @@ class PPBase(object):
             the DataFrame dataframe reindexed onto index.
         """
 
-        return dataframe.reindex(
-            index.union(dataframe.index).sort_values()
-        ).interpolate(
-            'time', limit=limit, period=period
-        ).loc[index]
+        return (
+            dataframe.reindex(index.union(dataframe.index).sort_values())
+            .interpolate("time", limit=limit, period=period)
+            .loc[index]
+        )
 
-    def get_input_flag(self, index):
+    def get_input_flag(self) -> pd.Series:
         cflag = pd.Series(dtype=np.int8)
         for _input in self.inputs:
             if _input in self.ignored_upstream_flags:
@@ -282,18 +310,21 @@ class PPBase(object):
             # TODO: we probably don't want to fill with 0 in the case of
             # differing frequencies
             cflag = cflag.reindex(cindex)
-            cflag = cflag.fillna(method='bfill')
-            cflag = cflag.fillna(method='ffill')
-            cflag.loc[flag.index] = np.maximum(
-                flag, cflag.loc[flag.index]
-            )
+            cflag = cflag.bfill()
+            cflag = cflag.ffill()
+            cflag.loc[flag.index] = np.maximum(flag, cflag.loc[flag.index])
 
         cflag[cflag > 1] = 1
         return cflag
 
-
-    def get_dataframe(self, method='outerjoin', index=None, limit=1,
-                      circular=None, exclude=None):
+    def get_dataframe(
+        self,
+        method: DFJoinMethods = "outerjoin",
+        index: pd.DatetimeIndex | None = None,
+        limit: int = 1,
+        circular: list[str] | None = None,
+        exclude: list[str] | None = None,
+    ) -> None:
         """
         Create a dataframe containing all of the inputs required to run the
         processing module. The dataframe is stored in the class attribute 'd'.
@@ -322,32 +353,33 @@ class PPBase(object):
         if exclude is None:
             exclude = []
 
-        df = pd.DataFrame()
+        df: pd.Series | pd.DataFrame = pd.DataFrame()
 
         _inputs = [
-            i for i in self.inputs if i not in self.dataset.constants
-            and i not in exclude
+            i
+            for i in self.inputs
+            if i not in self.dataset.constants and i not in exclude
         ]
 
-        if method == 'outerjoin':
+        if method == "outerjoin":
 
             # Create a joined dataframe
             for _input in _inputs:
-                df = df.join(self.dataset[_input]().dropna(), how='outer')
+                df = df.join(self.dataset[_input]().dropna(), how="outer")
 
             # Ensure the dataframe has a continuous index at the frequency of
             # the highest frequency input.
             _freq = np.max([self.dataset[i].frequency for i in _inputs])
-            df = df.reindex(pd.date_range(
-                start=df.index[0], end=df.index[-1], freq=pd_freq[_freq]
-            ))
+            df = df.reindex(
+                pd.date_range(start=df.index[0], end=df.index[-1], freq=pd_freq[_freq])
+            )
 
-        elif method == 'onto':
+        elif method == "onto":
             # Interpolate onto a given index when creating the dataframe
 
             if index is None:
                 df = self.dataset[_inputs[0]]()
-                index = df.index
+                index = cast(pd.DatetimeIndex, df.index)
                 _start = 1
             else:
                 df = pd.DataFrame(index=index)
@@ -362,29 +394,27 @@ class PPBase(object):
                     _tmp = self.dataset[_input_name]()
                     _data = _tmp.values.copy()
 
-                    _input = pd.DataFrame([], index=_tmp.index)
+                    _input_df = pd.DataFrame([], index=_tmp.index)
 
-                    _input[_input_name] = _data
-                    _input[_input_name] = unwrap_array(_input[_input_name])
+                    _input_df[_input_name] = _data
+                    _input_df[_input_name] = unwrap_array(_input_df[_input_name])
 
                 else:
-                    _input = self.dataset[_input_name]()
+                    _input_df = self.dataset[_input_name]()
 
                 # Interpolate onto the instance dataframe
-                df[_input_name] = _input.reindex(
-                    index.union(
-                        _input.index
-                    ).sort_values()
-                ).interpolate(
-                    'linear', limit=limit
-                ).loc[index]
+                df[_input_name] = (
+                    _input_df.reindex(index.union(_input_df.index).sort_values())
+                    .interpolate("linear", limit=limit)
+                    .loc[index]
+                )
 
                 if _input_name in circular:
                     df[_input_name] %= 360
 
-        self.d = df
+        self.d = pd.DataFrame(df)
 
-    def add_output(self, variable):
+    def add_output(self, variable: DecadesVariable) -> None:
         """
         Add an output variable. Initially outputs are stored in the processing
         module 'outputs' attribute (a list). These are propagated to the parent
@@ -396,9 +426,7 @@ class PPBase(object):
 
         # All outputs must be declared before being added (see self.declare)
         if variable.name not in self.declarations:
-            raise RuntimeError('Output {} has not been declared'.format(
-                variable.name
-            ))
+            raise RuntimeError("Output {} has not been declared".format(variable.name))
 
         # Set all of the variable attribute specified in self.declare
         for item, value in self.declarations[variable.name].items():
@@ -411,7 +439,7 @@ class PPBase(object):
             _df = variable()
             start_time = _df.index[good_start]
             end_time = _df.index[-1]
-            variable.trim(start_time, end_time)
+            variable.trim(start_time, end_time)  # type: ignore - we cant type Series index
 
         except ValueError:
             # If a value is raised, there's no good data. In this case there's
@@ -419,7 +447,7 @@ class PPBase(object):
             # write attribute to false.
             if not self.test_instance:
                 variable.write = False
-                print('Warning: no good data: {}'.format(variable.name))
+                print("Warning: no good data: {}".format(variable.name))
 
         self.outputs[variable.name] = variable
 
@@ -438,10 +466,7 @@ class PPBase(object):
         _missing_variables = []
 
         for _name in self.inputs:
-            _inputs = (
-                self.dataset.variables +
-                list(self.dataset.constants.keys())
-            )
+            _inputs = self.dataset.variables + list(self.dataset.constants.keys())
             if _name not in _inputs:
                 _missing_variables.append(_name)
 
@@ -472,30 +497,24 @@ class PPBase(object):
         for key, val in _test.items():
             _type, *_values = val
 
-            if val[0] == 'const':
+            if val[0] == "const":
                 d.constants[key] = val[1]
 
-            elif val[0] == 'data':
+            elif val[0] == "data":
 
                 _values, _freq = val[1:]
-                _dt = datetime.timedelta(seconds=1/_freq)
-                freq = '{}N'.format((1/_freq) * 1e9)
+                _dt = datetime.timedelta(seconds=1 / _freq)
+                freq = "{}N".format((1 / _freq) * 1e9)
 
                 start_time = datetime.datetime(*d.date.timetuple()[:3])
-                end_time = (
-                    start_time + datetime.timedelta(seconds=len(_values)) - _dt
-                )
+                end_time = start_time + datetime.timedelta(seconds=len(_values)) - _dt
 
                 hz1_index = pd.date_range(
-                    start=start_time, periods=len(_values), freq='S'
+                    start=start_time, periods=len(_values), freq="S"
                 )
-                full_index = pd.date_range(
-                    start=start_time, end=end_time, freq=freq
-                )
+                full_index = pd.date_range(start=start_time, end=end_time, freq=freq)
 
-                data = pd.Series(
-                    _values, hz1_index
-                ).reindex(full_index).interpolate()
+                data = pd.Series(_values, hz1_index).reindex(full_index).interpolate()
 
                 var = DecadesVariable(data, name=key, frequency=_freq)
                 d.add_input(var)
