@@ -21,8 +21,6 @@ from ..decades.attributes import DocAttribute
 from .base import PPBase, register_pp, TestData
 from .shortcuts import _o, _z
 
-ArrayOrSeries = np.ndarray | pd.Series
-
 
 @register_pp("core")
 class BuckCR2(PPBase):
@@ -246,10 +244,10 @@ class BuckCR2(PPBase):
 
     @staticmethod
     def calc_uncertainty(
-        buck_mirr_temp: ArrayOrSeries,
-        buck_pressure: ArrayOrSeries,
-        buck_mirr_control: ArrayOrSeries,
-    ) -> ArrayOrSeries:
+        buck_mirr_temp: np.ndarray,
+        buck_pressure: np.ndarray,
+        buck_mirr_control: np.ndarray,
+    ) -> np.ndarray:
         """
         Calculate and return the uncertainties from for the Buck parameters.
 
@@ -347,7 +345,7 @@ class BuckCR2(PPBase):
         return buck_unc_k
 
     @staticmethod
-    def get_buck_mirror_ctl(buck_mirr_temp: ArrayOrSeries) -> ArrayOrSeries:
+    def get_buck_mirror_ctl(buck_mirr_temp: np.ndarray) -> np.ndarray:
         """
         Calc the buck mirror control signal, given the mirror temperature.
 
@@ -445,7 +443,7 @@ class BuckCR2(PPBase):
         return buck_mirror_control
 
     @staticmethod
-    def get_vp_coeff(buck_mirror_ctl: ArrayOrSeries) -> ArrayOrSeries:
+    def get_vp_coeff(buck_mirror_ctl: np.ndarray) -> np.ndarray:
         """
         Get the correct vapour pressure coefficients, for water or ice, given
         the derived mirror control signal.
@@ -496,7 +494,7 @@ class BuckCR2(PPBase):
         return result
 
     @staticmethod
-    def get_enhance_coeff(buck_mirror_ctl: ArrayOrSeries) -> ArrayOrSeries:
+    def get_enhance_coeff(buck_mirror_ctl: np.ndarray) -> np.ndarray:
         """
         Get the correct enhance coefficients, for water or ice, given
         the derived mirror control signal.
@@ -553,10 +551,10 @@ class BuckCR2(PPBase):
 
     def calc_vp(
         self,
-        buck_mirr_temp: ArrayOrSeries,
-        buck_mirror_ctl: ArrayOrSeries,
-        buck_unc_k: ArrayOrSeries | None = None,
-    ) -> ArrayOrSeries:
+        buck_mirr_temp: np.ndarray,
+        buck_mirror_ctl: np.ndarray,
+        buck_unc_k: np.ndarray | None = None,
+    ) -> np.ndarray:
         """
         Calculate vapour pressure.
 
@@ -595,8 +593,8 @@ class BuckCR2(PPBase):
 
     @staticmethod
     def calc_vmr(
-        vp: ArrayOrSeries, enhance: ArrayOrSeries, buck_pressure: ArrayOrSeries
-    ) -> ArrayOrSeries:
+        vp: np.ndarray, enhance: np.ndarray, buck_pressure: np.ndarray
+    ) -> np.ndarray:
         """
         Calculate volume mixing ration
 
@@ -614,11 +612,11 @@ class BuckCR2(PPBase):
 
     def calc_enhance_factor(
         self,
-        vp_buck: ArrayOrSeries,
-        buck_mirror_t: ArrayOrSeries,
-        buck_pressure: ArrayOrSeries,
-        buck_mirror_ctl: ArrayOrSeries,
-    ) -> ArrayOrSeries:
+        vp_buck: np.ndarray,
+        buck_mirror_t: np.ndarray,
+        buck_pressure: np.ndarray,
+        buck_mirror_ctl: np.ndarray,
+    ) -> np.ndarray:
         """
         Calculate enhancement factors.
 
@@ -648,8 +646,8 @@ class BuckCR2(PPBase):
 
     @staticmethod
     def get_flag(
-        buck_mirr_flag: ArrayOrSeries, buck_dewpoint_flag: ArrayOrSeries
-    ) -> ArrayOrSeries:
+        buck_mirr_flag: np.ndarray, buck_dewpoint_flag: np.ndarray
+    ) -> np.ndarray:
         """
         Return flagging information of buck parameters.
 
@@ -668,11 +666,11 @@ class BuckCR2(PPBase):
 
     @staticmethod
     def calc_tdew_corrected(
-        buck_mirr_control: ArrayOrSeries,
-        vmr_buck: ArrayOrSeries,
-        ps_rvsm: ArrayOrSeries,
-        enhance: ArrayOrSeries,
-    ) -> ArrayOrSeries:
+        buck_mirr_control: np.ndarray,
+        vmr_buck: np.ndarray,
+        ps_rvsm: np.ndarray,
+        enhance: np.ndarray,
+    ) -> np.ndarray:
         """
         Calculate a corrected dewpoint temperature.
 
@@ -691,7 +689,7 @@ class BuckCR2(PPBase):
         result = np.zeros(n)
         vp_corrected = 100 * ps_rvsm * vmr_buck / (enhance * 10e5 + enhance * vmr_buck)
 
-        def tdew_function(tdew: float) -> float:
+        def tdew_function(tdew: np.ndarray) -> np.ndarray:
             """Dewpoint function."""
             return (
                 54.842763
@@ -775,27 +773,27 @@ class BuckCR2(PPBase):
         vp_buck = self.calc_vp(buck_mirr_temp, buck_mirr_control)
 
         buck_unc_k = self.calc_uncertainty(
-            buck_mirr_temp, buck_pressure, buck_mirr_control
+            buck_mirr_temp, buck_pressure.data, buck_mirr_control
         )
 
         vp_max = self.calc_vp(buck_mirr_temp, buck_mirr_control, buck_unc_k=buck_unc_k)
 
         enhance = self.calc_enhance_factor(
-            vp_buck, buck_mirr_temp, buck_pressure, buck_mirr_control
+            vp_buck, buck_mirr_temp, buck_pressure.data, buck_mirr_control
         )
 
-        vmr_buck = self.calc_vmr(vp_buck, enhance, buck_pressure)
+        vmr_buck = self.calc_vmr(vp_buck, enhance, buck_pressure.data)
 
-        vmr_max = self.calc_vmr(vp_max, enhance, buck_pressure)
+        vmr_max = self.calc_vmr(vp_max, enhance, buck_pressure.data)
 
         vmr_unc = vmr_max - vmr_buck
 
         tdew_corrected = self.calc_tdew_corrected(
-            buck_mirr_control, vmr_buck, ps_rvsm, enhance
+            buck_mirr_control, vmr_buck, ps_rvsm.data, enhance
         )
 
         # Get the flagging array
-        flag = self.get_flag(buck_mirr_cln_flag, buck_dewpoint_flag)
+        flag = self.get_flag(buck_mirr_cln_flag.data, buck_dewpoint_flag.data)
         flag[~np.isfinite(buck_mirr_temp)] = 4
 
         _index = self.d.index
