@@ -356,7 +356,7 @@ def make_definition(pp_group: str, standard: str | ModuleType, one_hz: bool = Fa
                     except Exception:
                         pass
                 try:
-                    value = value.item() # type: ignore - forgiveness rather than permission
+                    value = value.item() # type: ignore  # forgiveness rather than permission
                 except Exception:
                     pass
                 _attributes[item] = value
