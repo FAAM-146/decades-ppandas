@@ -7,6 +7,7 @@ radiative fluxes from these. See the class docstring for mor information.
 # pylint: disable=invalid-name
 import numpy as np
 
+import pandas as pd
 from vocal.types import DerivedString
 
 from .base import PPBase, register_pp, TestData
@@ -229,7 +230,7 @@ class BBRFlux(PPBase):
         )
 
     @staticmethod
-    def corr_thm(therm: np.ndarray) -> np.ndarray:
+    def corr_thm(therm: np.ndarray | pd.Series) -> np.ndarray | pd.Series:
         """
         Correct thermistors for linearity. TODO: find a reference for this
         """
@@ -376,6 +377,8 @@ class BBRFlux(PPBase):
                 output = DecadesVariable(
                     d[_flux], name=output_name, flag=DecadesBitmaskFlag
                 )
+
+                assert isinstance(output.flag, DecadesBitmaskFlag)
 
                 # Flag when the aircraft is in a significant roll
                 output.flag.add_mask(
