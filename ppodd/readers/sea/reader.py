@@ -11,7 +11,7 @@ from .parser import parser_f
 logger = logging.getLogger(__name__)
 
 
-@register(patterns=['.*\.wcm'])
+@register(patterns=[r'.*\.wcm'])
 class WcmFileReader(FileReader):
     def read(self):
         for _file in self.files:

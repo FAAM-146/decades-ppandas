@@ -17,7 +17,7 @@ class CCNReader(FileReader):
     def read(self):
         for _file in self.files:
             date = None
-            rex = re.compile('Date.*(\d{2}/\d{2}/\d{2}).*')
+            rex = re.compile(r'Date.*(\d{2}/\d{2}/\d{2}).*')
             cnt = 0
             with open(_file.filepath, 'r') as f:
                 while True:

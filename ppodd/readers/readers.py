@@ -405,7 +405,7 @@ class TcpFileReader(FileReader):
     ) -> list[int]:
         if definition.identifier is None:
             raise ValueError("No identifier found in definition.")
-        rex = re.compile(b"\$" + definition.identifier.encode())
+        rex = re.compile(b"$" + definition.identifier.encode())
         offsets = [i.start() for i in rex.finditer(rawdata)]
         return offsets
 
