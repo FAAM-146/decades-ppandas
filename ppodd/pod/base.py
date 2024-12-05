@@ -254,7 +254,7 @@ class PPBase(object):
                         flags.DEPENDENCY,
                         (
                             "A dependency, used in the derivation of this "
-                            "variable has a non-zero flag."
+                            "variable, has a non-zero flag."
                         ),
                     )
 
