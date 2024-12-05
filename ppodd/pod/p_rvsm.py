@@ -115,11 +115,33 @@ class Rvsm(PPBase):
 
         d['PALT_FEET'] = d['PRTAFT_pressure_alt'] * 4
         d['FLAG_ALT'] = 0
+        d['FLAG_READY'] = 0
 
         d.loc[d['PALT_FEET'] < PALT_MIN, 'FLAG_ALT'] = 1
         d.loc[d['PALT_FEET'] > PALT_MAX, 'FLAG_ALT'] = 1
 
+        idx = (
+            d['PRTAFT_pressure_alt']
+                .diff()
+                .abs()
+                .where(lambda x: x>0)
+                .dropna()
+                .index[0]
+        ) + pd.Timedelta(seconds=1)
+
+        d.loc[d.index < idx, 'FLAG_READY'] = 1
+
         d['PALT_METRES'] = d['PALT_FEET'] / 3.28084
+
+    def add_ready_flag(self, variable):
+        """
+        Add a flag to the given variable to indicate that the RVSM system is not
+        ready.
+        """
+        variable.flag.add_mask(
+            self.d.FLAG_READY, 'instrument not ready',
+            'The RVSM system may not be ready for use'
+        )
 
     def calc_pressure(self):
         """
@@ -192,11 +214,7 @@ class Rvsm(PPBase):
         ps_rvsm = DecadesVariable(ps_rvsm, name='PS_RVSM',
                                   flag=DecadesBitmaskFlag)
 
-        ps_rvsm.flag.add_mask(
-            d.FLAG_ALT, 'altitude out of range',
-            f'Pressure altitude outside acceptable range '
-            f'[{PALT_MIN}, {PALT_MAX}]'
-        )
+        self.add_ready_flag(ps_rvsm)
 
         return ps_rvsm
 
@@ -220,6 +238,8 @@ class Rvsm(PPBase):
             f'Pressure altitude outside acceptable range '
             f'[{PALT_MIN}, {PALT_MAX}]'
         )
+
+        self.add_ready_flag(palt_rvs)
 
         return palt_rvs
 
@@ -247,6 +267,8 @@ class Rvsm(PPBase):
             f'Indicated air speed outside acceptable range '
             f'[{IAS_MIN}, {IAS_MAX}]'
         )
+
+        self.add_ready_flag(q_rvsm)
 
         return q_rvsm
 
