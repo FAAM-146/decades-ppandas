@@ -9,3 +9,4 @@ build/
 *.egg-info/
 githash_freeze.py
 ppodd/docs/data/dynamic_content/*
+.mypy_cache/
