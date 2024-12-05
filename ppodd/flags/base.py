@@ -97,7 +97,7 @@ class FlaggingBase(abc.ABC):
             self.flags[var] = [(meaning.replace(" ", "_"), description)]
 
     @abc.abstractmethod
-    def _flag(self):
+    def _flag(self, test:bool=False) -> Any:
         """Add extra flag info to derived variables."""
 
     def _get_downstream(self, var: str) -> list:

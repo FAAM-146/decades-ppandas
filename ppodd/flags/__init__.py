@@ -1,11 +1,15 @@
 import os
 import re
 import importlib
+from types import ModuleType
 
 from .base import FlaggingBase
 
 
-def load_flagging_modules():
+def load_flagging_modules() -> list[ModuleType]:
+    """
+    Load all flagging modules in the flags directory.
+    """
     pysearchre = re.compile(".py$", re.IGNORECASE)
 
     flag_files = filter(pysearchre.search, os.listdir(os.path.dirname(__file__)))
@@ -23,4 +27,4 @@ def load_flagging_modules():
 
 
 load_flagging_modules()
-flag_modules = FlaggingBase.__subclasses__()
+flag_modules: list[type[FlaggingBase]] = FlaggingBase.__subclasses__()

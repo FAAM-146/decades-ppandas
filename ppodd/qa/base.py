@@ -7,11 +7,13 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
+from ppodd.decades.dataset import DecadesDataset
+
 
 class QAMod(abc.ABC):
-    inputs = []
+    inputs: list[str] = []
 
-    def __init__(self, dataset):
+    def __init__(self, dataset: DecadesDataset):
         self.dataset = dataset
 
     def ready(self):

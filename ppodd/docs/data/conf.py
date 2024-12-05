@@ -10,20 +10,21 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-import sphinx_rtd_theme
+import sphinx_rtd_theme  # type: ignore
 import datetime
 import ppodd
 
 
 def setup(app):
-    app.add_css_file('faam.css')
+    app.add_css_file("faam.css")
+
 
 # -- Project information -----------------------------------------------------
 
-project = 'FAAM Core Data Product'
-copyright = f'{datetime.datetime.now().year}, FAAM'
-author = 'FAAM'
-release = f'{ppodd.version()} ({ppodd.githash()})'
+project = "FAAM Core Data Product"
+copyright = f"{datetime.datetime.now().year}, FAAM"
+author = "FAAM"
+release = f"{ppodd.version()} ({ppodd.githash()})"
 version = release
 
 # -- General configuration ---------------------------------------------------
@@ -32,21 +33,22 @@ version = release
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx_rtd_theme',   # Read the docs theme
-    'sphinx.ext.autodoc', # Auto doc code documentation
-    'sphinx.ext.napoleon',# Google style docstrings
-    'sphinxnotes.strike'  # Strikethrough styling
+    "sphinx_rtd_theme",  # Read the docs theme
+    "sphinx.ext.autodoc",  # Auto doc code documentation
+    "sphinx.ext.napoleon",  # Google style docstrings
+    "sphinxnotes.strike",  # Strikethrough styling
 ]
 
+# Include both the class docstring and the __init__ docstring
 napoleon_include_init_with_doc = True
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', 'base_rst']
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "base_rst"]
 
 
 # -- Options for HTML output -------------------------------------------------
@@ -54,15 +56,15 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', 'base_rst']
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'sphinx_rtd_theme'
-html_static_path = ['static']
+html_theme = "sphinx_rtd_theme"
+html_static_path = ["static"]
 html_logo = "static/faam-small.png"
 html_theme_options = {
-    'logo_only': False,
-    'display_version': True,
+    "logo_only": False,
+    "display_version": True,
 }
 html_js_files = [
-    'https://cdn.jsdelivr.net/npm/iframe-resizer@4.3.2/js/iframeResizer.contentWindow.min.js',
+    "https://cdn.jsdelivr.net/npm/iframe-resizer@4.3.2/js/iframeResizer.contentWindow.min.js",
 ]
 
 
@@ -70,9 +72,9 @@ html_js_files = [
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 latex_elements = {
-    'papersize': 'a4paper',
-    'extraclassoptions': 'openany,oneside',
-    'preamble': r'''
+    "papersize": "a4paper",
+    "extraclassoptions": "openany,oneside",
+    "preamble": r"""
         \definecolor{FAAMDarkBlue}{HTML}{252243}
         \definecolor{FAAMLightBlue}{HTML}{0ABBEF}
         \usepackage{eso-pic}
@@ -84,10 +86,10 @@ latex_elements = {
         \put(300,-260){
             \color{FAAMDarkBlue}\circle*{760}
         }
-    }''',
+    }""",
     # Pretty hacky this - escaping from the sphinx macros,
     # but it sorta kinda works well enough.
-    'maketitle': '''
+    "maketitle": """
         \\AddToShipoutPicture*{{\\BackgroundPic}}
         \\begin{{titlepage}}
             \\color{{FAAMDarkBlue}}
@@ -104,11 +106,11 @@ latex_elements = {
                  }}
              \\end{{flushright}}
         \\end{{titlepage}}
-        '''.format(
-            project=project,
-            release=release,
-            author=author,
-            date=datetime.date.today().strftime('%B %-d, %Y')
-        )
+        """.format(
+        project=project,
+        release=release,
+        author=author,
+        date=datetime.date.today().strftime("%B %-d, %Y"),
+    ),
 }
-latex_logo = 'static/faam.png'
+latex_logo = "static/faam.png"

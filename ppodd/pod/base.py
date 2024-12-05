@@ -5,10 +5,11 @@ modules should subclass PPBase to be included in the processing.
 
 # pylint: disable=invalid-name, too-many-arguments
 
-import abc
+from __future__ import annotations
+
 import datetime
 import logging
-from typing import Any, Literal, cast
+from typing import Any, Callable, Literal, cast
 
 import numpy as np
 import pandas as pd
@@ -19,21 +20,44 @@ from ppodd.decades import DecadesBitmaskFlag, DecadesClassicFlag
 from ppodd.decades import flags
 
 DFJoinMethods = Literal["outerjoin", "onto"]
+TestDataValue = tuple[Literal["const"], Any] | tuple[Literal["data"], np.ndarray, int]
 
 logger = logging.getLogger(__name__)
 
 
 class PPRegister:
-    def __init__(self):
-        self._dict = {}
+    """
+    Register for processing modules. This is used to store the processing
+    modules, and to allow the processing code to find the appropriate modules
+    to run.
+    """
 
-    def append(self, pp_group, cls):
+    def __init__(self) -> None:
+        """
+        Initialize the register.
+        """
+        self._dict: dict[str, list[type[PPBase]]] = {}
+
+    def append(self, pp_group: str, cls: type[PPBase]) -> None:
+        """
+        Add a processing module to the register.
+
+        Args:
+            pp_group: the group to which the processing module belongs.
+            cls: the processing module to add.
+        """
         try:
             self._dict[pp_group].append(cls)
         except KeyError:
             self._dict[pp_group] = [cls]
 
-    def modules(self, group_name, date=None):
+    def modules(
+        self, group_name: str, date: datetime.date | None = None
+    ) -> list[type[PPBase]]:
+        """
+        Get a list of processing modules for a given group. Modules are filtered
+        by the date given.
+        """
         _modules = self._dict[group_name]
         if date is not None:
             _modules = [
@@ -47,8 +71,13 @@ class PPRegister:
 pp_register = PPRegister()
 
 
-def register_pp(pp_group):
-    def inner(cls):
+def register_pp(pp_group: str) -> Callable[[type[PPBase]], type[PPBase]]:
+    """
+    Provide a decorator to register processing modules with the
+    processing code.
+    """
+
+    def inner(cls: type[PPBase]) -> type[PPBase]:
         try:
             pp_register.append(pp_group, cls)
         except KeyError:
@@ -67,7 +96,6 @@ class PPBase(object):
     freq = pd_freq
 
     inputs: list[str] = []
-    test: dict[str, tuple] = {}
     ignored_upstream_flags: list[str] = []
 
     VALID_AFTER = datetime.date.min
@@ -86,7 +114,7 @@ class PPBase(object):
         """
         self.dataset = dataset
         self.outputs: dict[str, DecadesVariable] = {}
-        self.declarations = {}
+        self.declarations: dict[str, dict[str, Any]] = {}
         self.test_mode = test_mode
         self.declare_outputs()
         self.d: pd.DataFrame | None = None
@@ -97,19 +125,19 @@ class PPBase(object):
         """
         return self.__class__.__name__
 
-    #    @abc.abstractmethod
     def declare_outputs(self) -> None:
         """
         Add outputs to be written. This is run during initialization of the
         module, and should contain a call to self.declare for each output
         variable.
         """
+        raise NotImplementedError
 
-    #    @abc.abstractmethod
     def process(self) -> None:
         """Do the actual postprocessing - entry point for the module"""
+        raise NotImplementedError
 
-    def declare(self, name: str, **kwargs: dict[str, Any]) -> None:
+    def declare(self, name: str, **kwargs: Any) -> None:
         """
         Declare the output variables that the processing module is going to
         create.
@@ -435,23 +463,23 @@ class PPBase(object):
         try:
             # Find where the first and last non-nan data points are, and trim
             # the data to this period.
-            good_start = np.min(np.where(~np.isnan(variable.data)))
+            good_start = int(np.min(np.where(~np.isnan(variable.data))))
             _df = variable()
             start_time = _df.index[good_start]
             end_time = _df.index[-1]
-            variable.trim(start_time, end_time)  # type: ignore - we cant type Series index
+            variable.trim(start_time, end_time)  # type: ignore #  we cant type Series index
 
         except ValueError:
             # If a value is raised, there's no good data. In this case there's
             # no point including the data in the final product, so set its
             # write attribute to false.
-            if not self.test_instance:
+            if not self.test_mode:
                 variable.write = False
                 print("Warning: no good data: {}".format(variable.name))
 
         self.outputs[variable.name] = variable
 
-    def ready(self):
+    def ready(self) -> tuple[bool, list[str] | None]:
         """
         Determine if the module can run. A module can run if all of its
         required inputs are present in its parent dataset.
@@ -476,7 +504,7 @@ class PPBase(object):
         return True, None
 
     @classmethod
-    def test_instance(cls, dataset=None):
+    def test_instance(cls, dataset: DecadesDataset | None = None) -> PPBase:
         """
         Return a test instance of a postprocessing module, initialized with a
         DecadesDataset containing the modules test data.
@@ -495,28 +523,34 @@ class PPBase(object):
             _test = cls.test
 
         for key, val in _test.items():
-            _type, *_values = val
 
             if val[0] == "const":
                 d.constants[key] = val[1]
 
             elif val[0] == "data":
 
-                _values, _freq = val[1:]
+                if len(val) != 3:
+                    raise ValueError("Test data must be a tuple of (data, freq)")
+
+                _dvalues, _freq = val[1:]
                 _dt = datetime.timedelta(seconds=1 / _freq)
                 freq = "{}N".format((1 / _freq) * 1e9)
 
                 start_time = datetime.datetime(*d.date.timetuple()[:3])
-                end_time = start_time + datetime.timedelta(seconds=len(_values)) - _dt
+                end_time = start_time + datetime.timedelta(seconds=len(_dvalues)) - _dt
 
                 hz1_index = pd.date_range(
-                    start=start_time, periods=len(_values), freq="S"
+                    start=start_time, periods=len(_dvalues), freq="S"
                 )
                 full_index = pd.date_range(start=start_time, end=end_time, freq=freq)
 
-                data = pd.Series(_values, hz1_index).reindex(full_index).interpolate()
+                data = pd.Series(_dvalues, hz1_index).reindex(full_index).interpolate()
 
                 var = DecadesVariable(data, name=key, frequency=_freq)
                 d.add_input(var)
 
         return cls(d, test_mode=True)
+
+    @staticmethod
+    def test() -> dict[str, TestDataValue]:
+        raise NotImplementedError

@@ -5,7 +5,7 @@ from lxml import etree
 import requests
 import pandas as pd
 
-from cfunits import Units
+from cfunits import Units # type: ignore
 
 from ppodd.decades import DecadesDataset, DecadesVariable
 from ppodd.pod.base import pp_register

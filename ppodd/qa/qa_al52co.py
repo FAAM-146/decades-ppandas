@@ -18,14 +18,14 @@ class AL52QA(QAMod):
         'AL52CO_conc'
     ]
 
-    def make_lamptemp(self, fig):
+    def make_lamptemp(self, fig: QAFigure) -> None:
         lamptemp = self.dataset['AL52CO_lamptemp'].data
         ax = fig.timeseries_axes([.1, .8, .8, .1], labelx=False)
         ax.plot(lamptemp.loc[lamptemp < 100], label='Lamp temp.')
         ax.legend(fontsize=6)
         ax.set_ylabel('Temp. (degC)')
 
-    def make_flows(self, fig):
+    def make_flows(self, fig: QAFigure) -> None:
         lampflow = self.dataset['AL52CO_lampflow'].data
         monoflow = self.dataset['AL52CO_monoflow'].data
         ax = fig.timeseries_axes([.1, .69, .8, .1], labelx=False)
@@ -34,14 +34,14 @@ class AL52QA(QAMod):
         ax.legend(fontsize=6)
         ax.set_ylabel('Flow (sccm)')
 
-    def make_cellpress(self, fig):
+    def make_cellpress(self, fig: QAFigure) -> None:
         cellpress = self.dataset['AL52CO_cellpress'].data
         ax = fig.timeseries_axes([.1, .58, .8, .1])
         ax.plot(cellpress, label='Cell press.')
         ax.legend(fontsize=6)
         ax.set_ylabel('Torr')
 
-    def make_co(self, fig):
+    def make_co(self, fig: QAFigure) -> None:
         co_u = self.dataset['AL52CO_conc'].data
         co_c = self.dataset['CO_AERO'].data
         ax, ax2 = fig.timeseries_axes([.1, .15, .8, .4], twinx=True)
@@ -66,7 +66,7 @@ class AL52QA(QAMod):
 
         ax2.plot(self.cal.loc[self.cal == 1], 'ko')
 
-    def run(self):
+    def run(self) -> None:
         """
         QA plotting entry point.
         """
