@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from pysolar.solar import get_altitude, get_azimuth
+from pysolar.solar import get_altitude, get_azimuth # type: ignore
 
 from ..decades import DecadesVariable
 from .base import PPBase, register_pp

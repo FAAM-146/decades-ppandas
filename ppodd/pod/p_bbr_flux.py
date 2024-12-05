@@ -30,6 +30,24 @@ FLUX_LIMITS = {
     "DN_RED_MIN": -20.0,
 }
 
+def corr_thm(therm: pd.Series) -> pd.Series:
+    """
+    Correct thermistors for linearity. TODO: find a reference for this
+    """
+
+    rcon = -0.774
+    v = 6.08e-02
+    w = 2.47e-03
+    x = -6.29e-05
+    y = -8.78e-07
+    z = 1.37e-08
+
+    rt = therm - 273.15
+
+    therm_c = rt + (rcon + rt * (v + rt * (w + rt * (x + rt * (y + rt * z)))))
+
+    return therm_c
+
 
 @register_pp("core")
 class BBRFlux(PPBase):
@@ -229,24 +247,7 @@ class BBRFlux(PPBase):
             instrument_serial_number=self.dataset.lazy["BBRLP2_SN"],
         )
 
-    @staticmethod
-    def corr_thm(therm: np.ndarray | pd.Series) -> np.ndarray | pd.Series:
-        """
-        Correct thermistors for linearity. TODO: find a reference for this
-        """
-
-        rcon = -0.774
-        v = 6.08e-02
-        w = 2.47e-03
-        x = -6.29e-05
-        y = -8.78e-07
-        z = 1.37e-08
-
-        rt = therm - 273.15
-
-        therm_c = rt + (rcon + rt * (v + rt * (w + rt * (x + rt * (y + rt * z)))))
-
-        return therm_c
+    
 
     def process(self) -> None:
         """
@@ -293,9 +294,9 @@ class BBRFlux(PPBase):
                 _label = "{pos}{dome}Z".format(pos=pos, dome=dome)
                 d["{}_rmean".format(_label)] = d[_label].rolling(10, center=True).mean()
 
-                _therm_label_cor = "{pos}{dome}T_c".format(pos=pos, dome=dome)
-                _therm_label_raw = "{pos}{dome}T".format(pos=pos, dome=dome)
-                d[_therm_label_cor] = self.corr_thm(d[_therm_label_raw])
+                _therm_label_cor = f"{pos}{dome}T_c"#.format(pos=pos, dome=dome)
+                _therm_label_raw = f"{pos}{dome}T"#.format(pos=pos, dome=dome)
+                d[_therm_label_cor] = corr_thm(d[_therm_label_raw]) 
 
                 _caldict = {"P1": "C", "P2": "R"}
 
