@@ -21,8 +21,8 @@ class BBR(QAMod):
         zen = fig.filter_in_flight(self.dataset["SOL_ZEN"].data)
         hdg = fig.filter_in_flight(self.dataset["HDG_GIN"].data)
 
-        ax2.set_ylabel("Solar angle ($^\circ$)")
-        ax.set_ylabel("Relative sun angle ($^\circ$)")
+        ax2.set_ylabel(r"Solar angle ($^\circ$)")
+        ax.set_ylabel(r"Relative sun angle ($^\circ$)")
         rel_ang = (az - hdg.reindex(az.index)) % 360
         ax.plot(
             rel_ang, ".", color="tab:green", markersize=3, label="Relative sun angle"

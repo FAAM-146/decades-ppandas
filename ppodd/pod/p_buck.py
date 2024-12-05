@@ -2,6 +2,7 @@
 This module provides a postprocessing module for the Buck CR2 hygrometer,
 BuckCR2. See the class docstring for further information.
 """
+
 # pylint: disable=invalid-name
 
 import datetime
@@ -13,13 +14,17 @@ import pandas as pd
 from scipy.optimize import fsolve
 from vocal.types import DerivedString, OptionalDerivedString
 
+from ppodd.decades.flags import DecadesClassicFlag
+
 from ..decades import DecadesVariable
 from ..decades.attributes import DocAttribute
-from .base import PPBase, register_pp
+from .base import PPBase, register_pp, TestData
 from .shortcuts import _o, _z
 
+ArrayOrSeries = np.ndarray | pd.Series
 
-@register_pp('core')
+
+@register_pp("core")
 class BuckCR2(PPBase):
     r"""
     This documentation adapted from FAAM document FAAM010015A (H. Price, 2016).
@@ -119,122 +124,132 @@ class BuckCR2(PPBase):
     """
 
     inputs = [
-        'BUCK',
-        'AERACK_buck_ppm',
-        'AERACK_buck_mirr_temp',
-        'AERACK_buck_pressure',
-        'AERACK_buck_dewpoint_flag',
-        'AERACK_buck_mirr_cln_flag',
-        'PS_RVSM'
+        "BUCK",
+        "AERACK_buck_ppm",
+        "AERACK_buck_mirr_temp",
+        "AERACK_buck_pressure",
+        "AERACK_buck_dewpoint_flag",
+        "AERACK_buck_mirr_cln_flag",
+        "PS_RVSM",
     ]
 
     @staticmethod
-    def test():
+    def test() -> TestData:
         """
         Provide some dummy input data for testing purposes.
         """
         return {
-            'BUCK': ('const', [0, 1]),
-            'BUCK_SN': ('const', DocAttribute(value='1234', doc_value=DerivedString)),
-            'AERACK_buck_ppm': ('data', 2000 * _o(100), 1),
-            'AERACK_buck_mirr_temp': ('data', -10 * _o(100), 1),
-            'AERACK_buck_pressure': ('data', 800 * _o(100), 1),
-            'AERACK_buck_dewpoint_flag': ('data', _o(100), 1),
-            'AERACK_buck_mirr_cln_flag': ('data', _z(100), 1),
-            'PS_RVSM': ('data', 800 * _o(100), 32),
+            "BUCK": ("const", [0, 1]),
+            "BUCK_SN": ("const", DocAttribute(value="1234", doc_value=DerivedString)),
+            "AERACK_buck_ppm": ("data", 2000 * _o(100), 1),
+            "AERACK_buck_mirr_temp": ("data", -10 * _o(100), 1),
+            "AERACK_buck_pressure": ("data", 800 * _o(100), 1),
+            "AERACK_buck_dewpoint_flag": ("data", _o(100), 1),
+            "AERACK_buck_mirr_cln_flag": ("data", _z(100), 1),
+            "PS_RVSM": ("data", 800 * _o(100), 32),
             # Optional info constants
-            'BUCK_CALINFO_DATE': ('const', DocAttribute(
-                value=datetime.date(2000, 1, 1),
-                doc_value=OptionalDerivedString
-            )),
-            'BUCK_CALINFO_INFO': ('const', DocAttribute(
-                value='Calibrated in a lab',
-                doc_value=OptionalDerivedString
-            )),
-            'BUCK_CALINFO_URL': ('const', DocAttribute(
-                value='https://some.url',
-                doc_value=OptionalDerivedString
-            )),
+            "BUCK_CALINFO_DATE": (
+                "const",
+                DocAttribute(
+                    value=datetime.date(2000, 1, 1), doc_value=OptionalDerivedString
+                ),
+            ),
+            "BUCK_CALINFO_INFO": (
+                "const",
+                DocAttribute(
+                    value="Calibrated in a lab", doc_value=OptionalDerivedString
+                ),
+            ),
+            "BUCK_CALINFO_URL": (
+                "const",
+                DocAttribute(value="https://some.url", doc_value=OptionalDerivedString),
+            ),
         }
 
-    def declare_outputs(self):
+    def declare_outputs(self) -> None:
         """
         Declare the outputs produced by this module.
         """
 
-        manufacturer = 'Buck Research Instruments'
-        model = 'CR2 Chilled Mirror Hygrometer'
+        manufacturer = "Buck Research Instruments"
+        model = "CR2 Chilled Mirror Hygrometer"
 
         self.declare(
-            'VMR_CR2',
-            units='ppmv',
+            "VMR_CR2",
+            units="ppmv",
             frequency=1,
-            long_name=('Water vapour volume mixing ratio measured by the Buck '
-                       'CR2'),
+            long_name=("Water vapour volume mixing ratio measured by the Buck " "CR2"),
             instrument_manufacturer=manufacturer,
             instrument_model=model,
-            instrument_serial_number=self.dataset.lazy['BUCK_SN'],
-            calibration_date=self.dataset.lazy['BUCK_CALINFO_DATE'],
-            calibration_information=self.dataset.lazy['BUCK_CALINFO_INFO'],
-            calibration_url=self.dataset.lazy['BUCK_CALINFO_URL'],
+            instrument_serial_number=self.dataset.lazy["BUCK_SN"],
+            calibration_date=self.dataset.lazy["BUCK_CALINFO_DATE"],
+            calibration_information=self.dataset.lazy["BUCK_CALINFO_INFO"],
+            calibration_url=self.dataset.lazy["BUCK_CALINFO_URL"],
         )
 
         self.declare(
-            'VMR_C_U',
-            units='ppmv',
+            "VMR_C_U",
+            units="ppmv",
             frequency=1,
-            long_name=('Combined uncertainty estimate for water vapour volume '
-                       'mixing ratio measured by the Buck CR2'),
+            long_name=(
+                "Combined uncertainty estimate for water vapour volume "
+                "mixing ratio measured by the Buck CR2"
+            ),
             instrument_manufacturer=manufacturer,
             instrument_model=model,
-            instrument_serial_number=self.dataset.lazy['BUCK_SN'],
-            coverage_content_type='auxiliaryInformation'
+            instrument_serial_number=self.dataset.lazy["BUCK_SN"],
+            coverage_content_type="auxiliaryInformation",
         )
 
         self.declare(
-            'TDEW_CR2',
-            units='degK',
+            "TDEW_CR2",
+            units="degK",
             frequency=1,
-            long_name='Mirror Temperature measured by the Buck CR2 Hygrometer',
-            standard_name='dew_point_temperature',
+            long_name="Mirror Temperature measured by the Buck CR2 Hygrometer",
+            standard_name="dew_point_temperature",
             instrument_manufacturer=manufacturer,
             instrument_model=model,
-            instrument_serial_number=self.dataset.lazy['BUCK_SN'],
-            calibration_date=self.dataset.lazy['BUCK_CALINFO_DATE'],
-            calibration_information=self.dataset.lazy['BUCK_CALINFO_INFO'],
-            calibration_url=self.dataset.lazy['BUCK_CALINFO_URL'],
+            instrument_serial_number=self.dataset.lazy["BUCK_SN"],
+            calibration_date=self.dataset.lazy["BUCK_CALINFO_DATE"],
+            calibration_information=self.dataset.lazy["BUCK_CALINFO_INFO"],
+            calibration_url=self.dataset.lazy["BUCK_CALINFO_URL"],
         )
 
         self.declare(
-            'TDEW_C_U',
-            units='degK',
+            "TDEW_C_U",
+            units="degK",
             frequency=1,
-            long_name=('Combined uncertainty estimate for Buck CR2 '
-                       'Mirror Temperature'),
+            long_name=(
+                "Combined uncertainty estimate for Buck CR2 " "Mirror Temperature"
+            ),
             instrument_manufacturer=manufacturer,
             instrument_model=model,
-            instrument_serial_number=self.dataset.lazy['BUCK_SN'],
-            coverage_content_type='auxiliaryInformation'
+            instrument_serial_number=self.dataset.lazy["BUCK_SN"],
+            coverage_content_type="auxiliaryInformation",
         )
 
         self.declare(
-            'TDEWCR2C',
-            units='degK',
+            "TDEWCR2C",
+            units="degK",
             frequency=1,
-            long_name=('Corrected dew point temperature measured by the Buck '
-                       'CR2 Hygrometer'),
-            standard_name='dew_point_temperature',
+            long_name=(
+                "Corrected dew point temperature measured by the Buck " "CR2 Hygrometer"
+            ),
+            standard_name="dew_point_temperature",
             instrument_manufacturer=manufacturer,
             instrument_model=model,
-            instrument_serial_number=self.dataset.lazy['BUCK_SN'],
-            calibration_date=self.dataset.lazy['BUCK_CALINFO_DATE'],
-            calibration_information=self.dataset.lazy['BUCK_CALINFO_INFO'],
-            calibration_url=self.dataset.lazy['BUCK_CALINFO_URL'],
+            instrument_serial_number=self.dataset.lazy["BUCK_SN"],
+            calibration_date=self.dataset.lazy["BUCK_CALINFO_DATE"],
+            calibration_information=self.dataset.lazy["BUCK_CALINFO_INFO"],
+            calibration_url=self.dataset.lazy["BUCK_CALINFO_URL"],
         )
 
     @staticmethod
-    def calc_uncertainty(buck_mirr_temp, buck_pressure,
-                         buck_mirr_control):
+    def calc_uncertainty(
+        buck_mirr_temp: ArrayOrSeries,
+        buck_pressure: ArrayOrSeries,
+        buck_mirr_control: ArrayOrSeries,
+    ) -> ArrayOrSeries:
         """
         Calculate and return the uncertainties from for the Buck parameters.
 
@@ -256,21 +271,21 @@ class BuckCR2(PPBase):
         buck_unc_b = np.zeros(n)
         buck_unc_k = np.zeros(n)
 
-        buck_unc_temp = np.zeros(n)*np.nan
+        buck_unc_temp = np.zeros(n) * np.nan
 
         for i in range(0, n):
             # Calibration Uncertainty
-            Uc = 0.02 + 5E+27 * buck_mirr_temp[i]**-12.5
+            Uc = 0.02 + 5e27 * buck_mirr_temp[i] ** -12.5
             buck_unc_c[i] = Uc
 
             # Repeatability
-            Ur = 0.01 + 4E+19 * buck_mirr_temp[i]**-9.0
+            Ur = 0.01 + 4e19 * buck_mirr_temp[i] ** -9.0
             buck_unc_r[i] = Ur
 
             if buck_mirr_temp[i] > 248.0:
                 lag = 8
             else:
-                lag = np.ceil(2e+29 * buck_mirr_temp[i]**-11.902)
+                lag = np.ceil(2e29 * buck_mirr_temp[i] ** -11.902)
 
             if not np.isfinite(lag):
                 lag = 8
@@ -280,8 +295,8 @@ class BuckCR2(PPBase):
             if lag != np.nan:
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore")
-                    fwdUt = np.nanstd(buck_mirr_temp[i:i+lag])
-                    backUt = np.nanstd(buck_mirr_temp[i-lag:i])
+                    fwdUt = np.nanstd(buck_mirr_temp[i : i + lag])
+                    backUt = np.nanstd(buck_mirr_temp[i - lag : i])
             else:
                 fwdUt, backUt = 0, 0
 
@@ -305,17 +320,16 @@ class BuckCR2(PPBase):
 
             if buck_mirr_control[i] == 2:
 
-                lnesw = np.log(611.2) + (
-                    17.62 * (buck_mirr_temp[i] - 273.15)
-                ) / (243.12 + buck_mirr_temp[i] - 273.15)
-
-                dpi = 273.15 + (
-                    272.0 * (lnesw - np.log(611.2))
-                    / (22.46 - (lnesw - np.log(611.2)))
+                lnesw = np.log(611.2) + (17.62 * (buck_mirr_temp[i] - 273.15)) / (
+                    243.12 + buck_mirr_temp[i] - 273.15
                 )
 
-                buck_unc_b[i] = dpi-buck_mirr_temp[i]
-                Ub = dpi-buck_mirr_temp[i]
+                dpi = 273.15 + (
+                    272.0 * (lnesw - np.log(611.2)) / (22.46 - (lnesw - np.log(611.2)))
+                )
+
+                buck_unc_b[i] = dpi - buck_mirr_temp[i]
+                Ub = dpi - buck_mirr_temp[i]
 
             Uc = buck_unc_c[i]
             Ur = buck_unc_r[i]
@@ -333,7 +347,7 @@ class BuckCR2(PPBase):
         return buck_unc_k
 
     @staticmethod
-    def get_buck_mirror_ctl(buck_mirr_temp):
+    def get_buck_mirror_ctl(buck_mirr_temp: ArrayOrSeries) -> ArrayOrSeries:
         """
         Calc the buck mirror control signal, given the mirror temperature.
 
@@ -349,15 +363,16 @@ class BuckCR2(PPBase):
         recovery = 0
         mirrormin = 0
         mirrormax = 0
-        DTmax = 0
-        DTmin = 0
+        DTmax = 0.0
+        DTmin = 0.0
         DT = 0
         timing = 0
 
-        buck_mirror_control = np.zeros(buck_mirr_temp.size, dtype=np.int32)-9999
-        for i in range(interval+1, buck_mirr_temp.size-interval-1):
+        buck_mirror_control = np.zeros(buck_mirr_temp.size, dtype=np.int32) - 9999
+        for i in range(interval + 1, buck_mirr_temp.size - interval - 1):
             DT = np.mean(
-                buck_mirr_temp[i:i+interval] - buck_mirr_temp[i-1:i+interval-1]
+                buck_mirr_temp[i : i + interval]
+                - buck_mirr_temp[i - 1 : i + interval - 1]
             )
 
             if buck_mirr_temp[i] < 220:
@@ -430,7 +445,7 @@ class BuckCR2(PPBase):
         return buck_mirror_control
 
     @staticmethod
-    def get_vp_coeff(buck_mirror_ctl):
+    def get_vp_coeff(buck_mirror_ctl: ArrayOrSeries) -> ArrayOrSeries:
         """
         Get the correct vapour pressure coefficients, for water or ice, given
         the derived mirror control signal.
@@ -447,13 +462,31 @@ class BuckCR2(PPBase):
         result = np.zeros((rows, 11), dtype=np.float32)
 
         ice_coeff = [
-            9.550426, -5723.265, 3.53068, -0.00728332,
-            -9999.9, -9999.9, -9999.9, -9999.9, -9999.9, -9999.9, 0
+            9.550426,
+            -5723.265,
+            3.53068,
+            -0.00728332,
+            -9999.9,
+            -9999.9,
+            -9999.9,
+            -9999.9,
+            -9999.9,
+            -9999.9,
+            0,
         ]
 
         wat_coeff = [
-            54.842763, -6763.22, -4.210, 0.000367, 0.0415, -218.8, 53.878,
-            -1331.22, -9.44523, 0.014025, 1
+            54.842763,
+            -6763.22,
+            -4.210,
+            0.000367,
+            0.0415,
+            -218.8,
+            53.878,
+            -1331.22,
+            -9.44523,
+            0.014025,
+            1,
         ]
 
         result[buck_mirror_ctl < 1, :] = wat_coeff
@@ -463,7 +496,7 @@ class BuckCR2(PPBase):
         return result
 
     @staticmethod
-    def get_enhance_coeff(buck_mirror_ctl):
+    def get_enhance_coeff(buck_mirror_ctl: ArrayOrSeries) -> ArrayOrSeries:
         """
         Get the correct enhance coefficients, for water or ice, given
         the derived mirror control signal.
@@ -480,29 +513,50 @@ class BuckCR2(PPBase):
         result = np.zeros((buck_mirror_ctl.size, 8), dtype=np.float32)
 
         ice_coeff = [
-            -6.0190570E-2, 7.3984060E-4, -3.0897838E-6, 4.3669918E-9,
-            -9.4868712E+1, 7.2392075E-1, -2.1963437E-3, 2.4668279E-6
+            -6.0190570e-2,
+            7.3984060e-4,
+            -3.0897838e-6,
+            4.3669918e-9,
+            -9.4868712e1,
+            7.2392075e-1,
+            -2.1963437e-3,
+            2.4668279e-6,
         ]
 
         wat_0to100_coeff = [
-            -1.6302041E-1, 1.8071570E-3, -6.7703064E-6, 8.5813609E-9,
-            -5.9890467E+1, 3.4378043E-1, -7.7326396E-4, 6.3405286E-7
+            -1.6302041e-1,
+            1.8071570e-3,
+            -6.7703064e-6,
+            8.5813609e-9,
+            -5.9890467e1,
+            3.4378043e-1,
+            -7.7326396e-4,
+            6.3405286e-7,
         ]
 
         wat_min50to0_coeff = [
-            -5.5898100E-2, 6.7140389E-4, -2.7492721E-6, 3.8268958E-9,
-            -8.1985393E+1, 5.8230823E-1, -1.6340527E-3, 1.6725084E-6
+            -5.5898100e-2,
+            6.7140389e-4,
+            -2.7492721e-6,
+            3.8268958e-9,
+            -8.1985393e1,
+            5.8230823e-1,
+            -1.6340527e-3,
+            1.6725084e-6,
         ]
 
         result[buck_mirror_ctl < 1, :] = ice_coeff
-        result[
-            (buck_mirror_ctl >= 1) & (buck_mirror_ctl != 3), :
-        ] = wat_0to100_coeff
+        result[(buck_mirror_ctl >= 1) & (buck_mirror_ctl != 3), :] = wat_0to100_coeff
         result[buck_mirror_ctl == 3, :] = np.nan
 
         return result
 
-    def calc_vp(self, buck_mirr_temp, buck_mirror_ctl, buck_unc_k=None):
+    def calc_vp(
+        self,
+        buck_mirr_temp: ArrayOrSeries,
+        buck_mirror_ctl: ArrayOrSeries,
+        buck_unc_k: ArrayOrSeries | None = None,
+    ) -> ArrayOrSeries:
         """
         Calculate vapour pressure.
 
@@ -516,28 +570,33 @@ class BuckCR2(PPBase):
         Returns:
             result: vapour pressure, calculated by ???
         """
-        if not hasattr(buck_unc_k, 'size'):
+        if not hasattr(buck_unc_k, "size"):
             n = buck_mirr_temp.size
             buck_unc_k = np.zeros(n, dtype=np.float32)
 
         c = self.get_vp_coeff(buck_mirror_ctl)
 
         result = np.exp(
-            c[:, 0] + c[:, 1] / (buck_mirr_temp + buck_unc_k)
+            c[:, 0]
+            + c[:, 1] / (buck_mirr_temp + buck_unc_k)
             + c[:, 2] * np.log(buck_mirr_temp + buck_unc_k)
             + c[:, 3] * (buck_mirr_temp + buck_unc_k)
-            + c[:, 10] * (np.tanh(c[:, 4] * (
-                buck_mirr_temp + buck_unc_k + c[:, 5]
-            )))
-            * (c[:, 6] + c[:, 7] / (buck_mirr_temp + buck_unc_k)
+            + c[:, 10]
+            * (np.tanh(c[:, 4] * (buck_mirr_temp + buck_unc_k + c[:, 5])))
+            * (
+                c[:, 6]
+                + c[:, 7] / (buck_mirr_temp + buck_unc_k)
                 + c[:, 8] * np.log(buck_mirr_temp + buck_unc_k)
-                + c[:, 9] * (buck_mirr_temp + buck_unc_k))
+                + c[:, 9] * (buck_mirr_temp + buck_unc_k)
+            )
         )
 
         return result
 
     @staticmethod
-    def calc_vmr(vp, enhance, buck_pressure):
+    def calc_vmr(
+        vp: ArrayOrSeries, enhance: ArrayOrSeries, buck_pressure: ArrayOrSeries
+    ) -> ArrayOrSeries:
         """
         Calculate volume mixing ration
 
@@ -549,12 +608,17 @@ class BuckCR2(PPBase):
         Returns:
             vmr: the volume mixing ratio of water in air.
         """
-        vmr = vp / (buck_pressure * 100 - vp * enhance) * enhance * 10E5
+        vmr = vp / (buck_pressure * 100 - vp * enhance) * enhance * 10e5
         vmr[vmr < 0] = np.nan
         return vmr
 
-    def calc_enhance_factor(self, vp_buck, buck_mirror_t, buck_pressure,
-                            buck_mirror_ctl):
+    def calc_enhance_factor(
+        self,
+        vp_buck: ArrayOrSeries,
+        buck_mirror_t: ArrayOrSeries,
+        buck_pressure: ArrayOrSeries,
+        buck_mirror_ctl: ArrayOrSeries,
+    ) -> ArrayOrSeries:
         """
         Calculate enhancement factors.
 
@@ -578,14 +642,14 @@ class BuckCR2(PPBase):
         vp = vp_buck
         p = buck_pressure * 100
 
-        result = np.exp(
-            (alpha * (1 - (vp / p))) + (beta * ((p / vp) - 1))
-        )
+        result = np.exp((alpha * (1 - (vp / p))) + (beta * ((p / vp) - 1)))
 
         return result
 
     @staticmethod
-    def get_flag(buck_mirr_flag, buck_dewpoint_flag):
+    def get_flag(
+        buck_mirr_flag: ArrayOrSeries, buck_dewpoint_flag: ArrayOrSeries
+    ) -> ArrayOrSeries:
         """
         Return flagging information of buck parameters.
 
@@ -603,7 +667,12 @@ class BuckCR2(PPBase):
         return flag
 
     @staticmethod
-    def calc_tdew_corrected(buck_mirr_control, vmr_buck, ps_rvsm, enhance):
+    def calc_tdew_corrected(
+        buck_mirr_control: ArrayOrSeries,
+        vmr_buck: ArrayOrSeries,
+        ps_rvsm: ArrayOrSeries,
+        enhance: ArrayOrSeries,
+    ) -> ArrayOrSeries:
         """
         Calculate a corrected dewpoint temperature.
 
@@ -620,18 +689,17 @@ class BuckCR2(PPBase):
         n = vmr_buck.size
         tfrost_corrected = np.zeros(n)
         result = np.zeros(n)
-        vp_corrected = np.zeros(n)
-        vp_corrected = 100 * ps_rvsm * vmr_buck / (
-            enhance * 10e5 + enhance * vmr_buck
-        )
+        vp_corrected = 100 * ps_rvsm * vmr_buck / (enhance * 10e5 + enhance * vmr_buck)
 
-        def tdew_function(tdew):
+        def tdew_function(tdew: float) -> float:
             """Dewpoint function."""
             return (
-                54.842763 - 6763.22 / tdew - 4.210 * np.log(tdew)
-                + 0.000367 * tdew + np.tanh(0.0415 * (tdew - 218.8))
-                * (53.878 - 1331.22 / tdew - 9.44523 * np.log(tdew)
-                   + 0.014025*tdew)
+                54.842763
+                - 6763.22 / tdew
+                - 4.210 * np.log(tdew)
+                + 0.000367 * tdew
+                + np.tanh(0.0415 * (tdew - 218.8))
+                * (53.878 - 1331.22 / tdew - 9.44523 * np.log(tdew) + 0.014025 * tdew)
             ) - np.log(vp_here)
 
         tdew_corrected = np.zeros(n)
@@ -644,9 +712,8 @@ class BuckCR2(PPBase):
                 vp_here = vp_corrected[i]
                 tdew_corrected[i] = fsolve(tdew_function, tdew_initial_guess)
 
-        tfrost_corrected = (
-            (1.814625 * np.log(vp_corrected) + 6190.134)
-            / (29.120 - np.log(vp_corrected))
+        tfrost_corrected = (1.814625 * np.log(vp_corrected) + 6190.134) / (
+            29.120 - np.log(vp_corrected)
         )
 
         for j in range(0, n):
@@ -659,51 +726,51 @@ class BuckCR2(PPBase):
 
         return result
 
-    def process(self):
+    def process(self) -> None:
         """
         Processing entry hook.
         """
         # pylint: disable=too-many-locals
 
-        self.get_dataframe(
-            method='onto', index=self.dataset['AERACK_buck_ppm'].index
-        )
+        self.get_dataframe(method="onto", index=self.dataset["AERACK_buck_ppm"].index)
 
-        buck_mirr_temp = self.d['AERACK_buck_mirr_temp'].copy()
-        buck_mirr_temp += 273.15
-        buck_mirr_temp.loc[buck_mirr_temp == 273.15] = np.nan
-        buck_mirr_temp.loc[buck_mirr_temp < 0] = np.nan
+        if self.d is None:
+            raise ValueError("No data loaded")
 
-        ps_rvsm = self.d['PS_RVSM']
+        buck_mirr_temp_s = self.d["AERACK_buck_mirr_temp"].copy()
+        buck_mirr_temp_s += 273.15
+        buck_mirr_temp_s.loc[buck_mirr_temp_s == 273.15] = np.nan
+        buck_mirr_temp_s.loc[buck_mirr_temp_s < 0] = np.nan
 
-        p = np.poly1d(self.dataset['BUCK'][::-1])
-        buck_mirr_temp = p(buck_mirr_temp)
+        ps_rvsm = self.d["PS_RVSM"]
+
+        p = np.poly1d(self.dataset["BUCK"][::-1])
+        buck_mirr_temp = p(buck_mirr_temp_s)
         buck_mirr_control = self.get_buck_mirror_ctl(buck_mirr_temp)
 
         # Potentially apply different calibrations for when frost or liquid is
         # on the mirror
         try:
-            p_ice = np.poly1d(self.dataset['BUCK_ICE'][::-1])
-            ice = (buck_mirr_control == 1)
+            p_ice = np.poly1d(self.dataset["BUCK_ICE"][::-1])
+            ice = buck_mirr_control == 1
             buck_mirr_temp[ice] = p_ice(buck_mirr_temp[ice])
         except KeyError:
             pass
         except Exception as e:
-            warnings.warn('Failed to apply buck ice calibration')
+            warnings.warn("Failed to apply buck ice calibration")
 
         try:
-            p_liq = np.poly1d(self.dataset['BUCK_LIQ'][::-1])
-            liq = (buck_mirr_control == 0)
+            p_liq = np.poly1d(self.dataset["BUCK_LIQ"][::-1])
+            liq = buck_mirr_control == 0
             buck_mirr_temp[liq] = p_liq(buck_mirr_temp[liq])
         except KeyError:
             pass
         except Exception as e:
-            warnings.warn('Failed to apply buck liquid calibration')
+            warnings.warn("Failed to apply buck liquid calibration")
 
-        buck_pressure = self.d['AERACK_buck_pressure']
-        buck_dewpoint_flag = self.d['AERACK_buck_dewpoint_flag']
-        buck_mirr_cln_flag = self.d['AERACK_buck_mirr_cln_flag']
-
+        buck_pressure = self.d["AERACK_buck_pressure"]
+        buck_dewpoint_flag = self.d["AERACK_buck_dewpoint_flag"]
+        buck_mirr_cln_flag = self.d["AERACK_buck_mirr_cln_flag"]
 
         vp_buck = self.calc_vp(buck_mirr_temp, buck_mirr_control)
 
@@ -711,9 +778,7 @@ class BuckCR2(PPBase):
             buck_mirr_temp, buck_pressure, buck_mirr_control
         )
 
-        vp_max = self.calc_vp(
-            buck_mirr_temp, buck_mirr_control, buck_unc_k=buck_unc_k
-        )
+        vp_max = self.calc_vp(buck_mirr_temp, buck_mirr_control, buck_unc_k=buck_unc_k)
 
         enhance = self.calc_enhance_factor(
             vp_buck, buck_mirr_temp, buck_pressure, buck_mirr_control
@@ -736,47 +801,50 @@ class BuckCR2(PPBase):
         _index = self.d.index
 
         # Create the Buck VMR output
-        vmr_buck = DecadesVariable(
-            pd.Series(vmr_buck, index=_index), name='VMR_CR2'
-        )
+        vmr_buck_o = DecadesVariable(pd.Series(vmr_buck, index=_index), name="VMR_CR2")
 
         # Create the Buck VMR uncertainty output
-        vmr_unc = DecadesVariable(
-            pd.Series(vmr_unc, index=_index), name='VMR_C_U'
-        )
+        vmr_unc = DecadesVariable(pd.Series(vmr_unc, index=_index), name="VMR_C_U")
 
         # Create the Buck TDEW output
-        tdew_cr2 = DecadesVariable(pd.Series(
-            buck_mirr_temp, index=_index), name='TDEW_CR2'
+        tdew_cr2 = DecadesVariable(
+            pd.Series(buck_mirr_temp, index=_index), name="TDEW_CR2"
         )
 
         # Create the Buck TDEW uncertainty output
-        tdew_c_u = DecadesVariable(
-            pd.Series(buck_unc_k, index=_index), name='TDEW_C_U'
-        )
+        tdew_c_u = DecadesVariable(pd.Series(buck_unc_k, index=_index), name="TDEW_C_U")
 
         # Create the Buck corrected TDEW output
         tdewcr2c = DecadesVariable(
-            pd.Series(tdew_corrected, index=_index), name='TDEWCR2C'
+            pd.Series(tdew_corrected, index=_index), name="TDEWCR2C"
         )
 
         # Add flag to outputs and add to the dataset
-        for dv in (vmr_buck, vmr_unc, tdew_cr2, tdew_c_u, tdewcr2c):
-            dv.flag.add_meaning(0, 'data good', 'Data are considered valid')
+        for dv in (vmr_buck_o, vmr_unc, tdew_cr2, tdew_c_u, tdewcr2c):
+
+            assert isinstance(dv.flag, DecadesClassicFlag)  # TODO: use generics
+
+            dv.flag.add_meaning(0, "data good", "Data are considered valid")
             dv.flag.add_meaning(
-                1, 'not controlling', ('The instrument is not controlling '
-                                       'on a dew point')
+                1,
+                "not controlling",
+                ("The instrument is not controlling " "on a dew point"),
             )
             dv.flag.add_meaning(
-                2, 'mirror contaminated', ('The instrument is reporting '
-                                           'contamination on the mirror')
+                2,
+                "mirror contaminated",
+                ("The instrument is reporting " "contamination on the mirror"),
             )
             dv.flag.add_meaning(
-                3, 'in balance cycle', ('The instrument is in a balance cycle '
-                                        'and not recording a dew point')
+                3,
+                "in balance cycle",
+                (
+                    "The instrument is in a balance cycle "
+                    "and not recording a dew point"
+                ),
             )
             dv.flag.add_meaning(
-                4, 'data missing', 'Data are expected but are not present'
+                4, "data missing", "Data are expected but are not present"
             )
 
             dv.flag.add_flag(flag)

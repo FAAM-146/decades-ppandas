@@ -11,7 +11,7 @@ class Cabin(QAMod):
 
         ts = fig.filter_in_flight(self.dataset["CAB_TEMP"].data)
         ax.plot(ts, label="Cabin Temperature")
-        ax.set_ylabel("Temperature ($^\circ$C)")
+        ax.set_ylabel(r"Temperature ($^\circ$C)")
         ax.legend(fontsize=6)
 
     def make_pressure_timeseries(self, fig: QAFigure) -> None:

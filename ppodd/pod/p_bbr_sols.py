@@ -4,7 +4,7 @@ processing stage for the broadband radiometers.
 """
 # pylint: disable=invalid-name
 
-from .base import PPBase, register_pp
+from .base import PPBase, register_pp, TestData
 from .shortcuts import _o, _z
 from ..decades import DecadesVariable
 
@@ -48,7 +48,7 @@ class BBRSols(PPBase):
     ]
 
     @staticmethod
-    def test():
+    def test() -> TestData:
         """
         Provide some dummy input for testing purposes.
         """

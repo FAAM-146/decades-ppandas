@@ -21,6 +21,8 @@ from ppodd.decades import flags
 
 DFJoinMethods = Literal["outerjoin", "onto"]
 TestDataValue = tuple[Literal["const"], Any] | tuple[Literal["data"], np.ndarray, int]
+TestData = dict[str, TestDataValue]
+                
 
 logger = logging.getLogger(__name__)
 
@@ -534,13 +536,13 @@ class PPBase(object):
 
                 _dvalues, _freq = val[1:]
                 _dt = datetime.timedelta(seconds=1 / _freq)
-                freq = "{}N".format((1 / _freq) * 1e9)
+                freq = "{}ns".format((1 / _freq) * 1e9)
 
                 start_time = datetime.datetime(*d.date.timetuple()[:3])
                 end_time = start_time + datetime.timedelta(seconds=len(_dvalues)) - _dt
 
                 hz1_index = pd.date_range(
-                    start=start_time, periods=len(_dvalues), freq="S"
+                    start=start_time, periods=len(_dvalues), freq="s"
                 )
                 full_index = pd.date_range(start=start_time, end=end_time, freq=freq)
 
@@ -552,5 +554,5 @@ class PPBase(object):
         return cls(d, test_mode=True)
 
     @staticmethod
-    def test() -> dict[str, TestDataValue]:
+    def test() -> TestData:
         raise NotImplementedError

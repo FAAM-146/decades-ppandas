@@ -104,7 +104,7 @@ class TemperatureQA(QAMod):
             pass
         temp_axis.set_xticklabels([])
         temp_axis.set_ylabel("Temp. (K)")
-        temp2_axis.set_ylabel("$\Delta$ Temp. (K)")
+        temp2_axis.set_ylabel(r"$\Delta$ Temp. (K)")
         temp_axis.legend(fontsize=6)
         temp2_axis.legend(fontsize=6)
         temp2_axis.set_ylim([-2, 2])

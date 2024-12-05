@@ -65,7 +65,7 @@ def get_baseline_flag(
 
     smoothed_diff = (
         (col_p / ref_p).rolling(64, center=True).mean()
-        - k.rolling(64, center=True).mean() # type: ignore - we're confident k is a series
+        - k.rolling(64, center=True).mean() # type: ignore #  we're confident k is a series
     )
 
     flag.loc[mask == 0] = 0

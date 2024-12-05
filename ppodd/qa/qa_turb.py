@@ -47,7 +47,7 @@ class TurbProbe(QAMod):
         ax.plot(aoa, label="AOA", alpha=0.6)
         ax.plot(aoss, label="AOSS", alpha=0.6)
         ax.legend(fontsize=6, loc="lower right")
-        ax.set_ylabel("Flow Angle ($^\circ$)")
+        ax.set_ylabel(r"Flow Angle ($^\circ$)")
 
     def make_w_timeseries(self, fig: QAFigure) -> None:
         ax = fig.timeseries_axes([0.1, 0.24, 0.8, 0.15], labelx=False)

@@ -8,7 +8,7 @@ from vocal.types import OptionalDerivedString
 from ..decades import DecadesVariable
 from ..decades.flags import DecadesBitmaskFlag
 from ..decades.attributes import DocAttribute
-from .base import PPBase, register_pp, TestDataValue
+from .base import PPBase, register_pp, TestData
 from .shortcuts import _o, _z, _c
 
 WOW_FLAG_BUFFER = 10
@@ -47,7 +47,7 @@ class TwoBOzone(PPBase):
     ]
 
     @staticmethod
-    def test() -> dict[str, TestDataValue]:
+    def test() -> TestData:
         return {
             "TWBOZO_conc": ("data", _o(100), 1),
             "TWBOZO_MFM": ("data", _o(100) * 1.2, 1),
@@ -114,7 +114,7 @@ class TwoBOzone(PPBase):
 
         wow.loc[
             [to + datetime.timedelta(seconds=i) for i in range(WOW_FLAG_BUFFER)]
-        ] = 1 # type: ignore
+        ] = 1  # type: ignore
         d["wow_flag"] = wow
 
     def get_mfm_flag(self):
