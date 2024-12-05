@@ -63,7 +63,7 @@ class CabinTemp(PPBase):
         self.get_dataframe()
         d = self.d
 
-        if d is not None:
+        if d is None:
             raise ValueError("No data to process")
 
         _cals = self.dataset["CALCABT"][::-1]
