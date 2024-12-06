@@ -49,7 +49,7 @@ class SignalRegister(PPBase):
         start = self.dataset[self.inputs[0]].index[0].round('1s')
         end = self.dataset[self.inputs[0]].index[-1].round('1s')
 
-        index = pd.date_range(start, end, freq='.5s')
+        index = pd.date_range(start, end, freq='500ms')
         self.get_dataframe(method='onto', index=index)
 
         heimann = self.d.PRTAFT_heimann_calib_flag.fillna(0).astype(int)
