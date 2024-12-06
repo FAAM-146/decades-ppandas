@@ -132,8 +132,8 @@ class ReportCompiler(object):
 \usepackage{pdflscape}
 \usepackage[a4paper,left=20mm,right=20mm,bottom=30mm]{geometry}
 %\setmainfont[Path=/usr/share/fonts/opentype/nexa]{nexalight}
-\newfontfamily\nexalight[Path=/usr/local/share/fonts/n/]{Nexa_Light.otf}
-\newfontfamily\nexabold[Path=/usr/local/share/fonts/n/]{Nexa_Bold.otf}
+\newfontfamily\nexalight[Path=/usr/share/fonts/opentype/nexa/]{nexalight.otf}
+\newfontfamily\nexabold[Path=/usr/share/fonts/opentype/nexa/]{nexabold.otf}
 \setmainfont{nexalight}
 
 \definecolor{FAAMDarkBlue}{HTML}{252243}
