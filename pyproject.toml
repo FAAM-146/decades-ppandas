@@ -9,13 +9,11 @@ readme = "README.md"
 python = ">=3.12,<3.13"
 pandas = "^2.2.3"
 scipy = "^1.14.1"
-vocal = {git = "https://github.com/FAAM-146/vocal"}
 faam-data = {git = "https://github.com/FAAM-146/faam-data", develop = true}
 lxml = "^5.3.0"
 pysolar = "^0.11"
 matplotlib = ">=3.8,<3.9"
 basemap = "^1.4.1"
-pyqt6 = "^6.7.1"
 fpdf = "^1.7.2"
 pylatex = "^1.4.2"
 cartopy = "^0.24.1"
@@ -27,6 +25,7 @@ sphinx = "^8.1.3"
 sphinx-rtd-theme = "^3.0.2"
 ruamel-yaml = "^0.18.6"
 gribgrab = {git = "https://github.com/davesproson/gribgrab"}
+faam-vocal = {git = "https://github.com/FAAM-146/vocal"}
 
 
 [tool.poetry.group.dev.dependencies]
