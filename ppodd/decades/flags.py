@@ -263,7 +263,7 @@ class DecadesClassicFlag(DecadesFlagABC):
         else:
             self._df.FLAG = np.atleast_1d(flag)
 
-        self._df.FLAG[self._df.FLAG < 0] = -128
+        self._df.loc[self._df.FLAG < 0, 'FLAG'] = -128
 
     @classmethod
     def from_nc_variable(cls, var: netCDF4.Variable, decadesvar: "DecadesVariable") -> "DecadesClassicFlag":  # type: ignore
