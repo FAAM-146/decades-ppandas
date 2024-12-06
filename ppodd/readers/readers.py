@@ -405,7 +405,7 @@ class TcpFileReader(FileReader):
     ) -> list[int]:
         if definition.identifier is None:
             raise ValueError("No identifier found in definition.")
-        rex = re.compile(b"$" + definition.identifier.encode())
+        rex = re.compile(rb"\$" + definition.identifier.encode())
         offsets = [i.start() for i in rex.finditer(rawdata)]
         return offsets
 
@@ -626,7 +626,7 @@ class CrioFileReader(TcpFileReader):
 class GinFileReader(TcpFileReader):
     time_variable = "time1"
     frequency = 50
-    tolerance = "10s"
+    tolerance = "10ms"
 
     def _get_definition(self, _file: DecadesFile) -> "CrioTcpDefintion":
         if _file.dataset is None:
