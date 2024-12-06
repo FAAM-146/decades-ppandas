@@ -773,27 +773,27 @@ class BuckCR2(PPBase):
         vp_buck = self.calc_vp(buck_mirr_temp, buck_mirr_control)
 
         buck_unc_k = self.calc_uncertainty(
-            buck_mirr_temp, buck_pressure.data, buck_mirr_control
+            buck_mirr_temp, buck_pressure.values, buck_mirr_control
         )
 
         vp_max = self.calc_vp(buck_mirr_temp, buck_mirr_control, buck_unc_k=buck_unc_k)
 
         enhance = self.calc_enhance_factor(
-            vp_buck, buck_mirr_temp, buck_pressure.data, buck_mirr_control
+            vp_buck, buck_mirr_temp, buck_pressure.values, buck_mirr_control
         )
 
-        vmr_buck = self.calc_vmr(vp_buck, enhance, buck_pressure.data)
+        vmr_buck = self.calc_vmr(vp_buck, enhance, buck_pressure.values)
 
-        vmr_max = self.calc_vmr(vp_max, enhance, buck_pressure.data)
+        vmr_max = self.calc_vmr(vp_max, enhance, buck_pressure.values)
 
         vmr_unc = vmr_max - vmr_buck
 
         tdew_corrected = self.calc_tdew_corrected(
-            buck_mirr_control, vmr_buck, ps_rvsm.data, enhance
+            buck_mirr_control, vmr_buck, ps_rvsm.values, enhance
         )
 
         # Get the flagging array
-        flag = self.get_flag(buck_mirr_cln_flag.data, buck_dewpoint_flag.data)
+        flag = self.get_flag(buck_mirr_cln_flag.values, buck_dewpoint_flag.values)
         flag[~np.isfinite(buck_mirr_temp)] = 4
 
         _index = self.d.index
