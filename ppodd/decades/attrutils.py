@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 import abc
-import datetime
 import logging
 import uuid
 
-from typing import TYPE_CHECKING, Callable, Optional
+from typing import TYPE_CHECKING, Callable
 
 import numpy as np
 import pandas as pd
@@ -18,7 +17,9 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-attribute_helpers: list[AttributeHelper]  = []
+attribute_helpers: list[AttributeHelper] = []
+
+
 def register_attribute_helper(cls):
     attribute_helpers.append(cls)
     return cls
@@ -29,9 +30,9 @@ class AttributeHelper(abc.ABC):
     An abstract class which should be implemented to produce an attrubute
     helper. Implementations should be decorated with @register_attribute_helper
     to ensure that they are attached to DecadesDatasets.
-    """   
+    """
 
-    def __init__(self, dataset: 'DecadesDataset') -> None:
+    def __init__(self, dataset: "DecadesDataset") -> None:
         self.dataset = dataset
         self.__post_init__()
 
@@ -39,21 +40,21 @@ class AttributeHelper(abc.ABC):
         pass
 
     @property
-    def attributes(self) -> list[property|str]:
-        _attrs: list[property|str] = []
+    def attributes(self) -> list[property | str]:
+        _attrs: list[property | str] = []
         for attr in dir(self):
-            if attr == 'attributes':
+            if attr == "attributes":
                 continue
             try:
                 if isinstance(getattr(type(self), attr), property):
                     _attrs.append(attr)
-                
+
             except AttributeError:
                 pass
 
         return _attrs
 
-    
+
 @register_attribute_helper
 class FlightTime(AttributeHelper):
     """
@@ -75,14 +76,14 @@ class FlightTime(AttributeHelper):
             return self._takeoff_time
 
         try:
-            wow = self.dataset['PRTAFT_wow_flag']() # type: ignore
+            wow = self.dataset["PRTAFT_wow_flag"]()  # type: ignore
         except KeyError:
             return None
 
         try:
-            self._takeoff_time = wow.diff().where(
-                wow.diff() == -1
-            ).dropna().tail(1).index[0] # type: ignore
+            self._takeoff_time = (
+                wow.diff().where(wow.diff() == -1).dropna().tail(1).index[0]
+            )  # type: ignore
         except IndexError:
             return None
 
@@ -100,25 +101,25 @@ class FlightTime(AttributeHelper):
             return self._landing_time
 
         try:
-            wow = self.dataset['PRTAFT_wow_flag']() # type: ignore
+            wow = self.dataset["PRTAFT_wow_flag"]()  # type: ignore
         except KeyError:
             return None
 
         try:
-            self._landing_time = wow.diff().where(
-                wow.diff() == 1
-            ).dropna().tail(1).index[0] # type: ignore
+            self._landing_time = (
+                wow.diff().where(wow.diff() == 1).dropna().tail(1).index[0]
+            )  # type: ignore
         except IndexError:
             return None
 
         return self._landing_time
-        
+
 
 @register_attribute_helper
 class IDProvider(AttributeHelper):
     """
     Provides a `data_id` attribute. This is expected to be set at some point
-    during the processing chain - canonically when the filename of the 
+    during the processing chain - canonically when the filename of the
     resulting output has been set.
     """
 
@@ -150,20 +151,19 @@ class UUIDProvider(AttributeHelper):
     def uuid(self) -> Callable[[], str]:
         """
         Provide a UUID, factored as a callable. If the dataset globals `id`
-        and `date_created` attributes are available, returns a UUID3 of 
+        and `date_created` attributes are available, returns a UUID3 of
         id+date_created, hashed with `NAMESPACE_DNS`, otherwise returns a
         random UUID4.
         """
+
         def _closure() -> str:
             try:
-                _id = self.dataset.globals['id']
-                _date = stringify_if_datetime(
-                    self.dataset.globals['date_created']
-                ) 
+                _id = self.dataset.globals["id"]
+                _date = stringify_if_datetime(self.dataset.globals["date_created"])
             except Exception:
                 return str(uuid.uuid4())
 
-            _string = f'{_date}{_id}'
+            _string = f"{_date}{_id}"
 
             return str(uuid.uuid3(uuid.NAMESPACE_DNS, _string))
 
@@ -173,7 +173,7 @@ class UUIDProvider(AttributeHelper):
 @register_attribute_helper
 class DurationProvider(AttributeHelper):
     """
-    Provides a `time_coverage_duration` atttibute, giving the length of the 
+    Provides a `time_coverage_duration` atttibute, giving the length of the
     dataset in ISO format (e.g. PT1H23M12S).
     """
 
@@ -184,23 +184,24 @@ class DurationProvider(AttributeHelper):
         between `TIME_MAX_CALL` and `TIME_MIN_CALL`, formatted in ISO8601
         timedelta format.
         """
+
         def _closure() -> str | None:
             try:
-                start = self.dataset.lazy['TIME_MIN_CALL']()
-                end = self.dataset.lazy['TIME_MAX_CALL']()
+                start = self.dataset.lazy["TIME_MIN_CALL"]()
+                end = self.dataset.lazy["TIME_MAX_CALL"]()
             except Exception:
-                logger.error('Could not calculate time_coverage_duration')
+                logger.error("Could not calculate time_coverage_duration")
                 return None
 
             if start is None or end is None:
-                return 'PT0S'
+                return "PT0S"
 
             delta = (end - start).total_seconds()
             hours = int(delta // 3600)
             minutes = int(delta // 60 % 60)
             seconds = int(delta % 60)
 
-            return f'PT{hours}H{minutes}M{seconds}S'
+            return f"PT{hours}H{minutes}M{seconds}S"
 
         return _closure
 
@@ -212,21 +213,18 @@ class GeoBoundsProvider(AttributeHelper):
     """
 
     def get_map(self, attr: str) -> dict[str, float]:
-        lower = getattr(self, f'{attr}_min')
-        upper = getattr(self, f'{attr}_max')
-        return {
-            'l': lower,
-            'u': upper
-        }
+        lower = getattr(self, f"{attr}_min")
+        upper = getattr(self, f"{attr}_max")
+        return {"l": lower, "u": upper}
 
-    def point(self, defstr: str) -> Optional[str]:
-        lon_id, lat_id  = list(defstr)
+    def point(self, defstr: str) -> str | None:
+        lon_id, lat_id = list(defstr)
 
-        lon_map = self.get_map('lon')
-        lat_map = self.get_map('lat')
+        lon_map = self.get_map("lon")
+        lat_map = self.get_map("lat")
 
         try:
-            return f'{lon_map[lon_id]:0.2f} {lat_map[lat_id]:0.2f}'
+            return f"{lon_map[lon_id]:0.2f} {lat_map[lat_id]:0.2f}"
         except TypeError:
             return None
 
@@ -237,81 +235,81 @@ class GeoBoundsProvider(AttributeHelper):
         self.lon_max = self.geospatial_lon_max
 
     @property
-    def geospatial_bounds(self) -> Optional[str]:
+    def geospatial_bounds(self) -> str | None:
         """
         Provides a WKT representation of the flight envelope, as a rectangle
         with upper and lower lat/lon bounds.
         """
         self.get_props()
-        p1 = self.point('ll')
-        p2 = self.point('lu')
-        p3 = self.point('uu')
-        p4 = self.point('ul')
+        p1 = self.point("ll")
+        p2 = self.point("lu")
+        p3 = self.point("uu")
+        p4 = self.point("ul")
 
         if None in (p1, p2, p3, p4):
             return None
 
         try:
-            return f'POLYGON(({p1}, {p2}, {p3}, {p4}, {p1}))'
+            return f"POLYGON(({p1}, {p2}, {p3}, {p4}, {p1}))"
         except TypeError:
             return None
-        
+
     @property
-    def geospatial_lat_min(self) -> Optional[float]:
+    def geospatial_lat_min(self) -> np.float32 | None:
         """
         Provides the lower latitude bound of the flight envelope
         """
         try:
-            return np.float32(self.dataset[self.dataset.lat].min()) # type: ignore
+            return np.float32(self.dataset[self.dataset.lat].min())
         except Exception:
             return None
-        
+
     @property
-    def geospatial_lat_max(self) -> Optional[float]:
+    def geospatial_lat_max(self) -> np.float32 | None:
         """
         Provides the upper latitude bound of the flight envelope
         """
         try:
-            return np.float32(self.dataset[self.dataset.lat].max()) # type: ignore
+            return np.float32(self.dataset[self.dataset.lat].max())
         except Exception:
             return None
-        
+
     @property
-    def geospatial_lon_min(self) -> Optional[float]:
+    def geospatial_lon_min(self) -> np.float32 | None:
         """
         Provides the lower longitude bound of the flight envelope
         """
         try:
-            return np.float32(self.dataset[self.dataset.lon].min()) # type: ignore
+            return np.float32(self.dataset[self.dataset.lon].min())
         except Exception:
             return None
-        
+
     @property
-    def geospatial_lon_max(self) -> Optional[float]:
+    def geospatial_lon_max(self) -> np.float32 | None:
         """
         Provides the upper longitude bound of the flight envelope
         """
         try:
-            return np.float32(self.dataset[self.dataset.lon].max()) # type: ignore
+            return np.float32(self.dataset[self.dataset.lon].max())
         except Exception:
             return None
-    
+
     @property
-    def geospatial_vertical_min(self) -> Optional[float]:
+    def geospatial_vertical_min(self) -> np.float32 | None:
         """
         Provides the lower altitude bound of the flight envelope
         """
         try:
-            return np.float32(self.dataset[self.dataset.alt].min()) # type: ignore
+            return np.float32(self.dataset[self.dataset.alt].min())
         except Exception:
             return None
-        
+
     @property
-    def geospatial_vertical_max(self) -> Optional[float]:
+    def geospatial_vertical_max(self) -> np.float32 | None:
         """
         Provides the upper altitude bound of the flight envelope
         """
         try:
-            return np.float32(self.dataset[self.dataset.alt].max()) # type: ignore
+            return np.float32(self.dataset[self.dataset.alt].max())
         except Exception:
             return None
