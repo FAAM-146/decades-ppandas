@@ -55,7 +55,7 @@ def main() -> None:
             compare_files(f, [i for i in data_files['output_files'] if os.path.basename(i) == f][0])
     
 
-def compare_files(file1: str, file2: str) -> bool:
+def compare_files(file1: str, file2: str) -> None:
     """
     Compare two netCDF files. This function will compare the two files and print out
     any differences between the two files. It leverages the vocal library to do the
@@ -64,9 +64,6 @@ def compare_files(file1: str, file2: str) -> bool:
     Args:
         file1: The first file to compare (processed)
         file2: The second file to compare (example)
-
-    Returns:
-        bool: True if the files are the same, False otherwise
     """
     
     # First run vocal to check metadata etc.
