@@ -504,12 +504,13 @@ cfunits = "^3.3.7"
 netcdf4 = "^1.7.2"
 pydantic = "^2.10.3"
 pyyaml = "^6.0.2"
+requests = "^2.32.3"
 
 [package.source]
 type = "git"
 url = "https://github.com/FAAM-146/vocal"
 reference = "HEAD"
-resolved_reference = "b6360c34f85a2296b068d2b6c2e5acffa90777d4"
+resolved_reference = "39bfef7ab80eb88d0a4d2797af5c528b125de03f"
 
 [[package]]
 name = "fonttools"
