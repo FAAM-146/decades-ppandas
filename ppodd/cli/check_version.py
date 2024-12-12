@@ -70,7 +70,7 @@ def compare_files(file1: str, file2: str) -> None:
     checker = ProductChecker('.')
     f1 = NetCDFReader(file1).dict
     f2 = NetCDFReader(file2).dict
-    checker.compare_container(f1, f2)
+    checker.compare_container(f2, f1)
     p.ignore_info = True
     p.ignore_warnings = True
     print_checks(checker, file1, file2)
