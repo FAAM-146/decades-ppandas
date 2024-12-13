@@ -1,5 +1,5 @@
 from __future__ import annotations
-
+import numpy as np
 import collections
 from collections.abc import ItemsView, KeysView, ValuesView
 import enum
@@ -167,8 +167,8 @@ class AttributesCollection(object):
                 __k = "_".join((key, _k))
                 self.add(Attribute(__k, _v))
             return
-
-        if value == ATTR_USE_EXAMPLE:
+    
+        if np.array_equal(np.atleast_1d(value), np.atleast_1d(ATTR_USE_EXAMPLE)):
             if self._definition is None:
                 warnings.warn("No vocabulary definition set, cannot use example value")
                 value = None
@@ -247,7 +247,7 @@ class AttributesCollection(object):
             if self.strict:
                 raise NonStandardAttributeError(_message)
 
-        if att.value == ATTR_USE_EXAMPLE:
+        if np.array_equal(np.atleast_1d(att.value),np.atleast_1d( ATTR_USE_EXAMPLE)):
             if self._definition is None:
                 warnings.warn("No vocabulary definition set, cannot use example value")
                 att = Attribute(att.key, None)
