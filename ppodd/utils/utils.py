@@ -462,11 +462,10 @@ def make_definition(pp_group: str, standard: str | ModuleType, one_hz: bool = Fa
         instance.process()
         instance.finalize()
         for var in instance.dataset.outputs:
-            if var.frequency == 1:
-                continue
             dim_name = f"sps{var.frequency:02d}"
             if dim_name not in dimensions_to_add and not one_hz:
-                dimensions_to_add[dim_name] = {"name": dim_name, "size": var.frequency}
+                if var.frequency != 1:
+                    dimensions_to_add[dim_name] = {"name": dim_name, "size": var.frequency}
             if var.write:
                 exists = len(
                     [i for i in _dataset["variables"] if i["meta"]["name"] == var.name]
