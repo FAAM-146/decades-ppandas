@@ -268,14 +268,14 @@ def zenodo_update_metadata(
 
     Args:
         token_str (str): The Zenodo access token
-        draft_id (str): The draft ID
+        draft (str): The Zenodo draft
         metadata (dict[str, Any]): The metadata to update
     """
     params = {"access_token": token_str}
-    draft_id = draft["id"]
+    draft_link = draft["links"]["self"]
 
     r = requests.put(
-        f"https://sandbox.zenodo.org/api/deposit/depositions/{draft_id}",
+        draft_link,
         params=params,
         data=json.dumps(metadata),
     )
@@ -293,10 +293,10 @@ def zenodo_publish_release(token_str: str, draft: dict[str, Any]) -> None:
         draft (str): The Zenodo draft
     """
     params = {"access_token": token_str}
-    draft_id = draft["id"]
+    publish_link = draft["links"]["publish"]
 
     r = requests.post(
-        f"https://sandbox.zenodo.org/api/deposit/depositions/{draft_id}/actions/publish",
+        publish_link,
         params=params,
     )
 
