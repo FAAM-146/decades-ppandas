@@ -237,7 +237,7 @@ class PRTTemperatures(PPBase):
 
         # Heating flag is at 1 Hz, so we need to fill the 32 Hz version
         heating_flag = (
-            d['PRTAFT_deiced_temp_flag'].fillna(method='pad').fillna(0)
+            d['PRTAFT_deiced_temp_flag'].ffill().fillna(0)
         )
 
         # Correction not required when heater is not on

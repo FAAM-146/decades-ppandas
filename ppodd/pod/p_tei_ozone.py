@@ -60,7 +60,7 @@ class TeiOzone(PPBase):
         d['FLOW_FLAG'] = 0
         d['WOW_FLAG'] = 0
 
-        d['TEIOZO_flag'].fillna(value='', inplace=True)
+        d['TEIOZO_flag'] = d['TEIOZO_flag'].fillna(value='')
         flag = np.array([i.lower() for i in d['TEIOZO_flag']])
         flag[flag == ''] = 3
 

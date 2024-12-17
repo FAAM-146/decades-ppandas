@@ -433,11 +433,15 @@ class PPBase(object):
                     _input_df = self.dataset[_input_name]()
 
                 # Interpolate onto the instance dataframe
-                df[_input_name] = (
-                    _input_df.reindex(index.union(_input_df.index).sort_values())
-                    .interpolate("linear", limit=limit)
-                    .loc[index]
+                df[_input_name] = _input_df.reindex(
+                    index.union(_input_df.index).sort_values()
                 )
+                
+                if df[_input_name].dtype == object:
+                    df[_input_name] = df[_input_name].ffill().bfill().loc[index]
+                else:
+                    df[_input_name] = df[_input_name].interpolate("time").loc[index]
+                
 
                 if _input_name in circular:
                     df[_input_name] %= 360
@@ -546,7 +550,11 @@ class PPBase(object):
                 )
                 full_index = pd.date_range(start=start_time, end=end_time, freq=freq)
 
-                data = pd.Series(_dvalues, hz1_index).reindex(full_index).interpolate()
+                data = pd.Series(_dvalues, hz1_index).reindex(full_index)
+                if data.dtype == object:
+                    data = data.ffill().bfill()
+                else:
+                    data = data.interpolate("time")
 
                 var = DecadesVariable(data, name=key, frequency=_freq)
                 d.add_input(var)

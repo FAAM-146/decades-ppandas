@@ -138,9 +138,9 @@ def flagged_avg(
     # Replace nans in the flag, either by backfilling or setting to a given
     # value
     if fill_nan is not None:
-        df[flag_col].fillna(fill_nan, inplace=True)
+        df[flag_col] = df[flag_col].fillna(fill_nan)
     else:
-        df[flag_col].bfill(inplace=True)
+        df[flag_col] = df[flag_col].bfill()
 
     # Identify coherent groups of a single flag value, and drop those not
     # corresponding to the falg value that we're interested in
@@ -220,7 +220,7 @@ def slrs(
     _df["WOW_IND"] = wow
     _df["PS_RVSM"] = ps
     _df["ROLL_GIN"] = roll
-    _df = _df.asfreq("1S")
+    _df = _df.asfreq("1s")
 
     # Drop an data on the ground
     _df.loc[_df.WOW_IND == 1] = np.nan
@@ -255,7 +255,7 @@ def slrs(
         # Add slrs to list, splitting if required
         _add_slrs(slrs, group)
 
-    return [i.asfreq("{0:0.0f}N".format(1e9 / freq)).index for i in slrs]
+    return [i.asfreq("{0:0.0f}ns".format(1e9 / freq)).index for i in slrs]
 
 
 class Either(object):
@@ -408,7 +408,7 @@ def make_definition(pp_group: str, standard: str | ModuleType, one_hz: bool = Fa
 
     dimensions_to_add = {}
     
-    file_pattern = 'core_faam_[0-9]{8}_v005_r[0-9]+_[c-z][0-9]{3}'
+    file_pattern = 'core_faam_{date}_v005_r{revision}_{flight_number}'
     if one_hz:
         file_pattern += '_1hz'
     file_pattern += '.nc'
@@ -462,6 +462,8 @@ def make_definition(pp_group: str, standard: str | ModuleType, one_hz: bool = Fa
         instance.process()
         instance.finalize()
         for var in instance.dataset.outputs:
+            if var.frequency == 1:
+                continue
             dim_name = f"sps{var.frequency:02d}"
             if dim_name not in dimensions_to_add and not one_hz:
                 dimensions_to_add[dim_name] = {"name": dim_name, "size": var.frequency}

@@ -126,7 +126,7 @@ class WVSS2RH(PPBase):
         wow = d['WOW_IND']
         wow.ffill(inplace=True)
         wow.bfill(inplace=True)
-        d['WVSS2F_VMR_C'].interpolate(limit=32, inplace=True)
+        d['WVSS2F_VMR_C'] = d['WVSS2F_VMR_C'].interpolate(limit=32)
 
         temp_smooth = temp.rolling(64).mean()
         press_smooth = press.rolling(64).mean()

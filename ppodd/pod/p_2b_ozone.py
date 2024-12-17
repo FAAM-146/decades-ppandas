@@ -114,7 +114,7 @@ class TwoBOzone(PPBase):
 
         wow.loc[
             [to + datetime.timedelta(seconds=i) for i in range(WOW_FLAG_BUFFER)]
-        ] = 1  # type: ignore
+        ] = True
         d["wow_flag"] = wow
 
     def get_mfm_flag(self):

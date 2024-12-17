@@ -113,7 +113,9 @@ class TecoSO2V2(PPBase):
         if self.test_mode:
             to = self.d.index[20]
 
-        wow.loc[[to + datetime.timedelta(seconds=i) for i in range(WOW_FLAG_BUFFER)]] = 1
+        wow.loc[
+            [to + datetime.timedelta(seconds=i) for i in range(WOW_FLAG_BUFFER)]
+        ] = True
         d['wow_flag'] = wow
 
     def get_status_flag(self):
@@ -140,13 +142,13 @@ class TecoSO2V2(PPBase):
         leaving_zero = leaving_zero[leaving_zero]
         
         for i in leaving_zero.index:
-            in_zero.loc[i:i+datetime.timedelta(seconds=ZERO_FLAG_BUFFER)] = 1
+            in_zero.loc[i:i+datetime.timedelta(seconds=ZERO_FLAG_BUFFER)] = True
             
         leaving_cal = (in_cal - in_cal.shift()) == -1
         leaving_cal = leaving_cal[leaving_cal]
 
         for i in leaving_cal.index:
-            in_cal.loc[i:i+datetime.timedelta(seconds=CAL_FLAG_BUFFER)] = 1
+            in_cal.loc[i:i+datetime.timedelta(seconds=CAL_FLAG_BUFFER)] = True
 
         self.d['zero_cal_flag'] = in_zero | in_cal
 
@@ -208,7 +210,7 @@ class TecoSO2V2(PPBase):
         flagged_avg(self.d, 'zero_flag', 'CHTSOO_concentration', out_name='zero',
                     interp=True, skip_start=CAL_FLUSH_START, skip_end=CAL_FLUSH_END)
 
-        self.d['zero'].ffill(inplace=True)
+        self.d['zero'] = self.d['zero'].ffill()
 
         conc = (self.d['CHTSOO_concentration'] - self.d['zero']) / sens
 

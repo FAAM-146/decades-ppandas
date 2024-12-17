@@ -268,7 +268,7 @@ class ThermistorV1Temperatures(PPBase):
 
         d.loc[d['MACHNO'] < 0.05, 'MACHNO_FLAG'] = 1
         d.loc[~np.isfinite(d['MACHNO']), 'MACHNO_FLAG'] = 1
-        d.loc[d['MACHNO'] < 0.05, 'MACHNO'] = 0.05
+        d.loc[d['MACHNO'] < 0.05, 'MACHNO'] = np.float32(0.05)
 
     def calc_heating_correction(self):
         """
@@ -298,7 +298,7 @@ class ThermistorV1Temperatures(PPBase):
 
         # Heating flag is at 1 Hz, so we need to fill the 32 Hz version
         heating_flag = (
-            d['PRTAFT_deiced_temp_flag'].fillna(method='pad').fillna(0)
+            d['PRTAFT_deiced_temp_flag'].ffill().bfill()
         )
 
         # Correction not required when heater is not on

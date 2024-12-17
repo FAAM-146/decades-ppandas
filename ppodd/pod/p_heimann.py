@@ -117,12 +117,12 @@ class Heimann(PPBase):
 
         # Back / forward fill nans in the signal register. (The signal register
         # is at 2 Hz, while the Heimann data is at 4 Hz)
-        self.d.SREG.bfill(inplace=True)
-        self.d.SREG.ffill(inplace=True)
+        self.d['SREG'] = self.d['SREG'].bfill()
+        self.d['SREG'] = self.d['SREG'].ffill()
 
         # Back / forward fill nans in WOW flag.
-        self.d.WOW_IND.bfill(inplace=True)
-        self.d.WOW_IND.ffill(inplace=True)
+        self.d['WOW_IND'] = self.d['WOW_IND'].bfill()
+        self.d['WOW_IND'] = self.d['WOW_IND'].ffill()
 
         # The Heiman calibration is signified by the least significant bit in
         # the signal register. This is somewhat legacy, but...
