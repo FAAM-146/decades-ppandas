@@ -30,7 +30,7 @@ ZENODO_METADATA = {
     }
 }
 
-ZENODO_CONCEPT_ID = "143243"
+ZENODO_CONCEPT_ID = {"sandbox": "143243", "live": "7105518"}
 
 
 class TagError(Exception):
@@ -402,6 +402,7 @@ def main(
     release_description: str = "",
     force_docs: bool = False,
     zenodo_publish: bool = False,
+    zenodo_sandbox: bool = False,
 ) -> None:
     """
     The main function for the publish script. This function will create a new release
@@ -451,6 +452,10 @@ def main(
         gen_docs = True
 
     if not no_interactive:
+        print("Use Zenodo sandbox [y/n]")
+        zenodo_str = input("> ")
+        zenodo_sandbox = zenodo_str.lower() == "y"
+
         print("Publish Zenodo draft immediately [y/n]")
         zenodo_str = input("> ")
         zenodo_publish = zenodo_str.lower() == "y"
@@ -506,9 +511,9 @@ def main(
                 token=zenodo_token,
                 files=pdf_files,
                 metadata=ZENODO_METADATA,
-                concept_id=ZENODO_CONCEPT_ID,
+                concept_id=ZENODO_CONCEPT_ID["sandbox" if zenodo_sandbox else "live"],
                 publish=zenodo_publish,
-                use_sandbox=True,
+                use_sandbox=zenodo_sandbox,
             )
             if not success:
                 print(f"{CROSS} Failed to create Zenodo release.")
@@ -555,6 +560,13 @@ def get_parser() -> argparse.Namespace:
         help="Publish the release to Zenodo rather than just creating a draft",
     )
 
+    parser.add_argument(
+        "--zenodo-sandbox",
+        action="store_true",
+        default=False,
+        help="Use the Zenodo sandbox rather than the live site",
+    )
+
     args = parser.parse_args()
 
     if args.no_interactive and not args.confirm_checks:
@@ -568,7 +580,7 @@ def get_parser() -> argparse.Namespace:
 
 if __name__ == "__main__":
     try:
-        args = get_parser() 
+        args = get_parser()
     except ValueError as e:
         print(f"Error: {e}")
         sys.exit(1)
