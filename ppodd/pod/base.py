@@ -424,23 +424,29 @@ class PPBase(object):
                     _tmp = self.dataset[_input_name]()
                     _data = _tmp.values.copy()
 
-                    _input_df = pd.DataFrame([], index=_tmp.index)
+                    _input_df = pd.Series(_data, index=_tmp.index)
 
-                    _input_df[_input_name] = _data
-                    _input_df[_input_name] = unwrap_array(_input_df[_input_name])
+                    _input_df = unwrap_array(_input_df)
 
                 else:
                     _input_df = self.dataset[_input_name]()
 
                 # Interpolate onto the instance dataframe
-                df[_input_name] = _input_df.reindex(
-                    index.union(_input_df.index).sort_values()
-                )
-                
-                if df[_input_name].dtype == object:
-                    df[_input_name] = df[_input_name].ffill().bfill().loc[index]
+                if _input_df.dtype == object:
+                    df[_input_name] = (
+                        _input_df
+                            .reindex(index.union(_input_df.index).sort_values())
+                            .ffill()
+                            .bfill()
+                            .loc[index]
+                    )
                 else:
-                    df[_input_name] = df[_input_name].interpolate("time").loc[index]
+                    df[_input_name] = (
+                        _input_df
+                            .reindex(index.union(_input_df.index).sort_values())
+                            .interpolate("time", limit=limit)
+                            .loc[index]
+                    )
                 
 
                 if _input_name in circular:
