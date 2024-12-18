@@ -753,6 +753,7 @@ class Nevzorov(PPBase):
                     col_p, ref_p, clear_air, K
                 )
                 fit_status = CORRECTION_STATUS.FROM_FLIGHT_DATA
+                logger.info(f"Fit from flight data for {ins}: IAS: {ias_fit}, PS: {ps_fit}")
 
             except Exception:
                 # If the fit has failed, we only want to write
@@ -799,12 +800,13 @@ class Nevzorov(PPBase):
                 )
                 self.add_output(_var)
 
-            w_c.flag.add_mask(
-                get_baseline_flag(col_p, ref_p, fitted_K, clear_air),
-                'poor clear air baseline',
-                ('The Nevzorov baseline correction is poor in clear air '
-                 f'(|dk| > {BASELINE_DEVIATION_LIMIT})')
-            )
+            if fit_status != CORRECTION_STATUS.FAILED:
+                w_c.flag.add_mask(
+                    get_baseline_flag(col_p, ref_p, fitted_K, clear_air),
+                    'poor clear air baseline',
+                    ('The Nevzorov baseline correction is poor in clear air '
+                    f'(|dk| > {BASELINE_DEVIATION_LIMIT})')
+                )
 
             if _vanetype in ('1t1l2r', 'all'):
                 if ins in ('lwc1', 'lwc2'):
