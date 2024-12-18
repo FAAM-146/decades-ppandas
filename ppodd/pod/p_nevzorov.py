@@ -330,13 +330,13 @@ class Nevzorov(PPBase):
     vane fitted to the aircraft. If an old-style ``1T1L2R`` vane is fitted,
     then the default outputs are 
     `NV_TWC_C`, `NV_LWC_C`, `NV_TWC_COL_P`, `NV_LWC_COL_P`, `NV_TWC_REF_P`, `NV_LWC_REF_P`.
-    If a new-style ``1T2L1R` vane is fitted, then the default outputs are 
+    If a new-style ``1T2L1R`` vane is fitted, then the default outputs are 
     `NV_TWC_C`, `NV_LWC1_C`, `NV_LWC2_C`, `NV_TWC_COL_P`, `NV_LWC1_COL_P`, 
     `NV_LWC2_COL_P`, `NV_REF_P`.
 
     .. note::
 
-        Prior to software version ?? this module output uncorrected water
+        Prior to software version 24.6.0 this module output uncorrected water
         content data (`NV_TWC_U`, `NV_LWC_U`, `NV_LWC1_U`, `NV_LWC2_U`), instead
         of the element powers. These outputs are no longer produced.
     """
