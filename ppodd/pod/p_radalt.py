@@ -70,7 +70,7 @@ class RadAlt(PPBase):
         d.loc[d['HGT_RADR'] <= RADALT_MIN, 'RANGE_FLAG'] = 3
 
         wow = d['WOW_IND'].bfill().ffill()
-        d.loc[wow == 0, 'WOW_FLAG'] = 1
+        d.loc[wow == 1, 'WOW_FLAG'] = 1
 
     def process(self):
         """
@@ -91,7 +91,7 @@ class RadAlt(PPBase):
         )
 
         dv.flag.add_mask(
-            d['WOW_IND'], flags.WOW,
+            d['WOW_FLAG'], flags.WOW,
             ('The aircraft is on the ground, as indicated by the weight '
              'on wheels flag.')
         )

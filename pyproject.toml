@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ppodd"
-version = "24.6.0"
+version = "24.7.0"
 description = "Postprocessing of DECADES Data"
 authors = ["Dave Sproson <dave.sproson@faam.ac.uk>"]
 readme = "README.md"
