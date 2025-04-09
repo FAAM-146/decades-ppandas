@@ -318,7 +318,10 @@ class DecadesVariable(object):
                     raise ValueError(
                         "No frequency given and no dataframe to infer from"
                     )
-                _freq = pd.infer_freq(df.index)  # type: ignore  # we know it's a DatetimeIndex
+                try:
+                    _freq = pd.infer_freq(df.index)  # type: ignore  # we know it's a DatetimeIndex
+                except TypeError:
+                    _freq = None
 
         if df is None and _freq is None:
             raise ValueError("No dataframe to infer frequency from")

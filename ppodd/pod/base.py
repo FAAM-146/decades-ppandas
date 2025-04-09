@@ -177,10 +177,11 @@ class PPBase(object):
             assert isinstance(output.flag, DecadesClassicFlag)
 
             values = sorted(list(output.flag.cfattrs["flag_values"]))
-            if not values:
+            if max(values) <= 0:
                 flag_value = 1
             else:
                 flag_value = int(values[-1]) + 1
+
             output.flag.add_meaning(
                 flag_value,
                 "flagged in qc",
