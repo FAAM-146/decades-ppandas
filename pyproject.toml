@@ -25,6 +25,7 @@ dependencies = [
     "gribgrab",
     "faam-vocal",
     "sphinxnotes-strike>=1.2.1,<2",
+    "sqlalchemy>=2.0.41",
 ]
 
 [dependency-groups]
