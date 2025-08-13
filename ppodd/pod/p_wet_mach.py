@@ -2,18 +2,19 @@
 Provides a processing module which calculates a mach number for moist
 air.
 """
+
 # pylint: disable=invalid-name
 import numpy as np
 import pandas as pd
 
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..decades import flags
-from ..utils.constants import MOL_MASS_H20, MOL_MASS_DRY_AIR, c_pd, c_vd
+
 from .base import PPBase, register_pp
 from .shortcuts import _o
 
 
-@register_pp('core')
+@register_pp("core")
 class WetMach(PPBase):
     r"""
     This module calculate a moist-air Mach number using RVSM pressure
@@ -61,13 +62,15 @@ class WetMach(PPBase):
     """
 
     inputs = [
-        'WVSS2F_VMR_C',
-        'PS_RVSM',
-        'Q_RVSM',
-        'WOW_IND',
-        'SH_UNC_GAMMA',
-        'MACH_UNC_BAE',
-        'MACH_UNC_HUMIDITY'
+        "PS_RVSM",
+        "Q_RVSM",
+        "CP",
+        "CV",
+        "WVSS2F_VMR_C",  # Volume mixing ratio from WVSSII (corrected)
+        "WOW_IND",
+        "SH_UNC_GAMMA",
+        "MACH_UNC_BAE",
+        "MACH_UNC_HUMIDITY",
     ]
 
     @staticmethod
@@ -77,13 +80,13 @@ class WetMach(PPBase):
         """
         n = 100
         return {
-            'WVSS2F_VMR_C': ('data', 100 * _o(n), 1),
-            'PS_RVSM': ('data', 850 * _o(n), 32),
-            'Q_RVSM': ('data', 70 * _o(n), 32),
-            'WOW_IND': ('data', 0 * _o(n), 1),
-            'SH_UNC_GAMMA': ('const', [1E-5, 0, 0]),
-            'MACH_UNC_BAE': ('const', 0.005),
-            'MACH_UNC_HUMIDITY': ('const', [1E-5, 0, 0])
+            "WVSS2F_VMR_C": ("data", 100 * _o(n), 1),
+            "PS_RVSM": ("data", 850 * _o(n), 32),
+            "Q_RVSM": ("data", 70 * _o(n), 32),
+            "WOW_IND": ("data", 0 * _o(n), 1),
+            "SH_UNC_GAMMA": ("const", [1e-5, 0, 0]),
+            "MACH_UNC_BAE": ("const", 0.005),
+            "MACH_UNC_HUMIDITY": ("const", [1e-5, 0, 0]),
         }
 
     def declare_outputs(self):
@@ -91,38 +94,20 @@ class WetMach(PPBase):
         Declare outputs created by this module.
         """
         self.declare(
-            'MACH',
-            units='1',
+            "MACH",
+            units="1",
             frequency=32,
-            long_name='Moist air Mach derived from WVSS-II(F) and RVSM',
-            write=False
-        )
-
-        self.declare(
-            'MACH_CU',
-            units='1',
-            frequency=32,
-            long_name='Uncertainty estimate for moist-air Mach',
+            long_name="Moist air Mach derived from WVSS-II(F) and RVSM",
             write=False,
-            coverage_content_type='auxiliaryInformation'
         )
 
         self.declare(
-            'SH_GAMMA',
-            units='1',
+            "MACH_CU",
+            units="1",
             frequency=32,
-            long_name=('Ratio of specific heats at constant pressure and '
-                       'constant pressure'),
-            write=False
-        )
-
-        self.declare(
-            'SH_GAMMA_CU',
-            units='1',
-            frequency=32,
-            long_name='Uncertainty estimate for SH_GAMMA',
+            long_name="Uncertainty estimate for moist-air Mach",
             write=False,
-            coverage_content_type='auxiliaryInformation'
+            coverage_content_type="auxiliaryInformation",
         )
 
     def process(self):
@@ -134,67 +119,41 @@ class WetMach(PPBase):
 
         q = d.Q_RVSM
         p = d.PS_RVSM
+        c_p = d.CP.interpolate(limit=32)
+        c_v = d.CV.interpolate(limit=32)
         wvss2_vmr = d.WVSS2F_VMR_C.interpolate(limit=32)
+
         wow = d.WOW_IND.bfill()
 
-        # epsilon is the mass ratio of water and dry air
-        eps = MOL_MASS_H20 / MOL_MASS_DRY_AIR
-
-        # Convert wvss-ii from ppmv to a ratio
-        vmr_ratio = wvss2_vmr * 1e-6
-
-        # Calculate specific humidity from the vmr ratio
-        qh = eps * vmr_ratio / (eps * vmr_ratio + 1)
-
-        # Specific heats at constant pressure and volume
-        c_p = c_pd * (1 + qh * ((8 / (7 * eps)) - 1))
-        c_v = c_vd * (1 + qh * ((6 / (5 * eps)) - 1))
-
         R_a = c_p - c_v
-        gamma = c_p / c_v
 
         # Moist mach number
-        mach = np.sqrt(
-            (2 * c_v / R_a) * (((p + q) / p) ** (R_a / c_p) - 1)
-        )
+        mach = np.sqrt((2 * c_v / R_a) * (((p + q) / p) ** (R_a / c_p) - 1))
 
-        mach_var = DecadesVariable(
-            mach, name='MACH', flag=DecadesBitmaskFlag
-        )
+        mach_var = DecadesVariable(mach, name="MACH", flag=DecadesBitmaskFlag)
 
         # Simple flag for aircraft on the ground
         mach_var.flag.add_mask(
-            wow==1, 'aircraft on ground',
-            ('The aircraft is on the ground, as indicated by the '
-             'weight-on-wheels indicator')
+            wow == 1,
+            "aircraft on ground",
+            (
+                "The aircraft is on the ground, as indicated by the "
+                "weight-on-wheels indicator"
+            ),
         )
         self.add_output(mach_var)
 
-        # Create gamma output
-        gamma_var = DecadesVariable(
-            gamma, name='SH_GAMMA', flag=DecadesBitmaskFlag
-        )
-        self.add_output(gamma_var)
-
-
         # Uncertainties
-        u_gamma = np.polyval(self.dataset['SH_UNC_GAMMA'][::-1], wvss2_vmr)
-        u_mach_bae = self.dataset['MACH_UNC_BAE']
+        u_mach_bae = self.dataset["MACH_UNC_BAE"]
         u_mach_humidity = mach * np.polyval(
-            self.dataset['MACH_UNC_HUMIDITY'][::-1], wvss2_vmr
+            self.dataset["MACH_UNC_HUMIDITY"][::-1], wvss2_vmr
         )
-        u_mach = np.sqrt(u_mach_bae**2. + u_mach_humidity**2.)
-
-        # Create gamma uncertainty output
-        u_gamma_out = DecadesVariable(
-            pd.Series(u_gamma, index=wvss2_vmr.index),
-            name='SH_GAMMA_CU', flag=DecadesBitmaskFlag
-        )
-        self.add_output(u_gamma_out)
+        u_mach = np.sqrt(u_mach_bae**2.0 + u_mach_humidity**2.0)
 
         # Create mach uncertainty output
         u_mach_out = DecadesVariable(
             pd.Series(u_mach, index=wvss2_vmr.index),
-            name='MACH_CU', flag=DecadesBitmaskFlag
+            name="MACH_CU",
+            flag=DecadesBitmaskFlag,
         )
         self.add_output(u_mach_out)

@@ -9,7 +9,6 @@ details.
 import numpy as np
 
 from ppodd.decades import DecadesVariable, DecadesBitmaskFlag
-from ppodd.utils.calcs import sp_mach
 from ppodd.utils.constants import SPEED_OF_SOUND, ICAO_STD_TEMP, ICAO_STD_PRESS
 from ppodd.pod.base import PPBase, register_pp, TestData
 from ppodd.pod.shortcuts import _l, _o
@@ -49,8 +48,9 @@ class AirSpeed(PPBase):
 
     inputs = [
         "TASCORR",  #  Airspeed correction factor (const)
-        "PS_RVSM",  #  Static Pressure (derived)
-        "Q_RVSM",  #  Pitot-static pressure (derived)
+        "PRTAFT_ind_air_speed",  # indicated airspeed from the RVSM system (DLU)
+        "MACH",  #  Mach number (derived)
+        "SPEED_OF_SOUND",  #  Speed of sound (derived)
         "TAT_DI_R",  #  Deiced true air temp (derived)
     ]
 
@@ -76,9 +76,7 @@ class AirSpeed(PPBase):
             "IAS_RVSM",
             units="m s-1",
             frequency=32,
-            long_name=(
-                "Indicated air speed from the aircraft RVSM " "(air data) system"
-            ),
+            long_name=("Computed air speed from the aircraft RVSM (air data) system"),
         )
 
         self.declare(
@@ -102,7 +100,7 @@ class AirSpeed(PPBase):
         if d is None:
             raise ValueError("Instance dataframe is None")
 
-        ias = SPEED_OF_SOUND * d["MACHNO"] * np.sqrt(d["PS_RVSM"] / ICAO_STD_PRESS)
+        ias = d["PRTAFT_ind_air_speed"]
 
         d["IAS_RVSM"] = ias
 
@@ -125,18 +123,6 @@ class AirSpeed(PPBase):
 
         d["TAS_RVSM"] = tas
 
-    def calc_mach(self) -> None:
-        """
-        Calculate the mach number from the RVSM air data computer. Store this
-        in the instance dataframe as MACHNO.
-        """
-        d = self.d
-
-        if d is None:
-            raise ValueError("Instance dataframe is None")
-
-        d["MACHNO"], d["MACHNO_FLAG"] = sp_mach(d["Q_RVSM"], d["PS_RVSM"], flag=True)
-
     def process(self) -> None:
         """
         Module entry hook.
@@ -150,7 +136,6 @@ class AirSpeed(PPBase):
 
         # Run required calculations in turn. These are stored in instance
         # state.
-        self.calc_mach()
         self.calc_ias()
         self.calc_tas()
 
