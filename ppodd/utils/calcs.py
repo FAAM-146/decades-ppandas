@@ -9,7 +9,7 @@ def sp_mach(psp, sp, flag=False):
     PITOT_MAX = 125
 
     if len(psp) != len(sp):
-        raise ValueError('Inputs are not the same length')
+        raise ValueError("Inputs are not the same length")
 
     _flag = np.zeros_like(psp)
 
@@ -18,11 +18,11 @@ def sp_mach(psp, sp, flag=False):
     _flag[psp > PITOT_MAX] = 2
     _flag[psp < PITOT_MIN] = 2
 
-    _flag[psp/sp < 0] = 3
+    _flag[psp / sp < 0] = 3
 
-    mach = np.sqrt(5 * ((1 + psp / sp)**(2 / 7) - 1))
+    mach = np.sqrt(5 * ((1 + psp / sp) ** (2 / 7) - 1))
 
-    _flag[mach > .9] = 3
+    _flag[mach > 0.9] = 3
     _flag[mach <= 0] = 3
 
     if flag:
@@ -31,10 +31,15 @@ def sp_mach(psp, sp, flag=False):
     return mach
 
 
-def true_air_temp(iat, mach, recovery_factor=1, flag=False):
+def true_air_temp(
+    iat: np.ndarray,
+    mach: np.ndarray,
+    recovery_factor: float = 1.0,
+    flag: bool = False,
+) -> np.ndarray | tuple[np.ndarray, np.ndarray]:
 
     if len(iat) != len(mach):
-        raise ValueError('Inputs are not the same length')
+        raise ValueError("Inputs are not the same length")
 
     _flag = np.zeros_like(iat)
 
@@ -45,5 +50,8 @@ def true_air_temp(iat, mach, recovery_factor=1, flag=False):
     return tat
 
 
-def true_air_temp_variable(iat, mach, eta=0, gamma=1):
-    return iat * ((1. - eta) * (1. + ((gamma - 1.) / 2.) * mach**2.))**(-1.)
+def true_air_temp_variable(
+    iat: np.ndarray, mach: np.ndarray, eta: np.ndarray, gamma: np.ndarray
+) -> np.ndarray:
+
+    return iat * ((1.0 - eta) * (1.0 + ((gamma - 1.0) / 2.0) * mach**2.0)) ** (-1.0)
