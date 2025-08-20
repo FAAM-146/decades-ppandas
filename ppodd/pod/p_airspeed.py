@@ -6,44 +6,42 @@ details.
 
 # pylint: disable=invalid-name
 
-import numpy as np
-
 from ppodd.decades import DecadesVariable, DecadesBitmaskFlag
-from ppodd.utils.constants import SPEED_OF_SOUND, ICAO_STD_TEMP, ICAO_STD_PRESS
 from ppodd.pod.base import PPBase, register_pp, TestData
-from ppodd.pod.shortcuts import _l, _o
+from ppodd.pod.shortcuts import _l
+from ppodd.utils.conversions import knots_to_ms
 
 
 @register_pp("core")
 class AirSpeed(PPBase):
     r"""
-    Calculates aircraft indicated and true air speeds. Mach number, :math:`M`,
-    is calculated from static and dynamic pressures (here :math:`p` and
-    :math:`q`, derived as ``PS_RVSM`` and ``Q_RVSM``, in processing
-    module ``p_rvsm.py``) using the standard calculation ``sp_mach`` defined in
-    ppodd.utils.calcs:
+    Calculates aircraft indicated and true air speeds.
+
+    Indicated airspeed, IAS (note that we refer to this as indicated airspeed, but
+    in aviation terms it is more accurately described as calibrated or computed airspeed),
+    is read from the air data computer over the ARINC-429 bus. These data are stored as
+    knots * 32, so the indicated airspeed is given as
 
     .. math::
-        M = \sqrt{5\left(1 + \frac{q}{p}\right)^{2/7} - 1}
+        \text{IAS} = \text{IAS}_{\text{ARINC}} \times \frac{0.514444}{32},
 
-    Indicated airspeed is then given as
-
-    .. math::
-        \text{IAS} = V_s M \sqrt{\frac{p}{P_\text{std}}},
-
-    where :math:`V_s` is the speed of sound at standard temperature and
-    pressure, and :math:`P_{std}` is the surface pressure in the ICAO standard
-    atmosphere.
+    where :math:`\text{IAS}_{\text{ARINC}}` is the value recorded from the ARINC bus. The
+    conversion from knots to meters per second is done using the function `knots_to_ms` from
+    `ppodd.utils.conversions`.
 
     True airspeed is given as
 
     .. math::
-        \text{TAS} = T_c V_s M \sqrt{\frac{T_\text{di}}{T_\text{std}}},
+        \text{TAS} = T_c M a
 
     where :math:`T_c` is a TAS correction term, defined in the flight constants,
-    :math:`T_\text{di}` is the temperature from the de-iced temperature sensor,
-    and :math:`T_\text{std}` is the surface temperature in the ICAO standard
-    atmosphere.
+    :math:`M` is the Mach number, and :math:`a` is the local speed of sound.
+
+    See also:
+        * :ref:`WetMach`
+        * :ref:`DryMach`
+        * :ref:`SpeedOfSound`
+
     """
 
     inputs = [
@@ -51,7 +49,6 @@ class AirSpeed(PPBase):
         "PRTAFT_ind_air_speed",  # indicated airspeed from the RVSM system (DLU)
         "MACH",  #  Mach number (derived)
         "SPEED_OF_SOUND",  #  Speed of sound (derived)
-        "TAT_DI_R",  #  Deiced true air temp (derived)
     ]
 
     @staticmethod
@@ -61,9 +58,9 @@ class AirSpeed(PPBase):
         """
         return {
             "TASCORR": ("const", 1.0),
-            "PS_RVSM": ("data", _l(1000, 300, 100), 32),
-            "Q_RVSM": ("data", 250.0 * _o(100), 32),
-            "TAT_DI_R": ("data", _l(290, 250, 100), 32),
+            "MACH": ("data", _l(0.3, 0.8, 100), 32),
+            "SPEED_OF_SOUND": ("data", _l(340, 350, 100), 32),
+            "PRTAFT_ind_air_speed": ("data", _l(250 * 32, 300 * 32, 100), 32),
         }
 
     def declare_outputs(self) -> None:
@@ -100,7 +97,7 @@ class AirSpeed(PPBase):
         if d is None:
             raise ValueError("Instance dataframe is None")
 
-        ias = d["PRTAFT_ind_air_speed"]
+        ias = knots_to_ms(d["PRTAFT_ind_air_speed"] / 32)
 
         d["IAS_RVSM"] = ias
 
@@ -114,12 +111,7 @@ class AirSpeed(PPBase):
         if d is None:
             raise ValueError("Instance dataframe is None")
 
-        tas = (
-            self.dataset["TASCORR"]
-            * SPEED_OF_SOUND
-            * d["MACHNO"]
-            * np.sqrt(d["TAT_DI_R"] / ICAO_STD_TEMP)
-        )
+        tas = self.dataset["TASCORR"] * d["SPEED_OF_SOUND"] * d["MACH"]
 
         d["TAS_RVSM"] = tas
 
@@ -149,12 +141,12 @@ class AirSpeed(PPBase):
                 _var.flag, DecadesBitmaskFlag
             )  # TODO: shouldn't need this with generics
 
-            _var.flag.add_mask(
-                self.d["MACHNO_FLAG"],
-                "mach out of range",
-                (
-                    "Either static or dynamic pressure out of acceptable limits "
-                    "during calculation of mach number."
-                ),
-            )
+            # _var.flag.add_mask(
+            #     self.d["MACHNO_FLAG"],
+            #     "mach out of range",
+            #     (
+            #         "Either static or dynamic pressure out of acceptable limits "
+            #         "during calculation of mach number."
+            #     ),
+            # )
             self.add_output(_var)
