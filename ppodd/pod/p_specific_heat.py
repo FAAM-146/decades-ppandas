@@ -8,19 +8,45 @@ from ..utils.constants import MOL_MASS_H20, MOL_MASS_DRY_AIR, c_pd, c_vd
 
 
 @register_pp("core")
-class SpecificHeat(PPBase):
+class WetSpecificHeat(PPBase):
     r"""
-    Calculate the ratio of specific heats at constant pressure and constant
-    volume, :math:`\gamma`, using the moist-air Mach number, :math:`M`, and
+    Calculate the specific heats at constant pressure, :math:`c_p` and constant
+    volume, :math:`c_v`, and the ratio of specific heats, :math:`\gamma`, using the moist-air Mach number, :math:`M`, and
     the volume mixing ratio from the WVSSII.
+
+    The specific humidity, :math:`q_h`, is given by
+
+    .. math::
+        q_h = \frac{\epsilon \cdot \text{VMR}}{1 + \epsilon \cdot \text{VMR}},
+
+    where :math:`\epsilon` is the ratio of the molecular mass of water to that of dry air,
+    and :math:`\text{VMR}` is the volume mixing ratio.
+
+    Specific heat at constant pressure, :math:`c_p`, is given by
+
+    .. math::
+        c_p = c_{pd} \cdot (1 + q_h \cdot \left(\frac{8}{7} - 1\right)),
+
+    where :math:`c_{pd}` is the specific heat of dry air at constant pressure.
+
+    Specific heat at constant volume, :math:`c_v`, is given by
+
+    .. math::
+        c_v = c_{vd} \cdot (1 + q_h \cdot \left(\frac{6}{5} - 1\right)),
+
+    where :math:`c_{vd}` is the specific heat of dry air at constant volume.
 
     The ratio of specific heats is given by
 
     .. math::
-        \gamma = \frac{c_p}{c_v} = 1 + \frac{q_h}{\epsilon} \left(\frac{8}{7} - 1\right),
+        \gamma = \frac{c_p}{c_v} = 1 + \frac{q_h}{\epsilon} \left(\frac{8}{7} - 1\right).
 
-    where :math:`q_h` is the specific humidity and :math:`\epsilon` is the
-    ratio of the molecular mass of water to that of dry air.
+    The uncertainty in the ratio of specific heats, :math:`\sigma_\gamma`, is given
+    as polynomial coefficients for VMR in the flight constants file, and is evaluated
+    here to produce an uncertainty estimate.
+
+    See also:
+        * :ref:`WVSS2Calibrated`
     """
 
     inputs = [
@@ -35,9 +61,9 @@ class SpecificHeat(PPBase):
         """
         return {
             "WVSS2F_VMR_C": ("data", _l(0.001, 0.005, 100), 32),
-            "SH_UNC_GAMMA": ("data", _l(0.01, 0.02, 100), 32),
             "MACH_UNC_BAE": ("data", _l(0.001, 0.002, 100), 32),
-            "MACH_UNC_HUMIDITY": ("data", _l(0.001, 0.002, 100), 32),
+            "SH_UNC_GAMMA": ("const", [6.39e-05, 5.68e-08, -3.71e-12, 9.42e-17]),
+            "MACH_UNC_HUMIDITY": ("const", [3.21e-05, 1.59e-08, -8.9e-13, 2.1e-17]),
         }
 
     def declare_outputs(self) -> None:
@@ -78,7 +104,7 @@ class SpecificHeat(PPBase):
         )
 
     def process(self):
-        wvss2_vmr = self.d.WVSS2F_VMR_C
+        wvss2_vmr = self.dataset["WVSS2F_VMR_C"]()
 
         # epsilon is the mass ratio of water and dry air
         eps = MOL_MASS_H20 / MOL_MASS_DRY_AIR
