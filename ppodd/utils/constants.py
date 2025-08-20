@@ -12,6 +12,10 @@ ICAO_STD_TEMP = 288.15
 # ICAO Standard pressure at surface (hPa)
 ICAO_STD_PRESS = 1013.25
 
+# ICAO Standard density at zero altitude (kg/m^3)
+ICAO_STD_DENSITY = 1.225
+
+
 # Stefan-Boltzmann constant
 STEF_BOLTZ = 5.67e-8
 
@@ -26,10 +30,10 @@ R_v = 461.5
 
 # Specific heats of dry air (d) and water vapour (v) at constant pressure (p)
 # and constant volume (v)
-c_vd = (5. / 2.) * R_d
-c_pd = (7. / 2.) * R_d
-c_vv = 3. * R_v
-c_pv = 4. * R_v
+c_vd = (5.0 / 2.0) * R_d
+c_pd = (7.0 / 2.0) * R_d
+c_vv = 3.0 * R_v
+c_pv = 4.0 * R_v
 
 # Molecular mass of chemical species
 MOL_MASS_H20 = 18.0185
