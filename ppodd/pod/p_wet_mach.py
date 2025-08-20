@@ -64,8 +64,8 @@ class WetMach(PPBase):
     inputs = [
         "PS_RVSM",
         "Q_RVSM",
-        "CP",
-        "CV",
+        "C_P",
+        "C_V",
         "WVSS2F_VMR_C",  # Volume mixing ratio from WVSSII (corrected)
         "WOW_IND",
         "SH_UNC_GAMMA",
@@ -80,9 +80,11 @@ class WetMach(PPBase):
         """
         n = 100
         return {
-            "WVSS2F_VMR_C": ("data", 100 * _o(n), 1),
             "PS_RVSM": ("data", 850 * _o(n), 32),
             "Q_RVSM": ("data", 70 * _o(n), 32),
+            "C_P": ("data", 1005 * _o(n), 32),
+            "C_V": ("data", 718 * _o(n), 32),
+            "WVSS2F_VMR_C": ("data", 100 * _o(n), 32),
             "WOW_IND": ("data", 0 * _o(n), 1),
             "SH_UNC_GAMMA": ("const", [1e-5, 0, 0]),
             "MACH_UNC_BAE": ("const", 0.005),
@@ -119,8 +121,8 @@ class WetMach(PPBase):
 
         q = d.Q_RVSM
         p = d.PS_RVSM
-        c_p = d.CP.interpolate(limit=32)
-        c_v = d.CV.interpolate(limit=32)
+        c_p = d.C_P.interpolate(limit=32)
+        c_v = d.C_V.interpolate(limit=32)
         wvss2_vmr = d.WVSS2F_VMR_C.interpolate(limit=32)
 
         wow = d.WOW_IND.bfill()
