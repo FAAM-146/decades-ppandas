@@ -3,6 +3,7 @@ Provides a post processing module for data from the RVSM (air data computer)
 system, recorded on the rear core console via the ARINC 429 data bus. See the
 class docstring for more information.
 """
+
 # pylint: disable=invalid-name
 import datetime
 import pandas as pd
@@ -20,7 +21,7 @@ IAS_MIN = -50
 IAS_MAX = 500
 
 
-@register_pp('core')
+@register_pp("core")
 class Rvsm(PPBase):
     r"""
     Calculate derived parameters from the aircraft's RVSM system. Pressure
@@ -61,7 +62,7 @@ class Rvsm(PPBase):
     are considered out of range.
     """
 
-    inputs = ['PRTAFT_pressure_alt', 'PRTAFT_ind_air_speed']
+    inputs = ["PRTAFT_pressure_alt", "PRTAFT_ind_air_speed"]
 
     @staticmethod
     def test():
@@ -69,8 +70,8 @@ class Rvsm(PPBase):
         Return dummy input data for testing.
         """
         return {
-            'PRTAFT_pressure_alt': ('data', _l(0, 3000, 100), 32),
-            'PRTAFT_ind_air_speed': ('data', 150 * _o(100), 32)
+            "PRTAFT_pressure_alt": ("data", _l(0, 3000, 100), 32),
+            "PRTAFT_ind_air_speed": ("data", 150 * _o(100), 32),
         }
 
     def declare_outputs(self):
@@ -78,32 +79,32 @@ class Rvsm(PPBase):
         Declare the outputs produced by this module.
         """
         self.declare(
-            'PS_RVSM',
-            units='hPa',
+            "PS_RVSM",
+            units="hPa",
             frequency=32,
-            standard_name='air_pressure',
-            long_name=('Static pressure from the aircraft RVSM (air data) '
-                       'system'),
-            instrument_manufacturer='BAE Systems'
+            standard_name="air_pressure",
+            long_name=("Static pressure from the aircraft RVSM (air data) " "system"),
+            instrument_manufacturer="BAE Systems",
         )
 
         self.declare(
-            'Q_RVSM',
-            units='hPa',
+            "Q_RVSM",
+            units="hPa",
             frequency=32,
-            long_name=('Pitot static pressure inverted from RVSM (air data) '
-                       'system indicated airspeed'),
-            instrument_manufacturer='BAE Systems'
+            long_name=(
+                "Pitot static pressure inverted from RVSM (air data) "
+                "system indicated airspeed"
+            ),
+            instrument_manufacturer="BAE Systems",
         )
 
         self.declare(
-            'PALT_RVS',
-            units='m',
+            "PALT_RVS",
+            units="m",
             frequency=32,
-            standard_name='barometric_altitude',
-            long_name=('Pressure altitude from the aircraft RVSM (air data) '
-                       'system'),
-            instrument_manufacturer='BAE Systems'
+            standard_name="barometric_altitude",
+            long_name=("Pressure altitude from the aircraft RVSM (air data) system"),
+            instrument_manufacturer="BAE Systems",
         )
 
     def calc_altitude(self):
@@ -113,25 +114,25 @@ class Rvsm(PPBase):
         """
         d = self.d
 
-        d['PALT_FEET'] = d['PRTAFT_pressure_alt'] * 4
-        d['FLAG_ALT'] = 0
-        d['FLAG_READY'] = 0
+        d["PALT_FEET"] = d["PRTAFT_pressure_alt"] * 4
+        d["FLAG_ALT"] = 0
+        d["FLAG_READY"] = 0
 
-        d.loc[d['PALT_FEET'] < PALT_MIN, 'FLAG_ALT'] = 1
-        d.loc[d['PALT_FEET'] > PALT_MAX, 'FLAG_ALT'] = 1
+        d.loc[d["PALT_FEET"] < PALT_MIN, "FLAG_ALT"] = 1
+        d.loc[d["PALT_FEET"] > PALT_MAX, "FLAG_ALT"] = 1
 
         idx = (
-            d['PRTAFT_pressure_alt']
-                .diff()
-                .abs()
-                .where(lambda x: x>0)
-                .dropna()
-                .index[0]
+            d["PRTAFT_pressure_alt"]
+            .diff()
+            .abs()
+            .where(lambda x: x > 0)
+            .dropna()
+            .index[0]
         ) + pd.Timedelta(seconds=1)
 
-        d.loc[d.index < idx, 'FLAG_READY'] = 1
+        d.loc[d.index < idx, "FLAG_READY"] = 1
 
-        d['PALT_METRES'] = d['PALT_FEET'] / 3.28084
+        d["PALT_METRES"] = d["PALT_FEET"] / 3.28084
 
     def add_ready_flag(self, variable):
         """
@@ -139,8 +140,9 @@ class Rvsm(PPBase):
         ready.
         """
         variable.flag.add_mask(
-            self.d.FLAG_READY, 'instrument not ready',
-            'The RVSM system may not be ready for use'
+            self.d.FLAG_READY,
+            "instrument not ready",
+            "The RVSM system may not be ready for use",
         )
 
     def calc_pressure(self):
@@ -150,7 +152,7 @@ class Rvsm(PPBase):
         """
         d = self.d
 
-        high = self.d['PALT_METRES'] > 11000
+        high = self.d["PALT_METRES"] > 11000
 
         T0 = 288.15
         L0 = -0.0065
@@ -161,16 +163,14 @@ class Rvsm(PPBase):
         P0 = 1013.2500
 
         # Calulate pressure from standard atmosphere
-        d['P'] = P0 * (
-            T0 / (T0 + L0 * (d['PALT_METRES'] - h0))
-        )**(go * M / (R * L0))
+        d["P"] = P0 * (T0 / (T0 + L0 * (d["PALT_METRES"] - h0))) ** (go * M / (R * L0))
 
         T1 = 216.65
         P1 = 226.3210
         h1 = 11000.0
 
-        d.loc[high, 'P'] = P1 * np.exp(
-            (-go * M * (d['PALT_METRES'].loc[high] - h1)) / (R * T1)
+        d.loc[high, "P"] = P1 * np.exp(
+            (-go * M * (d["PALT_METRES"].loc[high] - h1)) / (R * T1)
         )
 
     def calc_ias(self):
@@ -179,25 +179,28 @@ class Rvsm(PPBase):
         recorded on the rear core console from the ARINC-429 data bus.
         """
         d = self.d
-        d['IAS'] = d['PRTAFT_ind_air_speed'] * 0.514444 / 32.0
-        d['IAS_FLAG'] = 0
-        d.loc[d['IAS'] < IAS_MIN, 'IAS_FLAG'] = 1
-        d.loc[d['IAS'] > IAS_MAX, 'IAS_FLAG'] = 1
-
-    def calc_mach(self):
-        """
-        Calculate mach number from the indicated air speed and pressure,
-        assuming a standard atmosphere.
-        """
-        d = self.d
-        d['MACH'] = d['IAS'] / (340.294 * np.sqrt(d['P'] / 1013.25))
+        d["IAS"] = d["PRTAFT_ind_air_speed"] * 0.514444 / 32.0
+        d["IAS_FLAG"] = 0
+        d.loc[d["IAS"] < IAS_MIN, "IAS_FLAG"] = 1
+        d.loc[d["IAS"] > IAS_MAX, "IAS_FLAG"] = 1
 
     def calc_pitot(self):
         """
         Calculate pitot-static pressure from static pressure and Mach number.
         """
         d = self.d
-        d['PITOT'] = d['P'] * ((((d['MACH']**2) / 5 + 1)**3.5) - 1)
+        GAMMA = 1.4
+        RHO = 1.225  # kg/m^3 at sea level, 15 degrees C
+        P = 101325
+        d["PITOT"] = (
+            P
+            * (
+                (((GAMMA - 1) * d["IAS"] ** 2 * RHO) / (2 * GAMMA * P) + 1)
+                ** (GAMMA / (GAMMA - 1))
+                - 1
+            )
+            / 100
+        )
 
     def calc_ps_rvsm(self):
         """
@@ -209,10 +212,9 @@ class Rvsm(PPBase):
         """
         d = self.d
 
-        ps_rvsm = d['P']
+        ps_rvsm = d["P"]
 
-        ps_rvsm = DecadesVariable(ps_rvsm, name='PS_RVSM',
-                                  flag=DecadesBitmaskFlag)
+        ps_rvsm = DecadesVariable(ps_rvsm, name="PS_RVSM", flag=DecadesBitmaskFlag)
 
         self.add_ready_flag(ps_rvsm)
 
@@ -228,15 +230,14 @@ class Rvsm(PPBase):
         """
         d = self.d
 
-        palt_rvs = d['PALT_METRES']
+        palt_rvs = d["PALT_METRES"]
 
-        palt_rvs = DecadesVariable(palt_rvs, name='PALT_RVS',
-                                   flag=DecadesBitmaskFlag)
+        palt_rvs = DecadesVariable(palt_rvs, name="PALT_RVS", flag=DecadesBitmaskFlag)
 
         palt_rvs.flag.add_mask(
-            d.FLAG_ALT, 'altitude out of range',
-            f'Pressure altitude outside acceptable range '
-            f'[{PALT_MIN}, {PALT_MAX}]'
+            d.FLAG_ALT,
+            "altitude out of range",
+            f"Pressure altitude outside acceptable range " f"[{PALT_MIN}, {PALT_MAX}]",
         )
 
         self.add_ready_flag(palt_rvs)
@@ -252,20 +253,19 @@ class Rvsm(PPBase):
                 derived from the RVSM air-data system.
         """
         d = self.d
-        q_rvsm = d['PITOT']
+        q_rvsm = d["PITOT"]
 
-        q_rvsm = DecadesVariable(q_rvsm, name='Q_RVSM',
-                                 flag=DecadesBitmaskFlag)
+        q_rvsm = DecadesVariable(q_rvsm, name="Q_RVSM", flag=DecadesBitmaskFlag)
 
         q_rvsm.flag.add_mask(
-            d.FLAG_ALT, 'altitude out of range',
-             f'Pressure altitude outside acceptable range '
-             f'[{PALT_MIN}, {PALT_MAX}]'
+            d.FLAG_ALT,
+            "altitude out of range",
+            f"Pressure altitude outside acceptable range " f"[{PALT_MIN}, {PALT_MAX}]",
         )
         q_rvsm.flag.add_mask(
-            d.IAS_FLAG, 'ias out of range',
-            f'Indicated air speed outside acceptable range '
-            f'[{IAS_MIN}, {IAS_MAX}]'
+            d.IAS_FLAG,
+            "ias out of range",
+            f"Indicated air speed outside acceptable range " f"[{IAS_MIN}, {IAS_MAX}]",
         )
 
         self.add_ready_flag(q_rvsm)
@@ -282,17 +282,16 @@ class Rvsm(PPBase):
         # This is a bit hacky, but it ensures we have a correct end point when
         # interpolating from 20 Hz to 32 Hz.
         _end += datetime.timedelta(
-            seconds=(1/self.dataset[self.inputs[0]].frequency)*.99
+            seconds=(1 / self.dataset[self.inputs[0]].frequency) * 0.99
         )
 
         # Generate the index we want, and build the dataframe
         _index = pd.date_range(start=_start, end=_end, freq=pd_freq[32])
-        self.get_dataframe(method='onto', index=_index, limit=2)
+        self.get_dataframe(method="onto", index=_index, limit=2)
 
         self.calc_altitude()
         self.calc_pressure()
         self.calc_ias()
-        self.calc_mach()
         self.calc_pitot()
 
         ps_rvsm = self.calc_ps_rvsm()
