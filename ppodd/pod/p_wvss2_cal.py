@@ -2,6 +2,7 @@
 Provides a processing module which calculates a mach number for moist
 air.
 """
+
 # pylint: disable=invalid-name
 import numpy as np
 import pandas as pd
@@ -11,12 +12,11 @@ from vocal.types import DerivedString
 from ..decades import DecadesVariable, DecadesBitmaskFlag
 from ..decades import flags
 from ..decades.attributes import DocAttribute
-from ..utils.calcs import sp_mach
 from .base import PPBase, register_pp
 from .shortcuts import _o, _z
 
 
-@register_pp('core')
+@register_pp("core")
 class WVSS2Calibrated(PPBase):
     r"""
     For further details see the `FAAM Met. Handbook <https://doi.org/10.5281/zenodo.5846962>`_.
@@ -50,14 +50,14 @@ class WVSS2Calibrated(PPBase):
     """
 
     inputs = [
-        'WVSS2F_VMR_U',
-        'WOW_IND',
-        'WVSS2_F_CAL',
-        'WVSS2_F_CAL_RANGE',
-        'WVSS2_F_SN',
-        'WVSS2_F_UNC_FITPARAMS',
-        'WVSS2_F_UNC_BUCK',
-        'WVSS2_F_UNC_FITRES'
+        "WVSS2F_VMR_U",
+        "WOW_IND",
+        "WVSS2_F_CAL",
+        "WVSS2_F_CAL_RANGE",
+        "WVSS2_F_SN",
+        "WVSS2_F_UNC_FITPARAMS",
+        "WVSS2_F_UNC_BUCK",
+        "WVSS2_F_UNC_FITRES",
     ]
 
     @staticmethod
@@ -67,14 +67,17 @@ class WVSS2Calibrated(PPBase):
         """
         n = 100
         return {
-            'WVSS2F_VMR_U': ('data', 1E5 * _o(n), 1),
-            'WOW_IND': ('data', _z(n), 1),
-            'WVSS2_F_CAL': ('const', [1, 0, 0]),
-            'WVSS2_F_CAL_RANGE': ('const', [0, 20000]),
-            'WVSS2_F_SN': ('const', DocAttribute(value='1234', doc_value=DerivedString)),
-            'WVSS2_F_UNC_FITPARAMS': ('const', [1, 0, 0, 0, 0, 0]),
-            'WVSS2_F_UNC_BUCK': ('const', [5, 0]),
-            'WVSS2_F_UNC_FITRES': ('const', [8, 0, 1])
+            "WVSS2F_VMR_U": ("data", 1e5 * _o(n), 1),
+            "WOW_IND": ("data", _z(n), 1),
+            "WVSS2_F_CAL": ("const", [1, 0, 0]),
+            "WVSS2_F_CAL_RANGE": ("const", [0, 20000]),
+            "WVSS2_F_SN": (
+                "const",
+                DocAttribute(value="1234", doc_value=DerivedString),
+            ),
+            "WVSS2_F_UNC_FITPARAMS": ("const", [1, 0, 0, 0, 0, 0]),
+            "WVSS2_F_UNC_BUCK": ("const", [5, 0]),
+            "WVSS2_F_UNC_FITRES": ("const", [8, 0, 1]),
         }
 
     def declare_outputs(self):
@@ -82,31 +85,30 @@ class WVSS2Calibrated(PPBase):
         Declare outputs created by this module.
         """
         self.declare(
-            'WVSS2F_VMR_C',
-            units='ppm',
+            "WVSS2F_VMR_C",
+            units="ppm",
             frequency=1,
-            long_name=('Calibrated volume mixing ratio from WVSS2F'),
-            instrument_manufacturer='SpectraSensors',
-            instrument_serial_number=self.dataset.lazy['WVSS2_F_SN']
+            long_name=("Calibrated volume mixing ratio from WVSS2F"),
+            instrument_manufacturer="SpectraSensors",
+            instrument_serial_number=self.dataset.lazy["WVSS2_F_SN"],
         )
 
         self.declare(
-            'WVSS2F_VMR_C_CU',
-            units='ppm',
+            "WVSS2F_VMR_C_CU",
+            units="ppm",
             frequency=1,
-            long_name=('Uncertainty estimate for calibrated volume mixing '
-                       'ratio from WVSS2F'),
-            instrument_manufacturer='SpectraSensors',
-            instrument_serial_number=self.dataset.lazy['WVSS2_F_SN'],
-            coverage_content_type='auxiliaryInformation',
-            flag=None
+            long_name=(
+                "Uncertainty estimate for calibrated volume mixing " "ratio from WVSS2F"
+            ),
+            instrument_manufacturer="SpectraSensors",
+            instrument_serial_number=self.dataset.lazy["WVSS2_F_SN"],
+            coverage_content_type="auxiliaryInformation",
+            flag=None,
         )
-
-
 
     def get_corrected_vmr(self):
         d = self.d
-        fit = self.dataset['WVSS2_F_CAL'][::-1]
+        fit = self.dataset["WVSS2_F_CAL"][::-1]
         vmr_unc = d.WVSS2F_VMR_U
         vmr_corr = pd.Series(np.polyval(fit, vmr_unc), index=vmr_unc.index)
 
@@ -118,22 +120,22 @@ class WVSS2Calibrated(PPBase):
     def get_uncertainty(self):
         d = self.d
         vmr_u = d.WVSS2F_VMR_U
-        popt_quintic_sigma_f = self.dataset['WVSS2_F_UNC_FITPARAMS'][::-1]
-        popt_linear = self.dataset['WVSS2_F_UNC_BUCK'][::-1]
-        popt_power = self.dataset['WVSS2_F_UNC_FITRES']
+        popt_quintic_sigma_f = self.dataset["WVSS2_F_UNC_FITPARAMS"][::-1]
+        popt_linear = self.dataset["WVSS2_F_UNC_BUCK"][::-1]
+        popt_power = self.dataset["WVSS2_F_UNC_FITRES"]
 
         sigma_f_data = np.polyval(popt_quintic_sigma_f, vmr_u)
         sigma_b_data = 0.5 * np.polyval(popt_linear, vmr_u)
-        sigma_r_data = vmr_u * (popt_power[0] * vmr_u**popt_power[1])
+        sigma_r_data = vmr_u * (popt_power[0] * vmr_u ** popt_power[1])
 
-        u_wvss2c = (sigma_f_data**2. + sigma_r_data**2. + sigma_b_data**2.)**0.5
+        u_wvss2c = (sigma_f_data**2.0 + sigma_r_data**2.0 + sigma_b_data**2.0) ** 0.5
 
         return u_wvss2c
 
     def get_out_range(self):
         d = self.d
         vmr_unc = d.WVSS2F_VMR_U
-        val_range = self.dataset['WVSS2_F_CAL_RANGE']
+        val_range = self.dataset["WVSS2_F_CAL_RANGE"]
         out_range = (vmr_unc < val_range[0]) | (vmr_unc > val_range[1])
         return out_range
 
@@ -148,27 +150,29 @@ class WVSS2Calibrated(PPBase):
         vmr_corr_cu = self.get_uncertainty()
 
         vmr_corr_out = DecadesVariable(
-            vmr_corr, name='WVSS2F_VMR_C',
-            flag=DecadesBitmaskFlag
+            vmr_corr, name="WVSS2F_VMR_C", flag=DecadesBitmaskFlag
         )
 
         vmr_corr_cu_out = DecadesVariable(
-            vmr_corr_cu, name='WVSS2F_VMR_C_CU', flag=None
+            vmr_corr_cu, name="WVSS2F_VMR_C_CU", flag=None
         )
 
         out_range = self.get_out_range()
-        val_range = self.dataset['WVSS2_F_CAL_RANGE']
+        val_range = self.dataset["WVSS2_F_CAL_RANGE"]
 
         vmr_corr_out.flag.add_mask(
-            out_range, flags.OUT_RANGE,
-            (f'VMR is outside calibration range '
-                f'[{val_range[0]} {val_range[1]}]')
+            out_range,
+            flags.OUT_RANGE,
+            (f"VMR is outside calibration range " f"[{val_range[0]} {val_range[1]}]"),
         )
 
         vmr_corr_out.flag.add_mask(
-            wow, flags.WOW,
-            ('Aircraft is on the ground, as indicated by the '
-                'weight-on-wheels indicator.')
+            wow,
+            flags.WOW,
+            (
+                "Aircraft is on the ground, as indicated by the "
+                "weight-on-wheels indicator."
+            ),
         )
 
         for var in (vmr_corr_out, vmr_corr_cu_out):
