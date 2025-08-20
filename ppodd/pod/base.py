@@ -22,7 +22,7 @@ from ppodd.decades import flags
 DFJoinMethods = Literal["outerjoin", "onto"]
 TestDataValue = tuple[Literal["const"], Any] | tuple[Literal["data"], np.ndarray, int]
 TestData = dict[str, TestDataValue]
-                
+
 
 logger = logging.getLogger(__name__)
 
@@ -435,20 +435,17 @@ class PPBase(object):
                 # Interpolate onto the instance dataframe
                 if _input_df.dtype == object:
                     df[_input_name] = (
-                        _input_df
-                            .reindex(index.union(_input_df.index).sort_values())
-                            .ffill()
-                            .bfill()
-                            .loc[index]
+                        _input_df.reindex(index.union(_input_df.index).sort_values())
+                        .ffill()
+                        .bfill()
+                        .loc[index]
                     )
                 else:
                     df[_input_name] = (
-                        _input_df
-                            .reindex(index.union(_input_df.index).sort_values())
-                            .interpolate("time", limit=limit)
-                            .loc[index]
+                        _input_df.reindex(index.union(_input_df.index).sort_values())
+                        .interpolate("time", limit=limit)
+                        .loc[index]
                     )
-                
 
                 if _input_name in circular:
                     df[_input_name] %= 360
