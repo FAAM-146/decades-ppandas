@@ -27,6 +27,7 @@ dependencies = [
     "sphinxnotes-strike>=1.2.1,<2",
     "sqlalchemy>=2.0.41",
     "pyqt6>=6.9.1",
+    "jupyter>=1.1.1",
 ]
 
 [dependency-groups]
