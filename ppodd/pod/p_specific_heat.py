@@ -25,21 +25,21 @@ class WetSpecificHeat(PPBase):
     Specific heat at constant pressure, :math:`c_p`, is given by
 
     .. math::
-        c_p = c_{pd} \cdot (1 + q_h \cdot \left(\frac{8}{7} - 1\right)),
+        c_p = c_{pd} \cdot \left(1 + q_h \cdot \left(\frac{8}{7} - 1\right)\right),
 
     where :math:`c_{pd}` is the specific heat of dry air at constant pressure.
 
     Specific heat at constant volume, :math:`c_v`, is given by
 
     .. math::
-        c_v = c_{vd} \cdot (1 + q_h \cdot \left(\frac{6}{5} - 1\right)),
+        c_v = c_{vd} \cdot \left(1 + q_h \cdot \left(\frac{6}{5} - 1\right)\right),
 
     where :math:`c_{vd}` is the specific heat of dry air at constant volume.
 
     The ratio of specific heats is given by
 
     .. math::
-        \gamma = \frac{c_p}{c_v} = 1 + \frac{q_h}{\epsilon} \left(\frac{8}{7} - 1\right).
+        \gamma = \frac{c_p}{c_v}.
 
     The uncertainty in the ratio of specific heats, :math:`\sigma_\gamma`, is given
     as polynomial coefficients for VMR in the flight constants file, and is evaluated
