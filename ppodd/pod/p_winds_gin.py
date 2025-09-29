@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 
 from ..decades import DecadesVariable, DecadesBitmaskFlag
-from .base import PPBase, register_pp
+from .base import PPBase, TestData, register_pp
 from .shortcuts import _o, _z
 
 ROLL_THRESH = 2
@@ -36,6 +36,10 @@ class GINWinds(PPBase):
 
     where :math:`u_G` and :math:`v_G` are the eastward and northward components
     of the aircraft speed, reported by the GIN.
+
+    See also:
+        * :ref:`AirSpeed`
+        * :ref:`Gin`
     """
 
     inputs = [
@@ -48,7 +52,7 @@ class GINWinds(PPBase):
     ]
 
     @staticmethod
-    def test() -> dict[str, tuple]:
+    def test() -> TestData:
         return {
             "GIN_HDG_OFFSET": ("const", 0),
             "VELE_GIN": ("data", 100 * _o(100), 32),
