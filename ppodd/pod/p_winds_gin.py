@@ -67,7 +67,7 @@ class GINWinds(PPBase):
             units="m s-1",
             frequency=1,
             long_name=(
-                "Eastward wind component derived from aircraft " "instruments and GIN"
+                "Eastward wind component derived from aircraft instruments and GIN"
             ),
             standard_name="eastward_wind",
         )
@@ -77,7 +77,7 @@ class GINWinds(PPBase):
             units="m s-1",
             frequency=1,
             long_name=(
-                "Northward wind component derived from aircraft " "instruments and GIN"
+                "Northward wind component derived from aircraft instruments and GIN"
             ),
             standard_name="northward_wind",
         )
@@ -129,7 +129,13 @@ class GINWinds(PPBase):
         for var in (u, v):
             assert isinstance(var.flag, DecadesBitmaskFlag)
             var.flag.add_mask(
-                self.d.ROLL_GIN.abs() > ROLL_THRESH, "roll exceeds threshold"
+                self.d.ROLL_GIN.abs() > ROLL_THRESH,
+                "roll exceeds threshold",
+                (
+                    f"The absolute value of the GIN roll exceeds "
+                    f"{ROLL_THRESH} degrees, so wind calculations "
+                    f"will be unreliable."
+                ),
             )
 
             self.add_output(var)
