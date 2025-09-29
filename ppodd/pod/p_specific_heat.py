@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 from ..decades import DecadesVariable, DecadesBitmaskFlag
-from .base import PPBase, register_pp
+from .base import PPBase, TestData, register_pp
 from .shortcuts import _l
 from ..utils.constants import MOL_MASS_H20, MOL_MASS_DRY_AIR, c_pd, c_vd
 
@@ -25,14 +25,14 @@ class WetSpecificHeat(PPBase):
     Specific heat at constant pressure, :math:`c_p`, is given by
 
     .. math::
-        c_p = c_{pd} \cdot \left(1 + q_h \cdot \left(\frac{8}{7} - 1\right)\right),
+        c_p = c_{pd} \cdot \left(1 + q_h \cdot \left(\frac{8}{7 \cdot \epsilon} - 1\right)\right),
 
     where :math:`c_{pd}` is the specific heat of dry air at constant pressure.
 
     Specific heat at constant volume, :math:`c_v`, is given by
 
     .. math::
-        c_v = c_{vd} \cdot \left(1 + q_h \cdot \left(\frac{6}{5} - 1\right)\right),
+        c_v = c_{vd} \cdot \left(1 + q_h \cdot \left(\frac{6}{5 \cdot \epsilon} - 1\right)\right),
 
     where :math:`c_{vd}` is the specific heat of dry air at constant volume.
 
@@ -55,15 +55,13 @@ class WetSpecificHeat(PPBase):
     ]
 
     @staticmethod
-    def test():
+    def test() -> TestData:
         """
         Return some dummy input data for testing usage.
         """
         return {
             "WVSS2F_VMR_C": ("data", _l(0.001, 0.005, 100), 32),
-            "MACH_UNC_BAE": ("data", _l(0.001, 0.002, 100), 32),
             "SH_UNC_GAMMA": ("const", [6.39e-05, 5.68e-08, -3.71e-12, 9.42e-17]),
-            "MACH_UNC_HUMIDITY": ("const", [3.21e-05, 1.59e-08, -8.9e-13, 2.1e-17]),
         }
 
     def declare_outputs(self) -> None:
@@ -103,7 +101,10 @@ class WetSpecificHeat(PPBase):
             write=False,
         )
 
-    def process(self):
+    def process(self) -> None:
+        """
+        Process the input data and compute the outputs.
+        """
         wvss2_vmr = self.dataset["WVSS2F_VMR_C"]()
 
         # epsilon is the mass ratio of water and dry air
