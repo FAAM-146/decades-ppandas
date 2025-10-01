@@ -100,12 +100,12 @@ class GINWinds(PPBase):
             # No GINWIND_TASCOR
             tas_scale_factor = 1
 
-        d.TAS *= tas_scale_factor
+        d.TAS_RVSM *= tas_scale_factor
 
         d.HDG_GIN += self.dataset["GIN_HDG_OFFSET"]
         d.HDG_GIN %= 360
-        air_spd_east = np.cos(np.deg2rad(d.HDG_GIN - 90.0)) * d.TAS
-        air_spd_north = np.sin(np.deg2rad(d.HDG_GIN - 90.0)) * d.TAS
+        air_spd_east = np.cos(np.deg2rad(d.HDG_GIN - 90.0)) * d.TAS_RVSM
+        air_spd_north = np.sin(np.deg2rad(d.HDG_GIN - 90.0)) * d.TAS_RVSM
 
         d["U_NOTURB"] = d.VELE_GIN - air_spd_east
         d["V_NOTURB"] = d.VELN_GIN + air_spd_north
