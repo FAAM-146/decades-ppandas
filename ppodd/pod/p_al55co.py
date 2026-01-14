@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 
+from scipy import odr
+
 from dataclasses import dataclass
 
 from vocal.types import OptionalDerivedString
@@ -11,6 +13,21 @@ from ..decades.attributes import DocAttribute
 from ..exceptions.messages import EM_CANNOT_RUN_MODULE_CONSTANTS, EM_CANNOT_INIT_MODULE
 from .base import PPBase, register_pp
 from .shortcuts import _o
+
+
+def linear_model(coeffs: np.ndarray, x: np.ndarray) -> np.ndarray:
+    """
+    A simple linear model function.
+
+    Args:
+        coeffs: The coefficients of the linear model, in the form
+            [slope, intercept].
+        x: The input x values.
+
+    Returns:
+        The output y values.
+    """
+    return coeffs[0] * x + coeffs[1]
 
 
 @dataclass
@@ -233,21 +250,62 @@ class AL55CO(PPBase):
         hi_times = df["hi_cal_avg"].dropna().index
         lo_points = df["lo_cal_avg"].dropna().values
         lo_times = df["lo_cal_avg"].dropna().index
+        hi_std = df["hi_cal_std"].dropna().values
+        lo_std = df["lo_cal_std"].dropna().values
 
         df["interpolated_sens"] = np.nan
         df["interpolated_zero"] = np.nan
 
-        for hi, lo, hi_time, lo_time in zip(hi_points, lo_points, hi_times, lo_times):
-            fit = np.polyfit(
+        color_cycles = iter(["tab:blue", "tab:orange", "tab:green", "tab:purple"])
+
+        for i, (hi, lo, hi_std, lo_std, hi_time, lo_time) in enumerate(
+            zip(hi_points, lo_points, hi_std, lo_std, hi_times, lo_times)
+        ):
+            # fit = np.polyfit(
+            #     [constants.cyl_lo_mr, constants.cyl_hi_mr],
+            #     [lo, hi],
+            #     deg=1,
+            # )
+            data = odr.RealData(
                 [constants.cyl_lo_mr, constants.cyl_hi_mr],
                 [lo, hi],
-                deg=1,
+                sx=[constants.cyl_lo_unc, constants.cyl_hi_unc],
+                sy=[lo_std, hi_std],
             )
+
+            model = odr.ODR(data, odr.Model(linear_model), beta0=[1.0, 0.0])
+            output = model.run()
+            fit = output.beta
 
             mean_time = (lo_time + (hi_time - lo_time) / 2).floor("s")
 
             df.at[mean_time, "interpolated_sens"] = fit[0]
             df.at[mean_time, "interpolated_zero"] = fit[1]
+
+            import matplotlib.pyplot as plt
+
+            # plt.figure()
+            col = next(color_cycles)
+            plt.errorbar(
+                [constants.cyl_lo_mr, constants.cyl_hi_mr],
+                [lo, hi],
+                xerr=[constants.cyl_lo_unc, constants.cyl_hi_unc],
+                yerr=[lo_std, hi_std],
+                ls=" ",
+                ecolor=col,
+                elinewidth=0.5,
+                label=f"Calibration {i + 1}",
+            )
+            x_fit = np.array(
+                [100, max(constants.cyl_hi_mr * 1.1, constants.cyl_lo_mr * 1.1)]
+            )
+            y_fit = linear_model(fit, x_fit)
+            plt.plot(x_fit, y_fit, "-", label="ODR Fit", linewidth=0.5, color=col)
+        plt.xlabel("Mixing Ratio (ppb)")
+        plt.ylabel("AL55CO Counts")
+        plt.title("AL55CO Calibrations")
+        plt.legend(fontsize="small")
+        plt.show()
 
         df["interpolated_sens"] = (
             df["interpolated_sens"].interpolate(method="time").ffill().bfill()
