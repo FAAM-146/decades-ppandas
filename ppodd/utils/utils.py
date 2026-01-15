@@ -32,6 +32,25 @@ pd_freq = {
 }
 
 
+def get_constant_groups(series: pd.Series) -> pd.core.groupby.SeriesGroupBy:
+    """
+    Identify coherent groups of constant values in a pd.Series.
+
+    Args:
+        series: the pd.Series to analyse.
+
+    Returns:
+        a pd.core.groupby.SeriesGroupBy object grouping coherent constant
+        value regions.
+    """
+    groups = (series != series.shift()).cumsum()
+    groups[series == 0] = np.nan
+    groups.dropna(inplace=True)
+    con_groups = series.groupby(groups)
+
+    return con_groups
+
+
 def infer_freq(index: pd.DatetimeIndex, mode_conf: float = 0.99) -> str:
     """
     Infer the frequency of a time series from the index.
