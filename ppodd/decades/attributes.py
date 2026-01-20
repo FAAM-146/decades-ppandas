@@ -10,8 +10,9 @@ import warnings
 from dataclasses import dataclass
 
 import pydantic
+import numpy as np
 
-from vocal.types import DerivedString, OptionalDerivedString # type: ignore
+from vocal.types import DerivedString, OptionalDerivedString  # type: ignore
 
 from ppodd import URL as PPODD_URL, DOI as PPODD_DOI
 
@@ -41,6 +42,106 @@ class NonStandardAttributeError(Exception):
 class DocAttribute:
     value: Any
     doc_value: Any
+
+    def __truediv__(self, other: Any) -> Any:
+        if isinstance(other, DocAttribute):
+            return DocAttribute(
+                value=self.value / other.value, doc_value=self.doc_value
+            )
+        return DocAttribute(value=self.value / other, doc_value=self.doc_value)
+
+    def __add__(self, other: Any) -> Any:
+        if isinstance(other, DocAttribute):
+            DocAttribute(value=self.value + other.value, doc_value=self.doc_value)
+        return DocAttribute(value=self.value + other, doc_value=self.doc_value)
+
+    def __sub__(self, other: Any) -> Any:
+        if isinstance(other, DocAttribute):
+            return DocAttribute(
+                value=self.value - other.value, doc_value=self.doc_value
+            )
+        return DocAttribute(value=self.value - other, doc_value=self.doc_value)
+
+    def __mul__(self, other: Any) -> Any:
+        if isinstance(other, DocAttribute):
+            return DocAttribute(
+                value=self.value * other.value, doc_value=self.doc_value
+            )
+        return DocAttribute(value=self.value * other, doc_value=self.doc_value)
+
+    def __rmul__(self, other: Any) -> Any:
+        if isinstance(other, DocAttribute):
+            return DocAttribute(
+                value=self.value * other.value, doc_value=self.doc_value
+            )
+        return DocAttribute(value=self.value * other, doc_value=self.doc_value)
+
+    def __rsub__(self, other: Any) -> Any:
+        if isinstance(other, DocAttribute):
+            return DocAttribute(
+                value=other.value - self.value, doc_value=self.doc_value
+            )
+        return DocAttribute(value=other - self.value, doc_value=self.doc_value)
+
+    def __radd__(self, other: Any) -> Any:
+        if isinstance(other, DocAttribute):
+            return DocAttribute(
+                value=other.value + self.value, doc_value=self.doc_value
+            )
+        return DocAttribute(value=other + self.value, doc_value=self.doc_value)
+
+    def __rtruediv__(self, other: Any) -> Any:
+        if isinstance(other, DocAttribute):
+            return DocAttribute(
+                value=other.value / self.value, doc_value=self.doc_value
+            )
+        return DocAttribute(value=other / self.value, doc_value=self.doc_value)
+
+    def __pow__(self, power: Any) -> Any:
+        if isinstance(power, DocAttribute):
+            return DocAttribute(value=self.value**power.value, doc_value=self.doc_value)
+        return DocAttribute(value=self.value**power, doc_value=self.doc_value)
+
+    def __float__(self) -> float:
+        return float(self.value)
+
+    def __len__(self) -> int:
+        return len(self.value)
+
+    def __array_ufunc__(self, ufunc, method, *inputs, **kwargs) -> Any:
+        if method != "__call__":
+            return NotImplemented
+
+        # Unary: sqrt
+        if ufunc is np.sqrt:
+            (x,) = inputs
+            return DocAttribute(np.sqrt(x.value), f"sqrt({x.doc_value})")
+
+        # Binary arithmetic
+        if ufunc in (np.add, np.subtract, np.multiply, np.divide, np.power):
+            a, b = inputs
+
+            # normalize operands
+            if not isinstance(a, DocAttribute):
+                a = DocAttribute(a, a)
+            if not isinstance(b, DocAttribute):
+                b = DocAttribute(b, b)
+
+            if ufunc is np.add:
+                return DocAttribute(a.value + b.value, a.doc_value)
+            if ufunc is np.subtract:
+                return DocAttribute(a.value - b.value, a.doc_value)
+            if ufunc is np.multiply:
+                return DocAttribute(a.value * b.value, a.doc_value)
+            if ufunc is np.divide:
+                return DocAttribute(a.value / b.value, a.doc_value)
+            if ufunc is np.power:
+                return DocAttribute(a.value**b.value, a.doc_value)
+
+        return NotImplemented
+
+    def __str__(self):
+        return str(self.doc_value)
 
     def __getattr__(self, name: str) -> Any:
         """
