@@ -13,6 +13,9 @@ class AL55CODiagsQA(QAMod):
 
     def make_altitude_plot(self, fig: QAFigure) -> None:
         ax = fig.timeseries_axes([0.1, 0.75, 0.8, 0.15], labelx=False)
+        ax.plot(self.dataset["ALT_GIN"](), color="tab:brown", label="Altitude")
+        ax.set_ylabel("Altitude (m)")
+        ax.legend(loc="upper left", fontsize=6)
 
     def make_conc_plot(self, fig: QAFigure) -> None:
         ax = fig.timeseries_axes([0.1, 0.6, 0.8, 0.14], labelx=False)

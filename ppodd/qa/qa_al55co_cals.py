@@ -240,7 +240,7 @@ class AL55COCalQA(QAMod):
             f"CO_AERO offset during targets (vs cylinder {cylinder_sn} @ {cylinder_conc:.2f} ±{cylinder_conc_cu:.2f} ppb)"
         )
 
-        ax.set_ylabel("$\Delta$CO_AERO (ppb)")
+        ax.set_ylabel(r"$\Delta$CO_AERO (ppb)")
         ax.set_xticks([])
         ylims = ax.get_ylim()
 
