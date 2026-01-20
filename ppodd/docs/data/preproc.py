@@ -255,7 +255,11 @@ def get_module_flagdoc(module: PPBase) -> str:
     """
 
     _dict = {}
+    var = None
+
     for _var in module.dataset.outputs:
+        if module.dataset[str(_var)].flag is None:
+            continue
         var = str(_var)
         try:
             _dict.update(module.dataset[var].flag.descriptions)
@@ -266,7 +270,7 @@ def get_module_flagdoc(module: PPBase) -> str:
     output += "\nFlags\n"
     output += "-" * 5 + "\n\n"
 
-    if not module.dataset.outputs:
+    if not module.dataset.outputs or var is None:
         output += "No flags are defined in this module.\n\n"
         return output
 

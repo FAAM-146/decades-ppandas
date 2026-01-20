@@ -13,23 +13,27 @@ from ppodd.decades.dataset import DecadesDataset
 class QAMod(abc.ABC):
     inputs: list[str] = []
 
-    def __init__(self, dataset: DecadesDataset):
+    def __init__(self, dataset: DecadesDataset) -> None:
         self.dataset = dataset
 
-    def ready(self):
-        for _input in self.inputs:
-            if _input not in self.dataset.variables:
+    def ready(self) -> bool:
+        for input in self.inputs:
+            if (
+                input not in self.dataset.variables
+                and input not in self.dataset.constants
+            ):
                 return False
         return True
 
     @abc.abstractmethod
-    def run(self):
+    def run(self) -> None:
         """Create a QA Figure"""
 
 
 class QAAxis(object):
-    def __init__(self, ax):
+    def __init__(self, ax, flight_padding_mins: int = 5):
         self._ax = ax
+        self.flight_padding_mins = flight_padding_mins
 
     def __getattr__(self, attr):
         try:
@@ -44,25 +48,19 @@ class QAAxis(object):
         ylim = self._ax.get_ylim()
         _start = np.min([xlim[0], ylim[0]])
         _end = np.max([xlim[1], ylim[1]])
-        self._ax.plot(
-            [_start, _end], [_start, _end], '--k', linewidth=linewidth
-        )
+        self._ax.plot([_start, _end], [_start, _end], "--k", linewidth=linewidth)
         self._ax.set_xlim([_start, _end])
         self._ax.set_ylim([_start, _end])
 
     def add_zero_line(self):
         xlim = self._ax.get_xlim()
-        self._ax.plot(
-            xlim, (0, 0), color='k', zorder=10, linewidth=.5, linestyle='--'
-        )
+        self._ax.plot(xlim, (0, 0), color="k", zorder=10, linewidth=0.5, linestyle="--")
         self._ax.set_xlim(xlim)
 
 
 class QAFigure(object):
-
     def __init__(self, dataset, title, subtitle=None, landscape=False):
-
-        _figsize = (8, 8*1.414)
+        _figsize = (8, 8 * 1.414)
         if landscape:
             _figsize = _figsize[::-1]
 
@@ -75,9 +73,9 @@ class QAFigure(object):
         self.landscape = landscape
 
         try:
-            self.flightnum = self.dataset.globals['flight_number']
+            self.flightnum = self.dataset.globals["flight_number"]
         except KeyError:
-            self.flightnum = 'nXXX'
+            self.flightnum = "nXXX"
 
         try:
             self.flight_date = self.dataset.date
@@ -85,22 +83,26 @@ class QAFigure(object):
             raise
 
         self._fig.text(
-            .5, .97, 'QA: {}'.format(title),
-            horizontalalignment='center',
-            size='x-large'
+            0.5,
+            0.97,
+            "QA: {}".format(title),
+            horizontalalignment="center",
+            size="x-large",
         )
 
         if subtitle:
             self._fig.text(
-                .5, .95, subtitle,
-                horizontalalignment='center',
-                size='x-small'
+                0.5, 0.95, subtitle, horizontalalignment="center", size="x-small"
             )
 
         self._fig.text(
-            .5, .02, 'Produced on {}'.format(
-                datetime.datetime.utcnow().strftime('%Y-%m-%d at %H:%Mz')
-            ), horizontalalignment='center', size='x-small'
+            0.5,
+            0.02,
+            "Produced on {}".format(
+                datetime.datetime.utcnow().strftime("%Y-%m-%d at %H:%Mz")
+            ),
+            horizontalalignment="center",
+            size="x-small",
         )
 
     def _set_sizes(self, axes=None, size=6):
@@ -108,33 +110,40 @@ class QAFigure(object):
             axes = self._ts_axes + self._axes
 
         for ax in axes:
-            for item in ([ax.title, ax.xaxis.label, ax.yaxis.label]
-                         + ax.get_xticklabels() + ax.get_yticklabels()):
-
+            for item in (
+                [ax.title, ax.xaxis.label, ax.yaxis.label]
+                + ax.get_xticklabels()
+                + ax.get_yticklabels()
+            ):
                 item.set_fontsize(6)
 
     def _finalize(self):
         self._set_sizes()
         for ax in self._ts_axes:
             if self.to_time is not None and self.land_time is not None:
-                ax.set_xlim([
-                    self.to_time - datetime.timedelta(minutes=5),
-                    self.land_time + datetime.timedelta(minutes=5)
-                ])
-                ax.axvline([self.to_time], color='gray', linewidth=2,
-                            alpha=.5)
-                ax.axvline([self.land_time], color='gray', linewidth=2,
-                            alpha=.5)
+                ax.set_xlim(
+                    [
+                        self.to_time
+                        - datetime.timedelta(
+                            minutes=getattr(ax, "flight_padding_mins", 5)
+                        ),
+                        self.land_time
+                        + datetime.timedelta(
+                            minutes=getattr(ax, "flight_padding_mins", 5)
+                        ),
+                    ]
+                )
+                ax.axvline([self.to_time], color="gray", linewidth=2, alpha=0.5)
+                ax.axvline([self.land_time], color="gray", linewidth=2, alpha=0.5)
 
     def _savefig(self):
         if self.dataset.qa_dir:
             _save_path = self.dataset.qa_dir
         else:
-            _save_path = '.'
+            _save_path = "."
 
-        _save_file = '{}_{}_{}.pdf'.format(
-            self.flightnum, self.title.replace(' ', ''),
-            'l' if self.landscape else 'p'
+        _save_file = "{}_{}_{}.pdf".format(
+            self.flightnum, self.title.replace(" ", ""), "l" if self.landscape else "p"
         )
 
         _save_file = os.path.join(_save_path, _save_file)
@@ -156,9 +165,9 @@ class QAFigure(object):
             self.land_time = self.dataset.time_bounds[1]
 
         self.set_subtitle(
-            'Report for {flight}, on {date}'.format(
+            "Report for {flight}, on {date}".format(
                 flight=self.flightnum.upper(),
-                date=self.flight_date.strftime('%Y-%m-%d')
+                date=self.flight_date.strftime("%Y-%m-%d"),
             )
         )
 
@@ -178,32 +187,33 @@ class QAFigure(object):
 
     def filter_in_flight(self, var):
         try:
-            return var.loc[
-                (var.index > self.to_time) & (var.index < self.land_time)
-            ]
+            return var.loc[(var.index > self.to_time) & (var.index < self.land_time)]
         except Exception:
             return var
 
     def set_subtitle(self, subtitle):
-        self.text(.5, .95, subtitle, horizontalalignment='center',
-                  size='x-small')
+        self.text(0.5, 0.95, subtitle, horizontalalignment="center", size="x-small")
 
-    def timeseries_axes(self, location, twinx=False, labelx=True):
+    def timeseries_axes(
+        self, location, twinx=False, labelx=True, flight_padding_mins: int = 5
+    ):
         def _set_xticks(_ax):
             hours = mdates.HourLocator()
             minutes = mdates.MinuteLocator(byminute=range(10, 60, 10))
-            hours_formatter = mdates.DateFormatter('%Hz')
+            hours_formatter = mdates.DateFormatter("%Hz")
             _ax.xaxis.set_major_locator(hours)
             _ax.xaxis.set_major_formatter(hours_formatter)
             _ax.xaxis.set_minor_locator(minutes)
 
-        ax = QAAxis(self._fig.add_axes(location))
+        ax = QAAxis(
+            self._fig.add_axes(location), flight_padding_mins=flight_padding_mins
+        )
         self._ts_axes.append(ax)
         if labelx:
             _set_xticks(ax)
 
         if twinx:
-            ax2 = QAAxis(ax.twinx())
+            ax2 = QAAxis(ax.twinx(), flight_padding_mins=flight_padding_mins)
             if labelx:
                 _set_xticks(ax2)
             self._ts_axes.append(ax2)

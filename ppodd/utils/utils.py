@@ -32,6 +32,25 @@ pd_freq = {
 }
 
 
+def get_constant_groups(series: pd.Series) -> pd.core.groupby.SeriesGroupBy:
+    """
+    Identify coherent groups of constant values in a pd.Series.
+
+    Args:
+        series: the pd.Series to analyse.
+
+    Returns:
+        a pd.core.groupby.SeriesGroupBy object grouping coherent constant
+        value regions.
+    """
+    groups = (series != series.shift()).cumsum()
+    groups[series == 0] = np.nan
+    groups.dropna(inplace=True)
+    con_groups = series.groupby(groups)
+
+    return con_groups
+
+
 def infer_freq(index: pd.DatetimeIndex, mode_conf: float = 0.99) -> str:
     """
     Infer the frequency of a time series from the index.
@@ -72,7 +91,7 @@ def get_range_flag(
     return flag
 
 
-def unwrap_array(ang: 'pd.Series[float | int]') -> pd.Series:
+def unwrap_array(ang: "pd.Series[float | int]") -> pd.Series:
     """
     Removes dicontinuities in directional (angular) data, similar to np.unwrap,
     but less good.
@@ -105,6 +124,8 @@ def flagged_avg(
     out_name: str | None = None,
     interp: bool = False,
     interp_method: InterpolateOptions = "linear",
+    with_std: bool = False,
+    std_name: str | None = None,
 ) -> None:
     """
     Average a variable where a corresponding flag has a given value
@@ -128,12 +149,20 @@ def flagged_avg(
                   (default False). If False, the output will be NaN everywhere
                   except the index closest to the middle of each averaging
                   period.
+        interp_method: the method to use for interpolation (default 'linear')
+        with_std: if True, also calculate the standard deviation over the
+                  averaging periods (default False)
+        std_name: the name of the resultant std dev data (a column in df). If
+                  not given, the default is <out_name>_std
 
     Returns:
         None, df is modified in-place.
     """
     if out_name is None:
         out_name = "{}_{}".format(data_col, flag_col)
+
+    if with_std and std_name is None:
+        std_name = "{}_std".format(out_name)
 
     # Replace nans in the flag, either by backfilling or setting to a given
     # value
@@ -159,6 +188,17 @@ def flagged_avg(
         ).values,
         index=_groups.apply(lambda x: x.index[int(len(x) / 2)]),
     )
+
+    if with_std:
+        stds = pd.Series(
+            _groups.apply(
+                lambda x: x[data_col].iloc[skip_start : len(x) - skip_end].std()
+            ).values,
+            index=_groups.apply(lambda x: x.index[int(len(x) / 2)]),
+        )
+
+        df[std_name] = np.nan
+        df.loc[stds.index, std_name] = stds.values
 
     # Either interpolate back across the full index, or create a series which
     # is NaN everywhere that the means are not defined.
@@ -195,7 +235,6 @@ def slrs(
     roll_mean: int = 5,
     freq: int = 1,
 ) -> list[pd.DatetimeIndex]:
-
     def _add_slrs(slrs, group):
         _gdf = group[1]
         if max_length is None:
@@ -259,7 +298,6 @@ def slrs(
 
 
 class Either(object):
-
     def __init__(self, *args, name: str | None = None):
         self.options = args
         if name is None:
@@ -308,16 +346,18 @@ def stringify_if_datetime(dt: Any) -> Any:
         an iso formatted date/time string if dt supports strftime, otherwise
         dt
     """
-    if not (hasattr(dt, "strftime") and callable(dt.strftime)):  
+    if not (hasattr(dt, "strftime") and callable(dt.strftime)):
         return dt
 
     if hasattr(dt, "hour"):
-        return dt.strftime("%Y-%m-%dT%H:%M:%SZ")  
+        return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
 
-    return dt.strftime("%Y-%m-%d") 
+    return dt.strftime("%Y-%m-%d")
 
 
-def make_definition(pp_group: str, standard: str | ModuleType, one_hz: bool = False) -> None:
+def make_definition(
+    pp_group: str, standard: str | ModuleType, one_hz: bool = False
+) -> None:
     """
     Attempt to generate a YAML file which describes the variables in a given
     processing group, for use with vocal definitions.
@@ -334,7 +374,7 @@ def make_definition(pp_group: str, standard: str | ModuleType, one_hz: bool = Fa
     from vocal.types import schema_types
     from ruamel.yaml import YAML
 
-    def make_variable(var: 'DecadesVariable', flag: bool=False) -> dict:
+    def make_variable(var: "DecadesVariable", flag: bool = False) -> dict:
         _meta = {
             "name": var.name if not flag else f"{var.name}_FLAG",
             "datatype": schema_types.Float32 if not flag else schema_types.Integer8,
@@ -356,7 +396,7 @@ def make_definition(pp_group: str, standard: str | ModuleType, one_hz: bool = Fa
                     except Exception:
                         pass
                 try:
-                    value = value.item() # type: ignore  # forgiveness rather than permission
+                    value = value.item()  # type: ignore  # forgiveness rather than permission
                 except Exception:
                     pass
                 _attributes[item] = value
@@ -407,40 +447,42 @@ def make_definition(pp_group: str, standard: str | ModuleType, one_hz: bool = Fa
         standard = importlib.import_module(standard)
 
     dimensions_to_add = {}
-    
-    file_pattern = 'core_faam_{date}_v005_r{revision}_{flight_number}'
+
+    file_pattern = "core_faam_{date}_v005_r{revision}_{flight_number}"
     if one_hz:
-        file_pattern += '_1hz'
-    file_pattern += '.nc'
+        file_pattern += "_1hz"
+    file_pattern += ".nc"
 
     _dataset = {
-        'meta': {
-            'file_pattern': file_pattern,
-            'short_name': one_hz and 'core_1hz' or 'core',
-            'long_name': one_hz and 'FAAM Core Data at 1 Hz' or 'FAAM Core Data',
-            'description': ('This dataset contains core data, primarily from the '
-                            'DECADES data system on the FAAM aircraft. This covers '
-                            'meteorological, chemistry, aerosol, inertial, and airframe measurements.'),
-            'references': [
+        "meta": {
+            "file_pattern": file_pattern,
+            "short_name": one_hz and "core_1hz" or "core",
+            "long_name": one_hz and "FAAM Core Data at 1 Hz" or "FAAM Core Data",
+            "description": (
+                "This dataset contains core data, primarily from the "
+                "DECADES data system on the FAAM aircraft. This covers "
+                "meteorological, chemistry, aerosol, inertial, and airframe measurements."
+            ),
+            "references": [
                 {
-                    'title': 'Processing Documentation',
-                    'web': 'https://www.faam.ac.uk/sphinx/coredata',
-                    'doi': '10.5281/zenodo.7105518'
+                    "title": "Processing Documentation",
+                    "web": "https://www.faam.ac.uk/sphinx/coredata",
+                    "doi": "10.5281/zenodo.7105518",
                 },
                 {
-                    'title': 'FAAM Met. Handbook',
-                    'web': 'https://www.faam.ac.uk/sphinx/met-handbook',
-                    'doi': '10.5281/zenodo.5846961'
+                    "title": "FAAM Met. Handbook",
+                    "web": "https://www.faam.ac.uk/sphinx/met-handbook",
+                    "doi": "10.5281/zenodo.5846961",
                 },
                 {
-                    'title': 'Processing Software',
-                    'web': 'https://github.com/FAAM-146/decades-ppandas',
-                    'doi': '10.5281/zenodo.5711136'
-                }
-            ]
-        }, 
-        'attributes': {},
-        'variables': [
+                    "title": "Processing Software",
+                    "web": "https://github.com/FAAM-146/decades-ppandas",
+                    "doi": "10.5281/zenodo.5711136",
+                },
+            ],
+        },
+        "attributes": {},
+        "variables": [
             {
                 "meta": {"name": "Time", "datatype": "<int32>"},
                 "dimensions": ["Time"],
@@ -465,7 +507,10 @@ def make_definition(pp_group: str, standard: str | ModuleType, one_hz: bool = Fa
             dim_name = f"sps{var.frequency:02d}"
             if dim_name not in dimensions_to_add and not one_hz:
                 if var.frequency != 1:
-                    dimensions_to_add[dim_name] = {"name": dim_name, "size": var.frequency}
+                    dimensions_to_add[dim_name] = {
+                        "name": dim_name,
+                        "size": var.frequency,
+                    }
             if var.write:
                 exists = len(
                     [i for i in _dataset["variables"] if i["meta"]["name"] == var.name]
@@ -494,15 +539,15 @@ def make_definition(pp_group: str, standard: str | ModuleType, one_hz: bool = Fa
     _dataset["attributes"]["processing_software_doi"] = DOI
     _dataset["attributes"]["project_name"] = schema_types.DerivedString
     _dataset["attributes"]["project_acronym"] = schema_types.DerivedString
-    _dataset["attributes"][
-        "project_principal_investigator"
-    ] = schema_types.OptionalDerivedString
-    _dataset["attributes"][
-        "project_principal_investigator_email"
-    ] = schema_types.OptionalDerivedString
-    _dataset["attributes"][
-        "project_principal_investigator_url"
-    ] = schema_types.OptionalDerivedString
+    _dataset["attributes"]["project_principal_investigator"] = (
+        schema_types.OptionalDerivedString
+    )
+    _dataset["attributes"]["project_principal_investigator_email"] = (
+        schema_types.OptionalDerivedString
+    )
+    _dataset["attributes"]["project_principal_investigator_url"] = (
+        schema_types.OptionalDerivedString
+    )
 
     yaml = YAML()
     yaml.indent(mapping=2, sequence=4, offset=2)
