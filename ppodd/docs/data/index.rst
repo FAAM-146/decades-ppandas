@@ -9,3 +9,4 @@ FAAM Core Data Guide
     dynamic_content/coredata
     dynamic_content/modules
     dynamic_content/flagmods
+    content/known_issues
