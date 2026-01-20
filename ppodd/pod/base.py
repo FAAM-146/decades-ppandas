@@ -40,7 +40,7 @@ class PPRegister:
         """
         self._dict: dict[str, list[type[PPBase]]] = {}
 
-    def append(self, pp_group: str, cls: type[PPBase]) -> None:
+    def append(self, pp_group: str | list[str], cls: type[PPBase]) -> None:
         """
         Add a processing module to the register.
 
@@ -48,10 +48,15 @@ class PPRegister:
             pp_group: the group to which the processing module belongs.
             cls: the processing module to add.
         """
-        try:
-            self._dict[pp_group].append(cls)
-        except KeyError:
-            self._dict[pp_group] = [cls]
+        if isinstance(pp_group, list):
+            for group in pp_group:
+                self.append(group, cls)
+            return
+
+        if pp_group not in self._dict:
+            self._dict[pp_group] = []
+
+        self._dict[pp_group].append(cls)
 
     def modules(
         self, group_name: str, date: datetime.date | None = None
@@ -73,17 +78,14 @@ class PPRegister:
 pp_register = PPRegister()
 
 
-def register_pp(pp_group: str) -> Callable[[type[PPBase]], type[PPBase]]:
+def register_pp(pp_group: str | list[str]) -> Callable[[type[PPBase]], type[PPBase]]:
     """
     Provide a decorator to register processing modules with the
     processing code.
     """
 
     def inner(cls: type[PPBase]) -> type[PPBase]:
-        try:
-            pp_register.append(pp_group, cls)
-        except KeyError:
-            pp_register.append(pp_group, cls)
+        pp_register.append(pp_group, cls)
         return cls
 
     return inner
@@ -160,7 +162,6 @@ class PPBase(object):
         self.declarations[name] = kwargs
 
     def add_flag_mod(self, flag: pd.Series, output: DecadesVariable) -> None:
-
         def _add_mask_flag(flag: pd.Series, output: DecadesVariable) -> None:
             assert isinstance(output.flag, DecadesBitmaskFlag)
 
@@ -215,9 +216,7 @@ class PPBase(object):
         try:
             input_flag = self.get_input_flag()
         except Exception:
-            logger.warning(
-                f"Failed to get input flag for " f"{self.__class__.__name__}"
-            )
+            logger.warning(f"Failed to get input flag for {self.__class__.__name__}")
 
             input_flag = pd.Series([], dtype=np.int8)  # TODO: check this
 
@@ -393,7 +392,6 @@ class PPBase(object):
         ]
 
         if method == "outerjoin":
-
             # Create a joined dataframe
             for _input in _inputs:
                 df = df.join(self.dataset[_input]().dropna(), how="outer")
@@ -533,12 +531,10 @@ class PPBase(object):
             _test = cls.test
 
         for key, val in _test.items():
-
             if val[0] == "const":
                 d.constants[key] = val[1]
 
             elif val[0] == "data":
-
                 if len(val) != 3:
                     raise ValueError("Test data must be a tuple of (data, freq)")
 
