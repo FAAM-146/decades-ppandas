@@ -9,7 +9,17 @@ class AL55CODiagsQA(QAMod):
     idea of the performance of the instrument.
     """
 
-    inputs = ["AL55CO_counts", "CO_AERO", "WOW_IND"]
+    inputs = [
+        "ALT_GIN",
+        "CO_AERO",
+        "CO_AERO_CU",
+        "AL55CO_flowlamp",
+        "AL55CO_flowmono",
+        "AL55CO_MFC1_mass_flow",
+        "AL55CO_pcell",
+        "AL55CO_templamp",
+        "AL55CO_tempcell",
+    ]
 
     def make_altitude_plot(self, fig: QAFigure) -> None:
         ax = fig.timeseries_axes([0.1, 0.75, 0.8, 0.15], labelx=False)
