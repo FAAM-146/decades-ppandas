@@ -5,9 +5,8 @@ for QC flagging of data variables.
 
 from __future__ import annotations
 
-# pylint: disable=useless-object-inheritance, invalid-name
 import datetime
-from typing import TYPE_CHECKING, Any, Iterable, Literal
+from typing import TYPE_CHECKING, Any, Literal
 import netCDF4
 import numpy as np
 import pandas as pd
@@ -140,7 +139,7 @@ class DecadesClassicFlag(DecadesFlagABC):
         # Initialize the flag to -128, a fill_value
         self._df["FLAG"] = np.int8(-128)
         self.descriptions[-128] = (
-            "A fill value. No flagging information " "has been provided"
+            "A fill value. No flagging information has been provided"
         )
         self.descriptions[0] = (
             "Data are assumed to be valid and "
@@ -230,7 +229,7 @@ class DecadesClassicFlag(DecadesFlagABC):
         self.descriptions[value] = description
 
     def add_flag(
-        self, flag: np.ndarray | pd.Series, method: FlagMethod = 'maximum'
+        self, flag: np.ndarray | pd.Series, method: FlagMethod = "maximum"
     ) -> None:
         """
         Add an array to the flag. Can either be merged with the current flag
@@ -263,10 +262,12 @@ class DecadesClassicFlag(DecadesFlagABC):
         else:
             self._df.FLAG = np.atleast_1d(flag)
 
-        self._df.loc[self._df.FLAG < 0, 'FLAG'] = -128
+        self._df.loc[self._df.FLAG < 0, "FLAG"] = -128
 
     @classmethod
-    def from_nc_variable(cls, var: netCDF4.Variable, decadesvar: "DecadesVariable") -> "DecadesClassicFlag":  # type: ignore
+    def from_nc_variable(
+        cls, var: netCDF4.Variable, decadesvar: "DecadesVariable"
+    ) -> "DecadesClassicFlag":
         """
         Generate a flag variable from a netcdf variable.
 
@@ -410,7 +411,9 @@ class DecadesBitmaskFlag(DecadesFlagABC):
         self._df.loc[data > 0, col_name] = data[data > 0]
 
     @classmethod
-    def from_nc_variable(cls, ncvar: netCDF4.Variable, decadesvar: "DecadesVariable") -> "DecadesBitmaskFlag":  # type: ignore
+    def from_nc_variable(
+        cls, ncvar: netCDF4.Variable, decadesvar: "DecadesVariable"
+    ) -> "DecadesBitmaskFlag":
         """
         Generate a flag variable from a netcdf variable.
 
