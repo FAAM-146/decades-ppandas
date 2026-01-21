@@ -86,7 +86,7 @@ class TwoBOzone(PPBase):
             "O3_2BTECH",
             units="ppb",
             frequency=1,
-            long_name=("Mole fraction of Ozone in air from the 2BTech " "photometer"),
+            long_name=("Mole fraction of Ozone in air from the 2BTech photometer"),
             standard_name="mole_fraction_of_ozone_in_air",
             instrument_manufacturer="2B Technologies Inc.",
             instrument_model="205",
