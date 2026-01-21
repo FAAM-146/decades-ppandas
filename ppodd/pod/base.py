@@ -262,7 +262,7 @@ class PPBase(object):
 
             if type(output.flag) is DecadesClassicFlag:
                 try:
-                    a = output.flag.meanings
+                    _a = output.flag.meanings
                     flag_value = max(list(output.flag.meanings)) + 1
                 except ValueError:
                     flag_value = 1
