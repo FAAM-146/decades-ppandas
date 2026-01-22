@@ -355,6 +355,23 @@ def stringify_if_datetime(dt: Any) -> Any:
     return dt.strftime("%Y-%m-%d")
 
 
+def mogrify_attribute(attr: Any) -> Any:
+    """
+    Stringify an attribute if it's a type that needs stringification.
+
+    Args:
+        attr - an attribute
+
+    Returns:
+        the attribute, stringified if needed
+    """
+    if hasattr(attr, "to_netcdf_attr") and callable(attr.to_netcdf_attr):
+        return attr.to_netcdf_attr()
+
+    attr = stringify_if_datetime(attr)
+    return attr
+
+
 def make_definition(
     pp_group: str, standard: str | ModuleType, one_hz: bool = False
 ) -> None:
