@@ -386,7 +386,7 @@ class AL55CO(PPBase):
             instrument_manufacturer="Aero-Laser GmbH",
             instrument_model="AL5005",
             instrument_serial_number=self.dataset.lazy["AL55CO_SN"],
-            instrument_description=self.dataset.lazy["AL55CO_INSTRINFO_URL"],
+            instrument_description=self.dataset.lazy["AL55CO_DESCRIPTION"],
             calibration_information=self.dataset.lazy["AL55CO_CALIBRATION_INFO"],
             calibration_url=self.dataset.lazy["AL55CO_CALINFO_URL"],
         )
