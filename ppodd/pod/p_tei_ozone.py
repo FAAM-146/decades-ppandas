@@ -39,6 +39,11 @@ class TeiOzone(PPBase):
             standard_name="mole_fraction_of_ozone_in_air",
             instrument_manufacturer="Thermo Fisher Scientific, Inc.",
             instrument_model="49i UV absorption ozone photometer",
+            instrument_serial_number="1162390004",
+            instrument_description=self.dataset.lazy["TEIOZO_DESCRIPTION"],
+            calibration_url=self.dataset.lazy["TEIOZO_CALINFO_URL"],
+            calibration_date=self.dataset.lazy["TEIOZO_CALINFO_DATE"],
+            calibration_information=self.dataset.lazy["TEIOZO_CALINFO_INFO"],
         )
 
     def flag(self):
