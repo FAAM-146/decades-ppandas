@@ -143,6 +143,15 @@ class DocAttribute:
     def __str__(self):
         return str(self.doc_value)
 
+    def to_netcdf_attr(self) -> Any:
+        """
+        Convert to a value suitable for use as a netCDF attribute.
+
+        Returns:
+            the value suitable for use as a netCDF attribute.
+        """
+        return self.value
+
     def __getattr__(self, name: str) -> Any:
         """
         Pass any attribute requests to the value of the attribute.
