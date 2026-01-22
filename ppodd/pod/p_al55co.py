@@ -475,10 +475,13 @@ class AL55CO(PPBase):
         logger.info(f"Found {len(target_groups)} target groups for bias calculation.")
 
         for group in target_groups:
-            target_mask[group[1].index[:5]] = 0
+            target_mask[group[1].index[:5]] = False
+            target_mask[group[1].index[-1]] = False
 
         target_conc = self.dataset["AL55CO_TAR_MR"]
-        target_data = df[target_mask == 1]["conc_final"]
+
+        target_mask = target_mask.reindex(df.index).bfill()
+        target_data = df.loc[target_mask == 1]["conc_final"]
         mu, std = scipy.stats.norm.fit(target_data - target_conc)
 
         logger.info(
@@ -497,10 +500,10 @@ class AL55CO(PPBase):
             A tuple of three pandas Series, containing the hi_cal_mask,
             lo_cal_mask and target_mask.
         """
-        v1 = self.dataset["AL55CO_V1"]()
-        v2 = self.dataset["AL55CO_V2"]()
-        v3 = self.dataset["AL55CO_V3"]()
-        v4 = self.dataset["AL55CO_V4"]()
+        v1 = self.dataset["AL55CO_V1"]().bfill().astype(bool)
+        v2 = self.dataset["AL55CO_V2"]().bfill().astype(bool)
+        v3 = self.dataset["AL55CO_V3"]().bfill().astype(bool)
+        v4 = self.dataset["AL55CO_V4"]().bfill().astype(bool)
 
         hi_cal_mask = v1 & v2 & v3 & v4
         lo_cal_mask = v1 & v2 & (~v3) & v4

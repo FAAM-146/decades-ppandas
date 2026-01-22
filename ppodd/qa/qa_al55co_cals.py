@@ -64,10 +64,10 @@ class AL55COCalQA(QAMod):
         )
 
         # Get valve states, and use to identify cal types
-        v1 = self.dataset["AL55CO_V1"]()
-        v2 = self.dataset["AL55CO_V2"]()
-        v3 = self.dataset["AL55CO_V3"]()
-        v4 = self.dataset["AL55CO_V4"]()
+        v1 = self.dataset["AL55CO_V1"]().bfill().astype(bool)
+        v2 = self.dataset["AL55CO_V2"]().bfill().astype(bool)
+        v3 = self.dataset["AL55CO_V3"]().bfill().astype(bool)
+        v4 = self.dataset["AL55CO_V4"]().bfill().astype(bool)
 
         hi_cal_mask = v1 & v2 & v3 & v4
         lo_cal_mask = v1 & v2 & (~v3) & v4
